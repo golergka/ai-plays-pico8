@@ -83,6 +83,42 @@ These instructions must not be summarized or removed from this document.
 - Agent performance metrics
 - Documentation on training process
 
+### [T-006] Game Action API [TODO]
+**Dependencies**: T-002
+**Description**: Design a standardized API for game actions.
+**Acceptance Criteria**:
+- Common interface for different games
+- Support for basic PICO-8 controls
+- Extensible for game-specific actions
+- Documentation and examples
+
+### [T-007] Basic Reinforcement Learning Model [TODO]
+**Dependencies**: T-004, T-006
+**Description**: Implement simple RL model for game playing.
+**Acceptance Criteria**:
+- State representation from game screens
+- Action selection mechanism
+- Learning algorithm implementation
+- Performance baseline metrics
+
+### [T-008] Visualization Tools [TODO]
+**Dependencies**: T-003, T-005
+**Description**: Create tools to visualize AI gameplay and learning.
+**Acceptance Criteria**:
+- Real-time visualization of gameplay
+- Performance metrics visualization
+- Learning progress visualization
+- Export options for analysis
+
+### [T-009] MVP Demo Game Integration [TODO]
+**Dependencies**: T-002, T-005, T-006
+**Description**: Integrate with a simple PICO-8 game for demonstration.
+**Acceptance Criteria**:
+- Complete integration with one simple game
+- AI can play game from start to finish
+- Performance metrics for the game
+- Demo documentation and setup instructions
+
 ## Low-Level Tasks
 
 ### [T-101] PICO-8 Game Runner [TODO]
@@ -102,3 +138,21 @@ These instructions must not be summarized or removed from this document.
 - Minimal performance impact
 - Error handling for failed captures
 - Image format suitable for processing
+
+### [T-103] Input Command Interface [TODO]
+**Dependencies**: T-101
+**Description**: Module to send input commands to PICO-8.
+**Acceptance Criteria**:
+- Send keyboard inputs to PICO-8
+- Support for all PICO-8 button combinations
+- Configurable input mapping
+- Input verification mechanism
+
+### [T-104] Game State Detector [TODO]
+**Dependencies**: T-102
+**Description**: Detect game state from screen captures.
+**Acceptance Criteria**:
+- Identify game screens (title, gameplay, game over)
+- Extract game score/progress when available
+- Detect success/failure conditions
+- Configurable for different games
