@@ -32,4 +32,6 @@ bun run typecheck
 - Format: `<type>(<scope>): <description>`
 - Example: `feat(controls): add button mapping for PICO-8 controls`
 
+For project tasks and tracking, refer to TASKS.md.
+
 Run `bun run typecheck` before committing changes.
