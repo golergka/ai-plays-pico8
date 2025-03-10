@@ -1,5 +1,13 @@
 # CLAUDE.md - AI Plays PICO-8 Project Guidelines
 
+## IMPORTANT: Claude Workflow
+**ALWAYS follow these steps when starting work on this project:**
+1. Check TASKS.md first to understand current priorities
+2. Do the required implementation work
+3. Run all required checks (typecheck, lint, tests if applicable)
+4. Update TASKS.md to reflect progress
+5. Commit changes following the git workflow below
+
 ## Build/Run/Test Commands
 ```bash
 # Run the project
