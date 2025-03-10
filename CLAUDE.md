@@ -26,12 +26,12 @@ bun run typecheck
 - **Testing**: Write unit tests for core functionality when implemented
 
 ## Git Workflow
+- Run `bun run typecheck` before committing changes.
 - Use conventional commits (feat, fix, docs, style, refactor, test, chore)
 - Make atomic commits (one logical change per commit)
 - Commit often to make changes easier to review and revert if needed
 - Format: `<type>(<scope>): <description>`
 - Example: `feat(controls): add button mapping for PICO-8 controls`
 
-For project tasks and tracking, refer to TASKS.md.
-
-Run `bun run typecheck` before committing changes.
+## Documents and workflows
+- For project tasks and tracking, refer to TASKS.md.
