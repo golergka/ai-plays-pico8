@@ -121,14 +121,15 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-Level Tasks
 
-### [T-101] PICO-8 Game Runner [TODO]
-**Dependencies**: T-001
+### [T-101] PICO-8 Game Runner [IN PROGRESS]
+**Dependencies**: T-001, T-105
 **Description**: Create a module to run PICO-8 games programmatically.
 **Acceptance Criteria**:
 - Can launch PICO-8 with a specific cartridge
 - Can close PICO-8 gracefully
 - Error handling for failed launches
 - Configurable PICO-8 path and options
+- Use environment variables for configuration
 
 ### [T-102] Screen Capture Module [TODO]
 **Dependencies**: T-101
@@ -156,3 +157,43 @@ These instructions must not be summarized or removed from this document.
 - Extract game score/progress when available
 - Detect success/failure conditions
 - Configurable for different games
+
+### [T-105] Environment Configuration System [TODO]
+**Dependencies**: T-001
+**Description**: Create a configuration system using environment variables with .env file support.
+**Acceptance Criteria**:
+- Configuration via .env file for development
+- Environment variables for production/CI environments
+- .env file added to .gitignore
+- Default values provided where appropriate
+- Documentation for all required environment variables
+
+### [T-106] Interactive Configuration Mode [TODO]
+**Dependencies**: T-105
+**Description**: Add interactive mode for collecting configuration values from users.
+**Acceptance Criteria**:
+- Interactive CLI prompt for missing configuration values
+- Validation of user input
+- Ability to save collected values to .env file
+- Clear error messages for invalid inputs
+- Documentation for interactive configuration workflow
+
+### [T-107] Configuration Validation System [TODO]
+**Dependencies**: T-105
+**Description**: Implement validation system for configuration values with different modes.
+**Acceptance Criteria**:
+- Non-interactive mode with strict validation (missing values are fatal errors)
+- Interactive mode with user prompts for missing values
+- Validation rules for each configuration type
+- Appropriate error handling for both modes
+- Command-line flags to switch between modes
+
+### [T-108] Enquirer Integration [TODO]
+**Dependencies**: T-106
+**Description**: Integrate Enquirer library for interactive CLI prompts.
+**Acceptance Criteria**:
+- Use Enquirer for all interactive prompts
+- Support for different prompt types (input, select, confirm)
+- Visual feedback for user actions
+- Ability to cancel configuration process
+- Proper error handling for user interactions
