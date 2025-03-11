@@ -17,13 +17,28 @@ export interface Pico8Config {
 }
 
 /**
- * Result of a PICO-8 process operation
+ * Result of a successful PICO-8 process operation
  */
-export interface Pico8Result {
-  /** Whether the operation was successful */
-  success: boolean
-  /** Error message if operation failed */
-  error?: string
-  /** Process ID if applicable */
+export interface Pico8SuccessResult {
+  /** Operation succeeded */
+  success: true
+  /** Process ID */
+  pid: number
+}
+
+/**
+ * Result of a failed PICO-8 process operation
+ */
+export interface Pico8ErrorResult {
+  /** Operation failed */
+  success: false
+  /** Error message explaining the failure */
+  error: string
+  /** Process ID if available */
   pid?: number
 }
+
+/**
+ * Result of a PICO-8 process operation (union type)
+ */
+export type Pico8Result = Pico8SuccessResult | Pico8ErrorResult

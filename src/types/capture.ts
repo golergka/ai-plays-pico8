@@ -37,20 +37,35 @@ export interface CaptureRegion {
 }
 
 /**
- * Result of a screen capture operation
+ * Result of a successful screen capture operation
  */
-export interface CaptureResult {
-  /** Whether the capture was successful */
-  success: boolean
-  /** Error message if capture failed */
-  error?: string
-  /** Captured image buffer (if successful) */
-  buffer?: Buffer
+export interface CaptureSuccessResult {
+  /** Capture was successful */
+  success: true
+  /** Captured image buffer */
+  buffer: Buffer
   /** File path if saved to disk (if applicable) */
   filePath?: string
   /** Timestamp of the capture */
   timestamp: number
 }
+
+/**
+ * Result of a failed screen capture operation
+ */
+export interface CaptureErrorResult {
+  /** Capture failed */
+  success: false
+  /** Error message explaining the failure */
+  error: string
+  /** Timestamp of the capture attempt */
+  timestamp: number
+}
+
+/**
+ * Result of a screen capture operation (union type)
+ */
+export type CaptureResult = CaptureSuccessResult | CaptureErrorResult
 
 /**
  * Event names for the screen capture module
