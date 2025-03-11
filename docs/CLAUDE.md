@@ -12,8 +12,12 @@ Follow these steps when asked with autonomusly work on the project:
 4. Run all required checks (typecheck, lint, tests if applicable). If you go through fix/test iterations, comment on each iteration.
 5. For tasks that require runtime verification (like UI, graphics, or interaction with external processes):
    - Mark task as IN PROGRESS in TASKS.md
+   - Make ALL necessary configuration changes (including .env files) to ensure testing is streamlined
    - Commit changes with a clear summary of what needs to be tested
-   - Request human testing and validation before marking as DONE
+   - Provide PRECISE testing instructions for the human, including:
+     - Exact commands to run
+     - What specifically to observe/validate
+     - Any configuration needed (if not already handled)
 6. For tasks with clear programmatic validation, update TASKS.md to reflect progress
 7. Commit changes following the git workflow below
 
