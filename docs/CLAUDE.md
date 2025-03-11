@@ -7,9 +7,9 @@ This is root of LLM-targeted documentation. Every time you're activated, follow 
 Follow these steps when asked with autonomusly work on the project:
 
 1. Check TASKS.md first to understand current priorities
-2. Select a task to work on
-3. Do the required implementation work
-4. Run all required checks (typecheck, lint, tests if applicable)
+2. Select a task to work on. Print the task description and your estimate of work to standard output.
+3. Do the required implementation work. If neccessary, provide brief comments of your activity.
+4. Run all required checks (typecheck, lint, tests if applicable). If you go through fix/test iterations, comment on each iteration.
 5. Update TASKS.md to reflect progress
 6. Commit changes following the git workflow below
 
@@ -18,8 +18,8 @@ Follow these steps when asked with autonomusly work on the project:
 When human prompts you with a specific task, follow these steps:
 
 1. Check TASKS.md to add a new or update existing task
-2. Update other tasks in TASKS.md in relation to this one
-3. If neccessary, create new sub-tasks for the task
+2. Update other tasks in TASKS.md in relation to this one.
+3. If neccessary, create new sub-tasks for the task.
 4. Select whether to work on the task or one of its sub-tasks
 5. Go to step 3 (do the required implementation work) in the Independent Work workflow
 6. After committing the changes, respond to the user with your current progress with task as described by him and your estimate of remaining work
