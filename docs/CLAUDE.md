@@ -59,3 +59,4 @@ bun run typecheck
 
 ## Documents and workflows
 - For project tasks and tracking, refer to TASKS.md.
+- For documentation maintenance guidelines, refer to MAINTENANCE.md.

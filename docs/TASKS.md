@@ -207,7 +207,7 @@ These instructions must not be summarized or removed from this document.
 
 **Cancellation Reason**: Task T-106 (Interactive Configuration Mode) has been cancelled, so this dependency is no longer needed.
 
-### [T-109] Documentation Health Monitor [TODO]
+### [T-109] Documentation Health Monitor [DONE]
 **Dependencies**: None
 **Description**: Adapt the doc_health.sh script to check document sizes in the docs directory.
 **Acceptance Criteria**:
