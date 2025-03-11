@@ -6,8 +6,12 @@
     "start": "bun run index.ts",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "dotenv": "^16.4.1"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/node": "^20.11.19"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
