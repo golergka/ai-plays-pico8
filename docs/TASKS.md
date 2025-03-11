@@ -236,22 +236,39 @@ These instructions must not be summarized or removed from this document.
 - Improved error handling for PICO-8 process failures
 **Implementation Status**:
 - Added explicit process exit handler to ensure application terminates when PICO-8 exits
-- Added automatic timeout (now set to 15 seconds total) for the demonstration, after which PICO-8 is automatically closed
-- Created structured input patterns with visual feedback:
-  - Square movement pattern (right, down, left, up)
-  - Diagonal movement (up-right, down-right)
-  - Rapid directional changes to collect targets
-- Improved error handling in the shutdown process
-- Ensured process.exit(0) always gets called even if there are errors during shutdown
+- Improved forced termination logic to ensure PICO-8 process is killed reliably
+- Added timeout-based demo that runs for 10 seconds before terminating
+- Enhanced error handling in the process termination flow
+- Updated key mapping for PICO-8 input verification
+**Current Issues to Fix**:
+- PICO-8 process isn't being killed (fix force kill logic)
+- Key mapping is incorrect (test with simple key mapping test cartridge)
+- Demo duration should be exactly 10 seconds
 **Testing Status**:
-- User reported that the code currently doesn't kill PICO-8 properly (need to fix for full process lifecycle control)
-- User reported that code doesn't wait for cartridge to load (need to simplify approach)
-- User reported seeing a menu appear during testing, but character didn't move (need more robust input method)
+- User reported that the PICO-8 process is not being killed properly (termination fails)
+- User reported character movement is not visible, but menu appears/disappears (key mapping issue)
+- Need to create a dedicated test cartridge for key mapping verification
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/test_game.p8
+
+### [T-114] Create Key Mapping Test Cartridge [IN PROGRESS]
+**Dependencies**: T-103
+**Description**: Create a simple PICO-8 cartridge specifically for testing key mappings.
+**Acceptance Criteria**:
+- Create a cartridge that clearly displays which keys are being pressed
+- Visual feedback should be immediate and obvious
+- Test cartridge should work without complex loading screens or menus
+- Include documentation on how to use the cartridge for testing
+**Implementation Status**:
+- Investigating key mapping issues with current implementation
+- Creating a simple cartridge with immediate visual feedback
+- Will update local .env to point to this new test cartridge
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
+- /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 
 ### [T-104] Game State Detector [TODO]
 **Dependencies**: T-102

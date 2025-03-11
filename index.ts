@@ -179,15 +179,15 @@ async function main() {
       console.log('Starting continuous input demo...')
       console.log('Pressing directional buttons to ensure input works during and after cartridge loading')
       
-      // Test game has a simple character that moves with arrow keys and collects targets
+      // Our key_test cartridge provides immediate visual feedback for key presses
       try {
-        // This demo runs for 30 seconds total, with constantly changing inputs to maximize visibility
+        // This demo runs for exactly 10 seconds with constantly changing inputs to maximize visibility
         // Even if cartridge is still loading or showing a menu, these inputs should be visible
-        console.log('Starting 30-second continuous input test...')
+        console.log('Starting 10-second continuous input test...')
         
-        // Cycle through directions continuously for 30 seconds
+        // Cycle through directions continuously for exactly 10 seconds
         const startTime = Date.now()
-        const endTime = startTime + 30000 // 30 seconds of continuous input
+        const endTime = startTime + 10000 // 10 seconds of continuous input
         
         const directions = [
           Pico8Button.Right,
@@ -235,9 +235,23 @@ async function main() {
       // Set up graceful shutdown handler
       setupGracefulShutdown(runner, capture, input)
       
-      // Demo is complete, now kill PICO-8 automatically
-      console.log('Continuous input demo completed, shutting down PICO-8...')
-      await gracefulShutdown(runner, capture, input)
+      // Demo is complete, now kill PICO-8 with force
+      console.log('Continuous input demo completed, forcefully shutting down PICO-8...')
+      
+      // First make sure screen capture is stopped
+      if (capture && capture.isActive()) {
+        console.log('Stopping screen capture...')
+        capture.stop()
+      }
+      
+      // Force kill PICO-8 to ensure termination
+      if (runner && runner.isRunning()) {
+        console.log('Force killing PICO-8 process...')
+        await runner.close(true, 5000) // Force kill with 5-second timeout
+      }
+      
+      console.log('Shutdown complete, exiting application.')
+      process.exit(0)
     } else {
       console.error(`Failed to launch PICO-8: ${result.error}`)
     }

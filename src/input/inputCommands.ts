@@ -407,7 +407,29 @@ export class InputCommands extends EventEmitter {
    * @returns The mapped key code or name
    */
   private mapButtonToKey(button: Pico8Button): string {
-    // Direct mapping for most keys (AppleScript uses the key names directly)
+    // AppleScript requires specific arrow key names
+    if (this.platform === 'darwin') {
+      // Special mapping for arrow keys in AppleScript
+      switch (button) {
+        case Pico8Button.Left:
+          return 'left arrow'
+        case Pico8Button.Right:
+          return 'right arrow'
+        case Pico8Button.Up:
+          return 'up arrow'
+        case Pico8Button.Down:
+          return 'down arrow'
+        case Pico8Button.Enter:
+          return 'return'
+        case Pico8Button.Escape:
+          return 'escape'
+        // Other keys can be used directly
+        default:
+          return button.toLowerCase()
+      }
+    }
+    
+    // Fallback for other platforms
     return button.toLowerCase()
   }
   
