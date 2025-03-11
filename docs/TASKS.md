@@ -22,6 +22,7 @@ These instructions must not be summarized or removed from this document.
    - Summarize completed tasks in CHANGELOG.md
    - Break down high-level tasks into low-level tasks as work progresses
    - Do not remove these instructions
+   - Reflect on different tasks and make sure that this document doesn't have self-contraditions
 
 4. **Task Format**:
 ```
@@ -33,6 +34,11 @@ These instructions must not be summarized or removed from this document.
 - Criterion 2
 - ...
 ```
+
+4. **Task scope**:
+   - High-level tasks (Epics) are larger features or user stories
+   - Low-level tasks are specific implementation details or sub-tasks
+   - Leaf-level (in terms of trees) tasks should be something that can be implemented in a single session
 
 ---
 
@@ -200,3 +206,14 @@ These instructions must not be summarized or removed from this document.
 - ~~Proper error handling for user interactions~~
 
 **Cancellation Reason**: Task T-106 (Interactive Configuration Mode) has been cancelled, so this dependency is no longer needed.
+
+### [T-109] Documentation Health Monitor [TODO]
+**Dependencies**: None
+**Description**: Adapt the doc_health.sh script to check document sizes in the docs directory.
+**Acceptance Criteria**:
+- Script moved to appropriate location in project structure
+- Script simplified to focus on document size checking
+- Remove project-specific features not relevant to this project
+- Support checking all Markdown files in docs directory
+- Display clear warnings for large documents that need summarization
+- Add helpful information on how to maintain documentation

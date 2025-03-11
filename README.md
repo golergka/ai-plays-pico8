@@ -68,4 +68,4 @@ bun run typecheck
 
 ## Project Status
 
-This project is under active development. See the [TASKS.md](TASKS.md) file for current priorities and progress.
+This project is under active development. See the [docs/TASKS.md](docs/TASKS.md) file for current priorities and progress.
