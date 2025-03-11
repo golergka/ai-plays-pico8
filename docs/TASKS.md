@@ -221,6 +221,34 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/input.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
+### [T-113] Improve PICO-8 Process Lifecycle Management [IN PROGRESS]
+**Dependencies**: T-101, T-103
+**Description**: Enhance control over the PICO-8 process lifecycle and improve input verification.
+**Acceptance Criteria**:
+- Application properly exits when PICO-8 is closed
+- Script controls the full PICO-8 lifecycle (launch, run for a set time, then terminate)
+- Structured input patterns send specific commands with visible feedback
+- Clear visual indication that keyboard inputs are working
+- Improved error handling for PICO-8 process failures
+**Implementation Status**:
+- Added explicit process exit handler to ensure application terminates when PICO-8 exits
+- Added automatic timeout (now set to 15 seconds total) for the demonstration, after which PICO-8 is automatically closed
+- Created structured input patterns with visual feedback:
+  - Square movement pattern (right, down, left, up)
+  - Diagonal movement (up-right, down-right)
+  - Rapid directional changes to collect targets
+- Improved error handling in the shutdown process
+- Ensured process.exit(0) always gets called even if there are errors during shutdown
+**Testing Needed**:
+- Verify that the application exits when PICO-8 is closed manually
+- Confirm that the structured input patterns are visible in the game
+- Check that the automatic shutdown works correctly after the demo completes
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/test_game.p8
+
 ### [T-104] Game State Detector [TODO]
 **Dependencies**: T-102
 **Description**: Detect game state from screen captures.

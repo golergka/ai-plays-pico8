@@ -8,6 +8,7 @@ import { CaptureEvent } from './src/types/capture'
 import type { CaptureEventData } from './src/types/capture'
 import { setTimeout } from 'node:timers/promises'
 import type { InputEventData } from './src/input/inputCommands'
+import { Pico8Button } from './src/types/input'
 
 /**
  * Example usage of the PICO-8 Game Runner with Screen Capture and Input Commands
@@ -72,6 +73,15 @@ async function main() {
     if (result.success) {
       console.log(`PICO-8 launched successfully (PID: ${result.pid})`)
       
+      // Setup a process exit handler to ensure app exits when PICO-8 exits
+      if (runner.process) {
+        runner.process.on('exit', (code) => {
+          console.log(`PICO-8 process exited with code ${code}, shutting down application...`)
+          // Make sure we exit the application
+          process.exit(0)
+        })
+      }
+      
       // Initialize screen capture if enabled
       if (config.CAPTURE_ENABLED) {
         console.log('Initializing screen capture...')
@@ -109,7 +119,7 @@ async function main() {
         capture.start()
         console.log('Screen capture started')
         
-        // Connect PICO-8 process exit to screen capture
+        // Connect PICO-8 process exit to screen capture (also handled in global exit handler)
         if (runner.process) {
           runner.process.on('exit', () => {
             console.log('PICO-8 process exited, stopping screen capture')
@@ -145,19 +155,92 @@ async function main() {
         console.error(`Input error: ${data.error}`)
       })
       
-      // Wait a bit for PICO-8 to fully initialize
+      // Wait for PICO-8 to fully initialize
       console.log('Waiting for PICO-8 to initialize...')
       await setTimeout(3000)
       
-      // Send random inputs to PICO-8 for 30 seconds
-      console.log('Sending random inputs to PICO-8 for 30 seconds...')
-      await input.sendRandomInputs(30000, 3)
-      console.log('Random input session completed')
+      // Run a structured demo to visually verify input commands work
+      console.log('Starting input verification demo...')
       
-      console.log('Press Ctrl+C to exit')
+      // Test game has a simple character that moves with arrow keys and collects targets
+      try {
+        // First, move in a square pattern to demonstrate directional inputs
+        console.log('Moving player in a square pattern...')
+        
+        // Move right
+        console.log('Moving RIGHT for 1 second...')
+        await input.pressButton(Pico8Button.Right)
+        await setTimeout(1000)
+        await input.releaseButton(Pico8Button.Right)
+        await setTimeout(500)
+        
+        // Move down
+        console.log('Moving DOWN for 1 second...')
+        await input.pressButton(Pico8Button.Down)
+        await setTimeout(1000)
+        await input.releaseButton(Pico8Button.Down)
+        await setTimeout(500)
+        
+        // Move left
+        console.log('Moving LEFT for 1 second...')
+        await input.pressButton(Pico8Button.Left)
+        await setTimeout(1000)
+        await input.releaseButton(Pico8Button.Left)
+        await setTimeout(500)
+        
+        // Move up
+        console.log('Moving UP for 1 second...')
+        await input.pressButton(Pico8Button.Up)
+        await setTimeout(1000)
+        await input.releaseButton(Pico8Button.Up)
+        await setTimeout(500)
+        
+        // Now demonstrate diagonal movement
+        console.log('Moving in diagonal directions...')
+        
+        // Up-Right
+        console.log('Moving UP-RIGHT for 1 second...')
+        await input.pressButton(Pico8Button.Up)
+        await input.pressButton(Pico8Button.Right)
+        await setTimeout(1000)
+        await input.releaseButton(Pico8Button.Up)
+        await input.releaseButton(Pico8Button.Right)
+        await setTimeout(500)
+        
+        // Down-Right
+        console.log('Moving DOWN-RIGHT for 1 second...')
+        await input.pressButton(Pico8Button.Down)
+        await input.pressButton(Pico8Button.Right)
+        await setTimeout(1000)
+        await input.releaseButton(Pico8Button.Down)
+        await input.releaseButton(Pico8Button.Right)
+        await setTimeout(500)
+        
+        // Now demonstrate rapid button presses to collect targets
+        console.log('Demonstrating rapid direction changes to collect targets...')
+        
+        // Send a sequence of rapid directional changes
+        await input.sendButtonSequence([
+          Pico8Button.Right, Pico8Button.Down, 
+          Pico8Button.Left, Pico8Button.Up,
+          Pico8Button.Right, Pico8Button.Right,
+          Pico8Button.Down, Pico8Button.Down
+        ], 100, 300)
+        
+        console.log('Input verification demo completed')
+      } catch (error) {
+        console.error('Error during input verification:', error)
+      }
       
       // Set up graceful shutdown handler
       setupGracefulShutdown(runner, capture, input)
+      
+      // Run for 5 more seconds, then automatically exit
+      console.log('Running for 5 more seconds before automatic shutdown...')
+      await setTimeout(5000)
+      
+      console.log('Automatic shutdown initiated...')
+      await gracefulShutdown(runner, capture, input)
     } else {
       console.error(`Failed to launch PICO-8: ${result.error}`)
     }
@@ -205,7 +288,7 @@ async function gracefulShutdown(
     }
     
     // Close PICO-8 if running
-    if (runner.isRunning()) {
+    if (runner && runner.isRunning()) {
       console.log('Closing PICO-8...')
       const result = await runner.close()
       if (result.success) {
@@ -219,9 +302,13 @@ async function gracefulShutdown(
   } catch (error) {
     console.error('Error during shutdown:', error)
   } finally {
+    // Always exit the process
     process.exit(0)
   }
 }
 
 // Run the main function
-main().catch(console.error)
+main().catch((error) => {
+  console.error('Unhandled error in main:', error)
+  process.exit(1)
+})
