@@ -322,17 +322,34 @@ export class ScreenCapture extends EventEmitter {
       })
       
       // Extract window bounds
+      // Need to account for macOS Retina display scaling factor
+      // On Retina displays, active-win reports logical coordinates
+      // but screenshot-desktop captures physical pixels
+      
+      // Determine scaling factor based on screen resolution
+      // Standard macOS Retina displays use 2x scaling
+      const scalingFactor = this.detectScalingFactor(screenSize)
+      this.logger.debug(`Detected scaling factor: ${scalingFactor}x`)
+      
+      // Apply scaling factor to window coordinates
       const region = {
-        x: pico8Window.bounds.x,
-        y: pico8Window.bounds.y,
-        width: pico8Window.bounds.width,
-        height: pico8Window.bounds.height
+        x: Math.round(pico8Window.bounds.x * scalingFactor),
+        y: Math.round(pico8Window.bounds.y * scalingFactor),
+        width: Math.round(pico8Window.bounds.width * scalingFactor),
+        height: Math.round(pico8Window.bounds.height * scalingFactor)
       }
       
       // Log window position details and screen size for debugging
       this.logger.debug('Window position details:', {
-        window: region,
+        originalWindow: {
+          x: pico8Window.bounds.x,
+          y: pico8Window.bounds.y,
+          width: pico8Window.bounds.width,
+          height: pico8Window.bounds.height
+        },
+        scaledWindow: region,
         screen: screenSize,
+        scalingFactor,
         relativePosition: {
           percentX: Math.round((region.x / screenSize.width) * 100),
           percentY: Math.round((region.y / screenSize.height) * 100),
@@ -367,5 +384,45 @@ export class ScreenCapture extends EventEmitter {
       this.logger.error('Error getting screen size:', error)
       return { width: 1920, height: 1080 } // Default fallback values
     }
+  }
+  
+  /**
+   * Detects the display scaling factor based on screen resolution
+   * This is primarily needed for macOS Retina displays
+   * @param screenSize The screen dimensions
+   * @returns The scaling factor (1 for standard displays, 2 for Retina, etc.)
+   * @private
+   */
+  private detectScalingFactor(screenSize: {width: number, height: number}): number {
+    // Common Retina resolutions on macOS
+    const retinaResolutions = [
+      // MacBook Pro 13" Retina
+      { width: 2560, height: 1600 },
+      // MacBook Pro 14" Retina
+      { width: 3024, height: 1964 },
+      // MacBook Pro 16" Retina
+      { width: 3456, height: 2234 },
+      // iMac 24" Retina
+      { width: 4480, height: 2520 },
+      // iMac 27" 5K Retina
+      { width: 5120, height: 2880 },
+      // Generic 4K display
+      { width: 3840, height: 2160 },
+    ]
+    
+    // Check if screen resolution matches a known Retina resolution
+    const isRetina = retinaResolutions.some(resolution => 
+      Math.abs(resolution.width - screenSize.width) < 100 && 
+      Math.abs(resolution.height - screenSize.height) < 100
+    )
+    
+    // Could also check for resolution > 2000 pixels in width as a general rule
+    const isHighDPI = screenSize.width > 2000 || screenSize.height > 1200
+    
+    if (isRetina || isHighDPI) {
+      return 2 // Retina displays typically use 2x scaling
+    }
+    
+    return 1 // Standard displays use 1x scaling
   }
 }
