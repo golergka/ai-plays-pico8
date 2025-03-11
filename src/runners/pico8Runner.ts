@@ -37,7 +37,8 @@ export class Pico8Runner {
       return {
         success: false,
         error: 'PICO-8 is already running',
-        pid: this.process.pid
+        // Only include pid if it's available
+        ...(this.process.pid ? { pid: this.process.pid } : {})
       }
     }
     
@@ -81,6 +82,14 @@ export class Pico8Runner {
         return {
           success: false,
           error: 'Failed to start PICO-8 process'
+        }
+      }
+      
+      // Ensure we have a valid PID
+      if (!this.process.pid) {
+        return {
+          success: false,
+          error: 'PICO-8 process started but no PID was assigned'
         }
       }
       
@@ -186,9 +195,10 @@ export class Pico8Runner {
       }
       
       console.log('PICO-8 termination process complete')
+      // We know pid is valid by this point, otherwise we would have returned earlier
       return {
         success: true,
-        pid
+        pid: pid || 0 // Provide default value to satisfy type system
       }
     } catch (error) {
       console.error(`Error during PICO-8 termination: ${error instanceof Error ? error.message : String(error)}`)
