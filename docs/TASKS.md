@@ -137,6 +137,16 @@ These instructions must not be summarized or removed from this document.
 - Configurable PICO-8 path and options
 - Use environment variables for configuration
 
+### [T-110] Basic PICO-8 Test Cartridge [DONE]
+**Dependencies**: T-101
+**Description**: Create a simple PICO-8 test cartridge for development and testing purposes.
+**Acceptance Criteria**:
+- Simple game loop with recognizable patterns/objects
+- Clear visual elements for screen capture testing
+- Basic interaction via PICO-8 controls
+- Stable and predictable behavior
+- Documentation on how to use the cartridge for testing
+
 ### [T-102] Screen Capture Module [TODO]
 **Dependencies**: T-101
 **Description**: Module to capture PICO-8 game screen.

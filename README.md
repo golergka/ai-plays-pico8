@@ -44,6 +44,20 @@ This project aims to create a framework for AI agents to learn and play games cr
 bun run start
 ```
 
+### Using Test Cartridges
+
+The project includes a test cartridge for development and testing:
+
+```bash
+# Run with the test cartridge
+bun run start
+
+# The test cartridge is located at:
+# input/cartridges/test_game.p8
+```
+
+See [input/cartridges/README.md](input/cartridges/README.md) for details on the test cartridge.
+
 ## Environment Configuration
 
 The application uses environment variables for configuration. You can set these in a `.env` file or directly in your environment.
