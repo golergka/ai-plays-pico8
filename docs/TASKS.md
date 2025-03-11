@@ -127,7 +127,7 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-Level Tasks
 
-### [T-101] PICO-8 Game Runner [IN PROGRESS]
+### [T-101] PICO-8 Game Runner [DONE]
 **Dependencies**: T-001, T-105
 **Description**: Create a module to run PICO-8 games programmatically.
 **Acceptance Criteria**:
