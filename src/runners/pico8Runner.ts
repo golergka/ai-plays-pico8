@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process'
-import { setTimeout } from 'node:timers/promises'
+import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
+import { setTimeout } from 'node:timers'
 import { type Pico8Config, type Pico8Result } from '../types/pico8'
 
 /**
@@ -69,7 +70,7 @@ export class Pico8Runner {
       })
       
       // Wait a bit to ensure process starts correctly
-      await setTimeout(100)
+      await setTimeoutPromise(100)
       
       // Check if process is actually running
       if (!this.process || this.process.killed) {
@@ -93,10 +94,11 @@ export class Pico8Runner {
   
   /**
    * Closes the running PICO-8 process
-   * @param force If true, forcefully kills the process
+   * @param force If true, forcefully kills the process with SIGKILL
+   * @param timeout Timeout in milliseconds to wait for process to exit before force killing
    * @returns Result of the close operation
    */
-  async close(force = false): Promise<Pico8Result> {
+  async close(force = false, timeout = 3000): Promise<Pico8Result> {
     if (!this.process) {
       return {
         success: false,
@@ -105,23 +107,71 @@ export class Pico8Runner {
     }
     
     try {
+      const pid = this.process.pid
+      
+      // Create a promise that resolves when the process exits
+      const exitPromise = new Promise<void>((resolve) => {
+        if (!this.process) return resolve()
+        
+        this.process.once('exit', () => {
+          resolve()
+        })
+      })
+      
+      // Create a timeout promise
+      const timeoutPromise = new Promise<void>((resolve) => {
+        const timer = setTimeout(() => resolve(), timeout)
+        // Avoid keeping the Node.js event loop active
+        if (timer.unref) timer.unref()
+      })
+      
       if (force) {
-        // Force kill the process
+        // Force kill the process immediately
+        console.log('Force killing PICO-8 process...')
         this.process.kill('SIGKILL')
       } else {
         // Gracefully terminate the process
+        console.log('Sending terminate signal to PICO-8...')
         this.process.kill('SIGTERM')
+        
+        // Wait for process to exit or timeout
+        const raceResult = await Promise.race([exitPromise, timeoutPromise])
+        
+        // If timeout occurred and process is still running, force kill
+        if (raceResult === undefined && this.process && !this.process.killed) {
+          console.log(`PICO-8 process did not exit within ${timeout}ms, force killing...`)
+          this.process.kill('SIGKILL')
+        }
       }
       
-      // Wait for process to exit
-      const pid = this.process.pid
+      // Make sure reference is cleared
+      const processRef = this.process
       this.process = null
+      
+      // Ensure the process is terminated (double-check)
+      if (processRef && !processRef.killed) {
+        try {
+          processRef.kill('SIGKILL')
+        } catch (err) {
+          // Ignore errors here, we're just making sure
+        }
+      }
       
       return {
         success: true,
         pid
       }
     } catch (error) {
+      // In case of error, still try to force kill to ensure cleanup
+      if (this.process) {
+        try {
+          this.process.kill('SIGKILL')
+          this.process = null
+        } catch (killError) {
+          // Ignore any errors during cleanup
+        }
+      }
+      
       return {
         success: false,
         error: `Failed to close PICO-8: ${error instanceof Error ? error.message : String(error)}`

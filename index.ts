@@ -155,91 +155,88 @@ async function main() {
         console.error(`Input error: ${data.error}`)
       })
       
-      // Wait for PICO-8 to fully initialize
-      console.log('Waiting for PICO-8 to initialize...')
+      // Wait for PICO-8 to partially initialize
+      // Note: We don't wait for the cartridge to fully load as that would require game-specific detection
+      // Instead, we'll start sending inputs continuously which will work whether the cartridge is loaded or not
+      console.log('Waiting briefly for PICO-8 window to appear...')
       await setTimeout(3000)
       
-      // Run a structured demo to visually verify input commands work
-      console.log('Starting input verification demo...')
+      /**
+       * Continuous Input Demo
+       * 
+       * This section runs a continuous input demonstration that:
+       * 1. Works during cartridge loading AND after loading completes
+       * 2. Sends directions continuously for 30 seconds to ensure visibility
+       * 3. Shows clear logging of which inputs are being sent
+       * 4. Automatically terminates PICO-8 after the demo completes
+       * 
+       * Implementation notes:
+       * - Does not rely on knowing when cartridge is loaded
+       * - Will show inputs visibly whether in menu or gameplay
+       * - Cycles through all directions repeatedly
+       * - Occasionally sends special input patterns
+       */
+      console.log('Starting continuous input demo...')
+      console.log('Pressing directional buttons to ensure input works during and after cartridge loading')
       
       // Test game has a simple character that moves with arrow keys and collects targets
       try {
-        // First, move in a square pattern to demonstrate directional inputs
-        console.log('Moving player in a square pattern...')
+        // This demo runs for 30 seconds total, with constantly changing inputs to maximize visibility
+        // Even if cartridge is still loading or showing a menu, these inputs should be visible
+        console.log('Starting 30-second continuous input test...')
         
-        // Move right
-        console.log('Moving RIGHT for 1 second...')
-        await input.pressButton(Pico8Button.Right)
-        await setTimeout(1000)
-        await input.releaseButton(Pico8Button.Right)
-        await setTimeout(500)
+        // Cycle through directions continuously for 30 seconds
+        const startTime = Date.now()
+        const endTime = startTime + 30000 // 30 seconds of continuous input
         
-        // Move down
-        console.log('Moving DOWN for 1 second...')
-        await input.pressButton(Pico8Button.Down)
-        await setTimeout(1000)
-        await input.releaseButton(Pico8Button.Down)
-        await setTimeout(500)
+        const directions = [
+          Pico8Button.Right,
+          Pico8Button.Down,
+          Pico8Button.Left,
+          Pico8Button.Up
+        ]
         
-        // Move left
-        console.log('Moving LEFT for 1 second...')
-        await input.pressButton(Pico8Button.Left)
-        await setTimeout(1000)
-        await input.releaseButton(Pico8Button.Left)
-        await setTimeout(500)
+        // Keep sending inputs until the end time
+        while (Date.now() < endTime) {
+          // Get time elapsed and calculate which phase we're in
+          const elapsed = Date.now() - startTime
+          const phaseIndex = Math.floor((elapsed / 1500) % directions.length)
+          const currentDirection = directions[phaseIndex]
+          
+          // Log current direction every 1.5 seconds
+          if (elapsed % 1500 < 50) {
+            console.log(`Moving ${currentDirection.toUpperCase()} (${Math.floor(elapsed/1000)}s elapsed)`)
+          }
+          
+          // Press current direction
+          await input.pressButton(currentDirection)
+          await setTimeout(300)
+          await input.releaseButton(currentDirection)
+          
+          // Short pause between presses
+          await setTimeout(50)
+          
+          // Every 5 seconds, try a special pattern
+          if (Math.floor(elapsed / 5000) !== Math.floor((elapsed - 100) / 5000)) {
+            console.log('Sending special button sequence...')
+            // Try rapid directional changes to collect targets
+            await input.sendButtonSequence([
+              Pico8Button.Right, Pico8Button.Down, 
+              Pico8Button.Left, Pico8Button.Up
+            ], 100, 200)
+          }
+        }
         
-        // Move up
-        console.log('Moving UP for 1 second...')
-        await input.pressButton(Pico8Button.Up)
-        await setTimeout(1000)
-        await input.releaseButton(Pico8Button.Up)
-        await setTimeout(500)
-        
-        // Now demonstrate diagonal movement
-        console.log('Moving in diagonal directions...')
-        
-        // Up-Right
-        console.log('Moving UP-RIGHT for 1 second...')
-        await input.pressButton(Pico8Button.Up)
-        await input.pressButton(Pico8Button.Right)
-        await setTimeout(1000)
-        await input.releaseButton(Pico8Button.Up)
-        await input.releaseButton(Pico8Button.Right)
-        await setTimeout(500)
-        
-        // Down-Right
-        console.log('Moving DOWN-RIGHT for 1 second...')
-        await input.pressButton(Pico8Button.Down)
-        await input.pressButton(Pico8Button.Right)
-        await setTimeout(1000)
-        await input.releaseButton(Pico8Button.Down)
-        await input.releaseButton(Pico8Button.Right)
-        await setTimeout(500)
-        
-        // Now demonstrate rapid button presses to collect targets
-        console.log('Demonstrating rapid direction changes to collect targets...')
-        
-        // Send a sequence of rapid directional changes
-        await input.sendButtonSequence([
-          Pico8Button.Right, Pico8Button.Down, 
-          Pico8Button.Left, Pico8Button.Up,
-          Pico8Button.Right, Pico8Button.Right,
-          Pico8Button.Down, Pico8Button.Down
-        ], 100, 300)
-        
-        console.log('Input verification demo completed')
+        console.log('Continuous input test completed')
       } catch (error) {
-        console.error('Error during input verification:', error)
+        console.error('Error during input test:', error)
       }
       
       // Set up graceful shutdown handler
       setupGracefulShutdown(runner, capture, input)
       
-      // Run for 5 more seconds, then automatically exit
-      console.log('Running for 5 more seconds before automatic shutdown...')
-      await setTimeout(5000)
-      
-      console.log('Automatic shutdown initiated...')
+      // Demo is complete, now kill PICO-8 automatically
+      console.log('Continuous input demo completed, shutting down PICO-8...')
       await gracefulShutdown(runner, capture, input)
     } else {
       console.error(`Failed to launch PICO-8: ${result.error}`)
@@ -274,6 +271,11 @@ function setupGracefulShutdown(
 
 /**
  * Gracefully shuts down all processes
+ * 
+ * This function ensures that all resources are properly cleaned up:
+ * 1. Stops the screen capture if it's active
+ * 2. Terminates the PICO-8 process, using force if necessary
+ * 3. Exits the application with a success code
  */
 async function gracefulShutdown(
   runner: Pico8Runner, 
@@ -287,21 +289,41 @@ async function gracefulShutdown(
       capture.stop()
     }
     
-    // Close PICO-8 if running
+    // Close PICO-8 if running - with more robust termination
     if (runner && runner.isRunning()) {
       console.log('Closing PICO-8...')
-      const result = await runner.close()
+      
+      // First attempt graceful shutdown with 3 second timeout
+      const result = await runner.close(false, 3000)
+      
       if (result.success) {
         console.log('PICO-8 closed successfully')
       } else {
         console.error(`Failed to close PICO-8: ${result.error}`)
         console.log('Attempting force close...')
-        await runner.close(true)
+        
+        // Force kill with SIGKILL if graceful shutdown failed
+        const forceResult = await runner.close(true)
+        
+        if (forceResult.success) {
+          console.log('PICO-8 force closed successfully')
+        } else {
+          console.error(`Failed to force close PICO-8: ${forceResult.error}`)
+          // We'll still exit but log the failure
+        }
+      }
+      
+      // Double-check process is truly gone
+      if (runner.isRunning()) {
+        console.error('WARNING: PICO-8 process may still be running despite termination attempts')
+      } else {
+        console.log('Confirmed PICO-8 process is terminated')
       }
     }
   } catch (error) {
     console.error('Error during shutdown:', error)
   } finally {
+    console.log('Exiting application...')
     // Always exit the process
     process.exit(0)
   }

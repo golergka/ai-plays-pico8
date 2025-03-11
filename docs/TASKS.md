@@ -71,6 +71,8 @@ These instructions must not be summarized or removed from this document.
 - Can capture game screen
 - Can send input commands
 - Can reset/restart games
+- Full control over PICO-8 process lifecycle (autonomous operation)
+- Robust error handling when interacting with PICO-8
 
 ### [T-003] Image Processing Pipeline [TODO]
 **Dependencies**: T-002
@@ -225,8 +227,10 @@ These instructions must not be summarized or removed from this document.
 **Dependencies**: T-101, T-103
 **Description**: Enhance control over the PICO-8 process lifecycle and improve input verification.
 **Acceptance Criteria**:
-- Application properly exits when PICO-8 is closed
-- Script controls the full PICO-8 lifecycle (launch, run for a set time, then terminate)
+- Application has full control over PICO-8 process lifecycle (launch, run, terminate)
+- Automatically terminate PICO-8 when the application exits or at the end of the demo
+- Ensure the demo script doesn't wait for cartridge to load specifically
+- Demo should continuously send input commands for sufficient time to handle any cartridge loading delays
 - Structured input patterns send specific commands with visible feedback
 - Clear visual indication that keyboard inputs are working
 - Improved error handling for PICO-8 process failures
@@ -239,10 +243,10 @@ These instructions must not be summarized or removed from this document.
   - Rapid directional changes to collect targets
 - Improved error handling in the shutdown process
 - Ensured process.exit(0) always gets called even if there are errors during shutdown
-**Testing Needed**:
-- Verify that the application exits when PICO-8 is closed manually
-- Confirm that the structured input patterns are visible in the game
-- Check that the automatic shutdown works correctly after the demo completes
+**Testing Status**:
+- User reported that the code currently doesn't kill PICO-8 properly (need to fix for full process lifecycle control)
+- User reported that code doesn't wait for cartridge to load (need to simplify approach)
+- User reported seeing a menu appear during testing, but character didn't move (need more robust input method)
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
