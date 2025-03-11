@@ -1,19 +1,23 @@
 import { Pico8Runner } from './src/runners/pico8Runner'
 import { ScreenCapture } from './src/capture/screenCapture'
+import { InputCommands, InputEvent } from './src/input/inputCommands'
 import { getConfig } from './src/config/env'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { CaptureEvent } from './src/types/capture'
 import type { CaptureEventData } from './src/types/capture'
+import { setTimeout } from 'node:timers/promises'
+import type { InputEventData } from './src/input/inputCommands'
 
 /**
- * Example usage of the PICO-8 Game Runner with Screen Capture
+ * Example usage of the PICO-8 Game Runner with Screen Capture and Input Commands
  */
 async function main() {
   console.log('AI Plays PICO-8')
   
   let runner: Pico8Runner | null = null
   let capture: ScreenCapture | null = null
+  let input: InputCommands | null = null
   
   try {
     // Get configuration from environment variables
@@ -116,10 +120,44 @@ async function main() {
         }
       }
       
+      // Initialize input commands module
+      console.log('Initializing input commands...')
+      input = new InputCommands({
+        windowTitle: 'PICO-8',
+        delayBetweenKeys: 150,
+        debug: config.APP_DEBUG
+      })
+      
+      // Set up input event listeners
+      input.on(InputEvent.BUTTON_PRESS, (data: InputEventData) => {
+        if (config.APP_DEBUG) {
+          console.log(`Button pressed: ${data.button} at ${new Date(data.timestamp).toISOString()}`)
+        }
+      })
+      
+      input.on(InputEvent.BUTTON_RELEASE, (data: InputEventData) => {
+        if (config.APP_DEBUG) {
+          console.log(`Button released: ${data.button} at ${new Date(data.timestamp).toISOString()}`)
+        }
+      })
+      
+      input.on(InputEvent.ERROR, (data: InputEventData) => {
+        console.error(`Input error: ${data.error}`)
+      })
+      
+      // Wait a bit for PICO-8 to fully initialize
+      console.log('Waiting for PICO-8 to initialize...')
+      await setTimeout(3000)
+      
+      // Send random inputs to PICO-8 for 30 seconds
+      console.log('Sending random inputs to PICO-8 for 30 seconds...')
+      await input.sendRandomInputs(30000, 3)
+      console.log('Random input session completed')
+      
       console.log('Press Ctrl+C to exit')
       
       // Set up graceful shutdown handler
-      setupGracefulShutdown(runner, capture)
+      setupGracefulShutdown(runner, capture, input)
     } else {
       console.error(`Failed to launch PICO-8: ${result.error}`)
     }
@@ -134,23 +172,31 @@ async function main() {
 /**
  * Sets up graceful shutdown handlers for the application
  */
-function setupGracefulShutdown(runner: Pico8Runner, capture: ScreenCapture | null): void {
+function setupGracefulShutdown(
+  runner: Pico8Runner, 
+  capture: ScreenCapture | null,
+  input: InputCommands | null
+): void {
   // Handle Ctrl+C and other termination signals
   process.on('SIGINT', async () => {
     console.log('\nShutting down...')
-    await gracefulShutdown(runner, capture)
+    await gracefulShutdown(runner, capture, input)
   })
   
   process.on('SIGTERM', async () => {
     console.log('\nReceived termination signal. Shutting down...')
-    await gracefulShutdown(runner, capture)
+    await gracefulShutdown(runner, capture, input)
   })
 }
 
 /**
  * Gracefully shuts down all processes
  */
-async function gracefulShutdown(runner: Pico8Runner, capture: ScreenCapture | null): Promise<void> {
+async function gracefulShutdown(
+  runner: Pico8Runner, 
+  capture: ScreenCapture | null,
+  input: InputCommands | null
+): Promise<void> {
   try {
     // Stop screen capture if running
     if (capture && capture.isActive()) {

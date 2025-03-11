@@ -192,7 +192,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-103] Input Command Interface [TODO]
+### [T-103] Input Command Interface [IN PROGRESS]
 **Dependencies**: T-101
 **Description**: Module to send input commands to PICO-8.
 **Acceptance Criteria**:
@@ -200,6 +200,26 @@ These instructions must not be summarized or removed from this document.
 - Support for all PICO-8 button combinations
 - Configurable input mapping
 - Input verification mechanism
+**Implementation Status**:
+- Initially tried robotjs for keyboard input, but encountered "missing symbol called" errors on macOS
+- Current implementation uses child_process to execute AppleScript commands (osascript) for key events on macOS
+- Added AppleScript commands for key press, key release, and key tap operations
+- Added support for tap and sequence input patterns
+- Added random button generator for testing
+- Window detection via active-win package to ensure commands only sent when PICO-8 is in focus
+**Testing Needed**:
+- Verify that keyboard inputs are successfully sent to PICO-8
+- Confirm that random button presses work as expected
+- Test on macOS (current implementation)
+- Consider adding support for Windows and Linux if needed
+**Alternatives for Future Updates**:
+1. nut.js - built on top of a C++ backend (via node-ffi-napi), more robust for system-level key events
+2. node-key-sender - uses AppleScript under the hood to avoid C-level symbol issues
+3. Swift binary called via child_process for more precise control on macOS
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/input.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
 ### [T-104] Game State Detector [TODO]
 **Dependencies**: T-102
