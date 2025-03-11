@@ -10,8 +10,12 @@ Follow these steps when asked with autonomusly work on the project:
 2. Select a task to work on. Print the task description and your estimate of work to standard output.
 3. Do the required implementation work. If neccessary, provide brief comments of your activity.
 4. Run all required checks (typecheck, lint, tests if applicable). If you go through fix/test iterations, comment on each iteration.
-5. Update TASKS.md to reflect progress
-6. Commit changes following the git workflow below
+5. For tasks that require runtime verification (like UI, graphics, or interaction with external processes):
+   - Mark task as IN PROGRESS in TASKS.md
+   - Commit changes with a clear summary of what needs to be tested
+   - Request human testing and validation before marking as DONE
+6. For tasks with clear programmatic validation, update TASKS.md to reflect progress
+7. Commit changes following the git workflow below
 
 ## WORKFLOW: New Task
 

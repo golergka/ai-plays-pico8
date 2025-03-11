@@ -173,7 +173,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/config/env.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-111] Improve Screen Capture Focus and Lifecycle [DONE]
+### [T-111] Improve Screen Capture Focus and Lifecycle [IN PROGRESS]
 **Dependencies**: T-102
 **Description**: Fix issues with screen capture to only capture the PICO-8 window and properly handle PICO-8 process exit.
 **Acceptance Criteria**:
