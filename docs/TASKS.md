@@ -173,6 +173,25 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/config/env.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
+### [T-111] Improve Screen Capture Focus and Lifecycle [TODO]
+**Dependencies**: T-102
+**Description**: Fix issues with screen capture to only capture the PICO-8 window and properly handle PICO-8 process exit.
+**Acceptance Criteria**:
+- Capture only the PICO-8 window rather than the full screen
+- Automatically stop screen capture when PICO-8 process exits
+- Add configuration options for window detection
+- Update integration in main application
+**Implementation Notes**:
+- Consider using RobotJS (can simulate keystrokes and capture screens with window cropping)
+- Alternative: nut.js (more modern and cross-platform)
+- Alternative: socsieng/sendkeys-macos (GitHub, though it's archived)
+- Ensure screen capture is properly linked to PICO-8 process lifecycle
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
 ### [T-103] Input Command Interface [TODO]
 **Dependencies**: T-101
 **Description**: Module to send input commands to PICO-8.
