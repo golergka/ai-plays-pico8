@@ -356,14 +356,17 @@ export class InputCommands extends EventEmitter {
     
     for (let i = 0; i < buttons.length; i++) {
       // Tap the button
-      const result = await this.tapButton(buttons[i], tapDuration)
-      results.push(result)
-      
-      // Skip delay after last button
-      if (i < buttons.length - 1) {
-        // Wait between taps
-        const delay = delayBetweenTaps ?? (this.config.delayBetweenKeys ?? 100) * 2
-        await setTimeout(delay)
+      const button = buttons[i];
+      if (button !== undefined) {
+        const result = await this.tapButton(button, tapDuration)
+        results.push(result)
+        
+        // Skip delay after last button
+        if (i < buttons.length - 1) {
+          // Wait between taps
+          const delay = delayBetweenTaps ?? (this.config.delayBetweenKeys ?? 100) * 2
+          await setTimeout(delay)
+        }
       }
     }
     
@@ -510,7 +513,9 @@ export class InputCommands extends EventEmitter {
   private getRandomButton(): Pico8Button {
     const buttons = Object.values(Pico8Button)
     const randomIndex = Math.floor(Math.random() * buttons.length)
-    return buttons[randomIndex]
+    const button = buttons[randomIndex]
+    // Make sure we never return undefined
+    return button ?? Pico8Button.Up
   }
 
   /**
