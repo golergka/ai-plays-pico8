@@ -1,5 +1,7 @@
 # CLAUDE.md - AI Plays PICO-8 Project Guidelines
 
+This is root of LLM-targeted documentation.
+
 ## IMPORTANT: Claude Workflow
 **ALWAYS follow these steps when starting work on this project:**
 1. Check TASKS.md first to understand current priorities

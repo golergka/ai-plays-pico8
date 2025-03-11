@@ -2,6 +2,10 @@
 
 A TypeScript-based library/application that enables AI to play PICO-8 games.
 
+**Important**
+
+If you're Claude, only update this document as an artifact for humans. Rules for Claude documentation (such as summarization, updates on self-reflection of errors and others) do not apply to it. LLM-targeted documentation starts at [docs/CLAUDE.md](docs/CLAUDE.md).
+
 ## Project Overview
 
 This project aims to create a framework for AI agents to learn and play games created in PICO-8, a fantasy console. The system captures game screens, processes them for AI input, and enables the AI to control the game through simulated keyboard inputs.
