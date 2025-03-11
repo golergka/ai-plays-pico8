@@ -11,6 +11,8 @@ import type {
   CaptureConfig, 
   CaptureEventData, 
   CaptureResult,
+  CaptureSuccessResult,
+  CaptureErrorResult,
   CaptureRegion
 } from '../types/capture'
 
@@ -191,11 +193,11 @@ export class ScreenCapture extends EventEmitter {
         await writeFile(filePath, imageBuffer)
       }
       
-      // Create result object
-      const result: CaptureResult = {
+      // Create success result object
+      const result: CaptureSuccessResult = {
         success: true,
         buffer,
-        filePath,
+        ...(filePath ? { filePath } : {}),
         timestamp
       }
       
@@ -211,7 +213,7 @@ export class ScreenCapture extends EventEmitter {
       const errorMessage = error instanceof Error ? error.message : String(error)
       
       // Create error result
-      const result: CaptureResult = {
+      const result: CaptureErrorResult = {
         success: false,
         error: `Failed to capture screen: ${errorMessage}`,
         timestamp
