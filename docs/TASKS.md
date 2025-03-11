@@ -33,9 +33,19 @@ These instructions must not be summarized or removed from this document.
 - Criterion 1
 - Criterion 2
 - ...
+**Relevant Files**:
+- Path to relevant file 1
+- Path to relevant file 2
 ```
 
-4. **Task scope**:
+5. **Task References**:
+   - Each task should include a list of relevant files for implementation
+   - This helps with efficient code navigation and understanding
+   - Include both existing files that need to be referenced and new files to be created
+   - The references should be full file paths where possible
+   - When referencing directories, use trailing slash to indicate a directory
+
+6. **Task scope**:
    - High-level tasks (Epics) are larger features or user stories
    - Low-level tasks are specific implementation details or sub-tasks
    - Leaf-level (in terms of trees) tasks should be something that can be implemented in a single session
@@ -147,7 +157,7 @@ These instructions must not be summarized or removed from this document.
 - Stable and predictable behavior
 - Documentation on how to use the cartridge for testing
 
-### [T-102] Screen Capture Module [TODO]
+### [T-102] Screen Capture Module [IN PROGRESS]
 **Dependencies**: T-101
 **Description**: Module to capture PICO-8 game screen.
 **Acceptance Criteria**:
@@ -155,6 +165,13 @@ These instructions must not be summarized or removed from this document.
 - Minimal performance impact
 - Error handling for failed captures
 - Image format suitable for processing
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts (to be created)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts (to be created)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/config/env.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
 ### [T-103] Input Command Interface [TODO]
 **Dependencies**: T-101
