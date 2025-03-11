@@ -157,7 +157,7 @@ These instructions must not be summarized or removed from this document.
 - Stable and predictable behavior
 - Documentation on how to use the cartridge for testing
 
-### [T-102] Screen Capture Module [IN PROGRESS]
+### [T-102] Screen Capture Module [DONE]
 **Dependencies**: T-101
 **Description**: Module to capture PICO-8 game screen.
 **Acceptance Criteria**:
@@ -168,8 +168,8 @@ These instructions must not be summarized or removed from this document.
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts (to be created)
-- /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts (to be created)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/config/env.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 

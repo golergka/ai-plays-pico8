@@ -1,15 +1,19 @@
 import { Pico8Runner } from './src/runners/pico8Runner'
+import { ScreenCapture } from './src/capture/screenCapture'
 import { getConfig } from './src/config/env'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { CaptureEvent } from './src/types/capture'
+import type { CaptureEventData } from './src/types/capture'
 
 /**
- * Example usage of the PICO-8 Game Runner
+ * Example usage of the PICO-8 Game Runner with Screen Capture
  */
 async function main() {
-  console.log('AI Plays PICO-8 - Runner Example')
+  console.log('AI Plays PICO-8')
   
   let runner: Pico8Runner | null = null
+  let capture: ScreenCapture | null = null
   
   try {
     // Get configuration from environment variables
@@ -47,7 +51,13 @@ async function main() {
         PICO8_PATH: config.PICO8_PATH,
         PICO8_WINDOWED: config.PICO8_WINDOWED,
         PICO8_VOLUME: config.PICO8_VOLUME,
-        PICO8_DEFAULT_CARTRIDGE: config.PICO8_DEFAULT_CARTRIDGE || 'Not specified'
+        PICO8_DEFAULT_CARTRIDGE: config.PICO8_DEFAULT_CARTRIDGE || 'Not specified',
+        CAPTURE_ENABLED: config.CAPTURE_ENABLED,
+        CAPTURE_INTERVAL: config.CAPTURE_INTERVAL,
+        CAPTURE_SAVE_TO_DISK: config.CAPTURE_SAVE_TO_DISK,
+        CAPTURE_OUTPUT_DIR: config.CAPTURE_OUTPUT_DIR,
+        CAPTURE_FORMAT: config.CAPTURE_FORMAT,
+        CAPTURE_QUALITY: config.CAPTURE_QUALITY
       })
     }
     
@@ -57,10 +67,42 @@ async function main() {
     
     if (result.success) {
       console.log(`PICO-8 launched successfully (PID: ${result.pid})`)
+      
+      // Initialize screen capture if enabled
+      if (config.CAPTURE_ENABLED) {
+        console.log('Initializing screen capture...')
+        
+        capture = new ScreenCapture({
+          interval: config.CAPTURE_INTERVAL || 1000,
+          saveToDisk: config.CAPTURE_SAVE_TO_DISK,
+          outputDir: config.CAPTURE_OUTPUT_DIR,
+          imageFormat: (config.CAPTURE_FORMAT || 'png') as 'png' | 'jpg' | 'webp',
+          imageQuality: config.CAPTURE_QUALITY || 90
+        })
+        
+        // Set up capture event listeners
+        capture.on(CaptureEvent.CAPTURE, (data: CaptureEventData) => {
+          if (config.APP_DEBUG) {
+            console.log(`Capture taken at ${new Date(data.timestamp).toISOString()}`)
+            if (data.filePath) {
+              console.log(`Saved to: ${data.filePath}`)
+            }
+          }
+        })
+        
+        capture.on(CaptureEvent.ERROR, (data: CaptureEventData) => {
+          console.error(`Capture error: ${data.error}`)
+        })
+        
+        // Start capturing
+        capture.start()
+        console.log('Screen capture started')
+      }
+      
       console.log('Press Ctrl+C to exit')
       
       // Set up graceful shutdown handler
-      setupGracefulShutdown(runner)
+      setupGracefulShutdown(runner, capture)
     } else {
       console.error(`Failed to launch PICO-8: ${result.error}`)
     }
@@ -75,25 +117,33 @@ async function main() {
 /**
  * Sets up graceful shutdown handlers for the application
  */
-function setupGracefulShutdown(runner: Pico8Runner): void {
+function setupGracefulShutdown(runner: Pico8Runner, capture: ScreenCapture | null): void {
   // Handle Ctrl+C and other termination signals
   process.on('SIGINT', async () => {
-    console.log('\nShutting down PICO-8...')
-    await gracefulShutdown(runner)
+    console.log('\nShutting down...')
+    await gracefulShutdown(runner, capture)
   })
   
   process.on('SIGTERM', async () => {
-    console.log('\nReceived termination signal. Shutting down PICO-8...')
-    await gracefulShutdown(runner)
+    console.log('\nReceived termination signal. Shutting down...')
+    await gracefulShutdown(runner, capture)
   })
 }
 
 /**
- * Gracefully shuts down the PICO-8 process
+ * Gracefully shuts down all processes
  */
-async function gracefulShutdown(runner: Pico8Runner): Promise<void> {
+async function gracefulShutdown(runner: Pico8Runner, capture: ScreenCapture | null): Promise<void> {
   try {
+    // Stop screen capture if running
+    if (capture && capture.isActive()) {
+      console.log('Stopping screen capture...')
+      capture.stop()
+    }
+    
+    // Close PICO-8 if running
     if (runner.isRunning()) {
+      console.log('Closing PICO-8...')
       const result = await runner.close()
       if (result.success) {
         console.log('PICO-8 closed successfully')
