@@ -37,6 +37,12 @@ bun run typecheck
 
 # Testing (add jest/vitest in future) 
 # bun run test
+
+# Package management (IMPORTANT: Use Bun, not npm)
+bun install <package>     # Install a package
+bun add <package>         # Install and save to dependencies
+bun add -d <package>      # Install and save to devDependencies
+bun remove <package>      # Remove a package
 ```
 
 ## Code Style Guidelines
