@@ -18,6 +18,8 @@ export interface CaptureConfig {
   windowTitle?: string
   /** Auto-stop when target window is no longer found */
   autoStopOnWindowClose?: boolean
+  /** Enable debug logging */
+  debug?: boolean
 }
 
 /**

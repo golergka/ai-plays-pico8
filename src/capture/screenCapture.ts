@@ -6,6 +6,7 @@ import screenshot from 'screenshot-desktop'
 import sharp from 'sharp'
 import * as activeWin from 'active-win'
 import { CaptureEvent } from '../types/capture'
+import { createLogger, LogLevel } from '../utils/logger'
 import type { 
   CaptureConfig, 
   CaptureEventData, 
@@ -21,6 +22,7 @@ export class ScreenCapture extends EventEmitter {
   private config: CaptureConfig
   private captureInterval: ReturnType<typeof setInterval> | null = null
   private isCapturing = false
+  private logger = createLogger('ScreenCapture')
   
   /**
    * Creates a new ScreenCapture instance
@@ -42,6 +44,12 @@ export class ScreenCapture extends EventEmitter {
     this.config = {
       ...defaults,
       ...config
+    }
+    
+    // Set logger level based on debug mode
+    if (config.debug) {
+      this.logger.setLevel(LogLevel.DEBUG)
+      this.logger.debug('Debug logging enabled for ScreenCapture')
     }
   }
   
@@ -124,15 +132,33 @@ export class ScreenCapture extends EventEmitter {
       if (captureRegion) {
         const { x, y, width, height } = captureRegion
         
+        this.logger.debug(`Capturing region: x=${x}, y=${y}, width=${width}, height=${height}`)
+        
         // Capture full screen first
         buffer = await screenshot({ screen: 0, format: 'png' })
         
+        // Log the full screenshot dimensions
+        const fullScreenMetadata = await sharp(buffer).metadata()
+        this.logger.debug(`Full screenshot dimensions: ${fullScreenMetadata.width}x${fullScreenMetadata.height}`)
+        
         // Then crop to the target region
-        buffer = await sharp(buffer)
-          .extract({ left: x, top: y, width, height })
-          .toBuffer()
+        try {
+          buffer = await sharp(buffer)
+            .extract({ left: x, top: y, width, height })
+            .toBuffer()
+            
+          // Log successful cropping
+          this.logger.debug(`Successfully cropped to region ${width}x${height}`)
+        } catch (cropError) {
+          this.logger.error('Failed to crop screenshot:', cropError)
+          
+          // Fallback to using the full screenshot if cropping fails
+          // This could happen if the window bounds are outside the screen
+          this.logger.warn('Using full screenshot as fallback')
+        }
       } else {
         // Capture full screen if no region specified
+        this.logger.debug('No capture region specified, capturing full screen')
         buffer = await screenshot({ screen: 0, format: 'png' })
       }
       
@@ -238,14 +264,21 @@ export class ScreenCapture extends EventEmitter {
     try {
       // If no window title is specified, we can't detect the window
       if (!this.config.windowTitle) {
+        this.logger.debug('No window title specified, cannot detect window')
         return undefined
       }
       
+      this.logger.debug(`Looking for window with title containing "${this.config.windowTitle}"`)
+      
       // Use active-win to get information about all open windows
       const windows = await activeWin.openWindows()
+      
       if (!windows || windows.length === 0) {
+        this.logger.debug('No open windows found')
         return undefined
       }
+      
+      this.logger.debug(`Found ${windows.length} open windows`)
       
       // Find PICO-8 window by matching title or owner name
       const pico8Window = windows.find((window: activeWin.BaseResult) => {
@@ -272,19 +305,67 @@ export class ScreenCapture extends EventEmitter {
       })
       
       if (!pico8Window) {
+        this.logger.debug('PICO-8 window not found')
         return undefined
       }
       
+      // Get screen size for comparison
+      const screenSize = await this.getScreenSize()
+      
+      // Log detailed info about the found window
+      this.logger.debug('PICO-8 window found:', {
+        title: pico8Window.title,
+        owner: pico8Window.owner.name,
+        processId: pico8Window.owner.processId,
+        platform: 'platform' in pico8Window ? pico8Window.platform : 'unknown',
+        bundleId: 'owner' in pico8Window && 'bundleId' in pico8Window.owner ? pico8Window.owner.bundleId : 'unknown',
+      })
+      
       // Extract window bounds
-      return {
+      const region = {
         x: pico8Window.bounds.x,
         y: pico8Window.bounds.y,
         width: pico8Window.bounds.width,
         height: pico8Window.bounds.height
       }
+      
+      // Log window position details and screen size for debugging
+      this.logger.debug('Window position details:', {
+        window: region,
+        screen: screenSize,
+        relativePosition: {
+          percentX: Math.round((region.x / screenSize.width) * 100),
+          percentY: Math.round((region.y / screenSize.height) * 100),
+          percentWidth: Math.round((region.width / screenSize.width) * 100),
+          percentHeight: Math.round((region.height / screenSize.height) * 100),
+        }
+      })
+      
+      return region
     } catch (error) {
-      console.error('Error finding PICO-8 window:', error)
+      this.logger.error('Error finding PICO-8 window:', error)
       return undefined
+    }
+  }
+  
+  /**
+   * Gets the screen size using screenshot-desktop
+   * @returns Screen dimensions
+   * @private
+   */
+  private async getScreenSize(): Promise<{width: number, height: number}> {
+    try {
+      // Take a small screenshot to get dimensions
+      const buffer = await screenshot({ screen: 0, format: 'png' })
+      const metadata = await sharp(buffer).metadata()
+      
+      return {
+        width: metadata.width || 1920, // Default fallback
+        height: metadata.height || 1080 // Default fallback
+      }
+    } catch (error) {
+      this.logger.error('Error getting screen size:', error)
+      return { width: 1920, height: 1080 } // Default fallback values
     }
   }
 }

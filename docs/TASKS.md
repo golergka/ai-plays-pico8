@@ -263,3 +263,16 @@ These instructions must not be summarized or removed from this document.
 - Support checking all Markdown files in docs directory
 - Display clear warnings for large documents that need summarization
 - Add helpful information on how to maintain documentation
+
+### [T-112] Logger Utility [DONE]
+**Dependencies**: None
+**Description**: Create a logger utility for consistent logging across the application.
+**Acceptance Criteria**:
+- Support different log levels (DEBUG, INFO, WARN, ERROR)
+- Allow module-specific loggers with prefixes
+- Configurable log level filtering
+- Support structured data logging
+- Include timestamps in log messages
+- Easily replaceable with more sophisticated logging systems in the future
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/utils/logger.ts

@@ -79,7 +79,8 @@ async function main() {
           imageFormat: (config.CAPTURE_FORMAT || 'png') as 'png' | 'jpg' | 'webp',
           imageQuality: config.CAPTURE_QUALITY || 90,
           windowTitle: 'PICO-8', // Explicitly set to capture PICO-8 window
-          autoStopOnWindowClose: true // Auto-stop when PICO-8 is closed
+          autoStopOnWindowClose: true, // Auto-stop when PICO-8 is closed
+          debug: config.APP_DEBUG // Enable debug logging when in debug mode
         })
         
         // Set up capture event listeners
