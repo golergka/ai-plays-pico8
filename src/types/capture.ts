@@ -14,6 +14,10 @@ export interface CaptureConfig {
   imageQuality?: number
   /** Region to capture (if not specified, whole window will be captured) */
   captureRegion?: CaptureRegion
+  /** Target window title (substring) to capture (PICO-8) */
+  windowTitle?: string
+  /** Auto-stop when target window is no longer found */
+  autoStopOnWindowClose?: boolean
 }
 
 /**

@@ -77,7 +77,9 @@ async function main() {
           saveToDisk: config.CAPTURE_SAVE_TO_DISK,
           outputDir: config.CAPTURE_OUTPUT_DIR,
           imageFormat: (config.CAPTURE_FORMAT || 'png') as 'png' | 'jpg' | 'webp',
-          imageQuality: config.CAPTURE_QUALITY || 90
+          imageQuality: config.CAPTURE_QUALITY || 90,
+          windowTitle: 'PICO-8', // Explicitly set to capture PICO-8 window
+          autoStopOnWindowClose: true // Auto-stop when PICO-8 is closed
         })
         
         // Set up capture event listeners
@@ -94,9 +96,23 @@ async function main() {
           console.error(`Capture error: ${data.error}`)
         })
         
+        capture.on(CaptureEvent.STOP, () => {
+          console.log('Screen capture stopped')
+        })
+        
         // Start capturing
         capture.start()
         console.log('Screen capture started')
+        
+        // Connect PICO-8 process exit to screen capture
+        if (runner.process) {
+          runner.process.on('exit', () => {
+            console.log('PICO-8 process exited, stopping screen capture')
+            if (capture && capture.isActive()) {
+              capture.stop()
+            }
+          })
+        }
       }
       
       console.log('Press Ctrl+C to exit')

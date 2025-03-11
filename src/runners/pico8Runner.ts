@@ -7,7 +7,7 @@ import { type Pico8Config, type Pico8Result } from '../types/pico8'
  * Handles launching and closing PICO-8 games programmatically
  */
 export class Pico8Runner {
-  private process: ChildProcess | null = null
+  process: ChildProcess | null = null
   private config: Pico8Config
   
   /**
