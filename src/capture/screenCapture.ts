@@ -5,6 +5,8 @@ import { existsSync } from 'node:fs'
 import screenshot from 'screenshot-desktop'
 import sharp from 'sharp'
 import * as activeWin from 'active-win'
+import captureWindow from 'capture-window'
+import { promisify } from 'node:util'
 import { CaptureEvent } from '../types/capture'
 import { createLogger, LogLevel } from '../utils/logger'
 import type { 
@@ -20,11 +22,17 @@ import type {
  * Screen Capture Module
  * Handles capturing screenshots of the PICO-8 window at regular intervals
  */
+
+// Promisify the captureWindow function
+// The function takes (windowId: number, callback: (err, path) => void)
+const captureWindowAsync = promisify<number, null, null, string>(captureWindow as any)
+
 export class ScreenCapture extends EventEmitter {
   private config: CaptureConfig
   private captureInterval: ReturnType<typeof setInterval> | null = null
   private isCapturing = false
   private logger = createLogger('ScreenCapture')
+  private lastWindowId: number | null = null
   
   /**
    * Creates a new ScreenCapture instance
@@ -112,14 +120,26 @@ export class ScreenCapture extends EventEmitter {
     const timestamp = Date.now()
     try {
       // Try to find the PICO-8 window if window title is specified
-      let captureRegion = this.config.captureRegion
+      let captureRegion: CaptureRegion | undefined = this.config.captureRegion
+      let windowId: number | undefined
       
       // If windowTitle is specified, try to find the window
       if (this.config.windowTitle && !captureRegion) {
-        captureRegion = await this.findPico8Window()
+        // Find the PICO-8 window - now returns both region and windowId
+        const windowInfo = await this.findPico8Window()
+        captureRegion = windowInfo.region
+        windowId = windowInfo.windowId
+        
+        // Save window ID for future captures
+        if (windowId) {
+          this.lastWindowId = windowId
+        } else if (this.lastWindowId) {
+          // If we have a previously found window ID, try to use it
+          windowId = this.lastWindowId
+        }
         
         // If we couldn't find the window and autoStop is enabled, stop capturing
-        if (!captureRegion && this.config.autoStopOnWindowClose) {
+        if (!captureRegion && !windowId && this.config.autoStopOnWindowClose) {
           this.stop()
           return {
             success: false,
@@ -129,45 +149,80 @@ export class ScreenCapture extends EventEmitter {
         }
       }
       
-      // Capture screen region or full screen
-      let buffer: Buffer
-      if (captureRegion) {
-        const { x, y, width, height } = captureRegion
-        
-        this.logger.debug(`Capturing region: x=${x}, y=${y}, width=${width}, height=${height}`)
-        
-        // Capture full screen first
-        buffer = await screenshot({ screen: 0, format: 'png' })
-        
-        // Log the full screenshot dimensions
-        const fullScreenMetadata = await sharp(buffer).metadata()
-        this.logger.debug(`Full screenshot dimensions: ${fullScreenMetadata.width}x${fullScreenMetadata.height}`)
-        
-        // Then crop to the target region
+      // First attempt to capture the specific window by ID if on macOS
+      let buffer: Buffer | undefined
+      let captureMethod = 'unknown'
+      
+      if (process.platform === 'darwin' && windowId) {
+        // Try window-specific capture first (macOS only)
         try {
-          buffer = await sharp(buffer)
-            .extract({ left: x, top: y, width, height })
-            .toBuffer()
-            
-          // Log successful cropping
-          this.logger.debug(`Successfully cropped to region ${width}x${height}`)
-        } catch (cropError) {
-          this.logger.error('Failed to crop screenshot:', cropError)
+          this.logger.debug(`Attempting window-specific capture with ID: ${windowId}`)
+          const windowBuffer = await this.captureSpecificWindow(windowId)
           
-          // Fallback to using the full screenshot if cropping fails
-          // This could happen if the window bounds are outside the screen
-          this.logger.warn('Using full screenshot as fallback')
+          if (windowBuffer) {
+            buffer = windowBuffer
+            captureMethod = 'window-specific'
+            this.logger.debug('Successfully captured specific window')
+          } else {
+            throw new Error('Window-specific capture failed, falling back to region capture')
+          }
+        } catch (windowCaptureError) {
+          this.logger.warn(`Window-specific capture failed: ${
+            windowCaptureError instanceof Error ? windowCaptureError.message : String(windowCaptureError)
+          }`)
+          
+          // If window-specific capture fails, fall back to region-based capture
+          if (captureRegion) {
+            this.logger.debug('Falling back to region-based capture')
+          } else {
+            this.logger.debug('Falling back to full screen capture')
+          }
         }
-      } else {
-        // Capture full screen if no region specified
-        this.logger.debug('No capture region specified, capturing full screen')
-        buffer = await screenshot({ screen: 0, format: 'png' })
+      }
+      
+      // If we don't have a buffer yet, use the fallback methods
+      if (!buffer) {
+        if (captureRegion) {
+          const { x, y, width, height } = captureRegion
+          
+          this.logger.debug(`Capturing region: x=${x}, y=${y}, width=${width}, height=${height}`)
+          
+          // Capture full screen first
+          buffer = await screenshot({ screen: 0, format: 'png' })
+          captureMethod = 'region'
+          
+          // Log the full screenshot dimensions
+          const fullScreenMetadata = await sharp(buffer).metadata()
+          this.logger.debug(`Full screenshot dimensions: ${fullScreenMetadata.width}x${fullScreenMetadata.height}`)
+          
+          // Then crop to the target region
+          try {
+            buffer = await sharp(buffer)
+              .extract({ left: x, top: y, width, height })
+              .toBuffer()
+              
+            // Log successful cropping
+            this.logger.debug(`Successfully cropped to region ${width}x${height}`)
+          } catch (cropError) {
+            this.logger.error('Failed to crop screenshot:', cropError)
+            
+            // Fallback to using the full screenshot if cropping fails
+            // This could happen if the window bounds are outside the screen
+            this.logger.warn('Using full screenshot as fallback')
+            captureMethod = 'fullscreen-fallback'
+          }
+        } else {
+          // Capture full screen if no region specified
+          this.logger.debug('No capture region specified, capturing full screen')
+          buffer = await screenshot({ screen: 0, format: 'png' })
+          captureMethod = 'fullscreen'
+        }
       }
       
       // Handle saving to disk if enabled
       let filePath: string | undefined
       if (this.config.saveToDisk && this.config.outputDir) {
-        const fileName = `capture-${timestamp}.${this.config.imageFormat}`
+        const fileName = `capture-${timestamp}-${captureMethod}.${this.config.imageFormat}`
         filePath = join(this.config.outputDir, fileName)
         
         // Ensure output directory exists
@@ -262,12 +317,12 @@ export class ScreenCapture extends EventEmitter {
    * @returns Capture region for the window or undefined if not found
    * @private
    */
-  private async findPico8Window(): Promise<CaptureRegion | undefined> {
+  private async findPico8Window(): Promise<{ region: CaptureRegion | undefined, windowId?: number }> {
     try {
       // If no window title is specified, we can't detect the window
       if (!this.config.windowTitle) {
         this.logger.debug('No window title specified, cannot detect window')
-        return undefined
+        return { region: undefined }
       }
       
       this.logger.debug(`Looking for window with title containing "${this.config.windowTitle}"`)
@@ -277,7 +332,7 @@ export class ScreenCapture extends EventEmitter {
       
       if (!windows || windows.length === 0) {
         this.logger.debug('No open windows found')
-        return undefined
+        return { region: undefined }
       }
       
       this.logger.debug(`Found ${windows.length} open windows`)
@@ -308,7 +363,15 @@ export class ScreenCapture extends EventEmitter {
       
       if (!pico8Window) {
         this.logger.debug('PICO-8 window not found')
-        return undefined
+        return { region: undefined }
+      }
+      
+      // Get window ID for direct window capture (macOS specific)
+      let windowId: number | undefined
+      if (process.platform === 'darwin') {
+        const macOSWindow = pico8Window as activeWin.MacOSResult
+        windowId = macOSWindow.id
+        this.logger.debug(`Found PICO-8 window ID: ${windowId}`)
       }
       
       // Get screen size for comparison
@@ -319,6 +382,7 @@ export class ScreenCapture extends EventEmitter {
         title: pico8Window.title,
         owner: pico8Window.owner.name,
         processId: pico8Window.owner.processId,
+        windowId: windowId,
         platform: 'platform' in pico8Window ? pico8Window.platform : 'unknown',
         bundleId: 'owner' in pico8Window && 'bundleId' in pico8Window.owner ? pico8Window.owner.bundleId : 'unknown',
       })
@@ -360,9 +424,52 @@ export class ScreenCapture extends EventEmitter {
         }
       })
       
-      return region
+      // Return with the correct type
+      const result: { region: CaptureRegion, windowId?: number } = { region }
+      if (windowId !== undefined) {
+        result.windowId = windowId
+      }
+      return result
     } catch (error) {
       this.logger.error('Error finding PICO-8 window:', error)
+      return { region: undefined }
+    }
+  }
+  
+  /**
+   * Captures a screenshot of a specific window by ID
+   * This is more reliable than screen cropping, especially when windows overlap
+   * Currently only supported on macOS
+   * @param windowId The window ID to capture
+   * @returns Buffer containing the image data, or undefined if capture failed
+   * @private
+   */
+  private async captureSpecificWindow(windowId: number): Promise<Buffer | undefined> {
+    if (process.platform !== 'darwin') {
+      this.logger.debug('Window-specific capture only supported on macOS')
+      return undefined
+    }
+    
+    try {
+      this.logger.debug(`Capturing specific window with ID: ${windowId}`)
+      
+      // Use the capture-window library to capture the specific window
+      // It returns a path to the temp file where the image was saved
+      const tempPath = await captureWindowAsync(windowId, null, null) as string
+      
+      if (!tempPath) {
+        throw new Error('No temp file path returned from capture-window')
+      }
+      
+      // Read the captured image into a buffer
+      const tempBuffer = await sharp(tempPath).toBuffer()
+      const metadata = await sharp(tempBuffer).metadata()
+      this.logger.debug(`Window capture dimensions: ${metadata.width}x${metadata.height}`)
+      
+      // Return the buffer
+      return tempBuffer
+    } catch (error) {
+      this.logger.error(`Error capturing specific window: ${error instanceof Error ? error.message : String(error)}`)
       return undefined
     }
   }

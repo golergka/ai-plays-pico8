@@ -83,6 +83,19 @@ async function main() {
       if (runner.process) {
         runner.process.on('exit', (code) => {
           console.log(`PICO-8 process exited with code ${code}, shutting down application...`)
+          
+          // Stop screen capture if running
+          if (capture && capture.isActive()) {
+            console.log('Stopping screen capture due to PICO-8 process exit')
+            capture.stop()
+          }
+          
+          // Stop vision system if running
+          if (visionSystem) {
+            console.log('Stopping vision feedback system due to PICO-8 process exit')
+            visionSystem.stop()
+          }
+          
           // Make sure we exit the application
           process.exit(0)
         })
@@ -125,15 +138,7 @@ async function main() {
         capture.start()
         console.log('Screen capture started')
         
-        // Connect PICO-8 process exit to screen capture (also handled in global exit handler)
-        if (runner.process) {
-          runner.process.on('exit', () => {
-            console.log('PICO-8 process exited, stopping screen capture')
-            if (capture && capture.isActive()) {
-              capture.stop()
-            }
-          })
-        }
+        // Screen capture exit handling is now done in the main process exit handler above
       }
       
       // Initialize input commands module
