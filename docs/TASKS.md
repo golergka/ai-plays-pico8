@@ -240,12 +240,15 @@ These instructions must not be summarized or removed from this document.
 - Added timeout-based demo that runs for 10 seconds before terminating
 - Enhanced error handling in the process termination flow
 - Updated key mapping for PICO-8 input verification
+- Added robust process termination with platform-specific commands and verification ✅
+- Added isProcessRunning helper method to reliably check process status ✅
+- Fixed force kill logic with multiple termination strategies ✅
 **Current Issues to Fix**:
-- PICO-8 process isn't being killed (fix force kill logic)
+- ~~PICO-8 process isn't being killed (fix force kill logic)~~ ✅
 - Key mapping is incorrect (test with simple key mapping test cartridge)
 - Demo duration should be exactly 10 seconds
 **Testing Status**:
-- User reported that the PICO-8 process is not being killed properly (termination fails)
+- ~~User reported that the PICO-8 process is not being killed properly (termination fails)~~ - Fixed with improved termination logic
 - User reported character movement is not visible, but menu appears/disappears (key mapping issue)
 - Need to create a dedicated test cartridge for key mapping verification
 **Relevant Files**:
