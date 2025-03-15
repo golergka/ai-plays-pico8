@@ -42,10 +42,9 @@ export class Logger {
    * Formats a log message with optional timestamp and prefix
    * @param level The log level
    * @param message The message to log
-   * @param data Additional data to log
    * @returns Formatted message
    */
-  private format(level: LogLevel, message: string, data?: any): string {
+  private format(level: LogLevel, message: string): string {
     const parts: string[] = []
     
     // Add timestamp if enabled
@@ -73,7 +72,7 @@ export class Logger {
    * @param message The message to log
    * @param data Additional data to log
    */
-  debug(message: string, data?: any): void {
+  debug(message: string, data?: unknown): void {
     if (this.options.minLevel <= LogLevel.DEBUG) {
       const formattedMessage = this.format(LogLevel.DEBUG, message)
       console.debug(formattedMessage)
@@ -88,7 +87,7 @@ export class Logger {
    * @param message The message to log
    * @param data Additional data to log
    */
-  info(message: string, data?: any): void {
+  info(message: string, data?: unknown): void {
     if (this.options.minLevel <= LogLevel.INFO) {
       const formattedMessage = this.format(LogLevel.INFO, message)
       console.info(formattedMessage)
@@ -103,7 +102,7 @@ export class Logger {
    * @param message The message to log
    * @param data Additional data to log
    */
-  warn(message: string, data?: any): void {
+  warn(message: string, data?: unknown): void {
     if (this.options.minLevel <= LogLevel.WARN) {
       const formattedMessage = this.format(LogLevel.WARN, message)
       console.warn(formattedMessage)
@@ -118,7 +117,7 @@ export class Logger {
    * @param message The message to log
    * @param data Additional data to log
    */
-  error(message: string, data?: any): void {
+  error(message: string, data?: unknown): void {
     if (this.options.minLevel <= LogLevel.ERROR) {
       const formattedMessage = this.format(LogLevel.ERROR, message)
       console.error(formattedMessage)

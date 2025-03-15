@@ -270,14 +270,42 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 
-### [T-104] Game State Detector [TODO]
-**Dependencies**: T-102
+### [T-115] Vision-Based LLM Feedback System [DONE]
+**Dependencies**: T-102, T-103
+**Description**: Create a system that uses an LLM with vision capabilities to analyze PICO-8 screenshots and provide feedback/input commands.
+**Acceptance Criteria**:
+- Integration with OpenAI API for vision analysis (using system-wide API key) ✅
+- Capture-analyze-command cycle: take screenshots, send to LLM, receive text feedback and commands ✅
+- Simple function calling signature for the LLM to send key presses ✅
+- Use cheapest suitable model for cost efficiency ✅
+- Handle timing between screenshot captures and key presses ✅
+- Proper error handling for API failures ✅
+- Documentation of the LLM prompt and function schema ✅
+**Implementation Status**:
+- Implemented VisionFeedbackSystem class with screen capture and input command integration
+- Added configuration through environment variables
+- Implemented system prompt for LLM with game control instructions
+- Added function calling schema for LLM to analyze game state and issue commands
+- Added robust error handling and logging
+- Integrated with main application flow with demo mode running for 60 seconds
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/llm.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
+### [T-104] Game State Detector [BLOCKED]
+**Dependencies**: T-102, T-115
 **Description**: Detect game state from screen captures.
 **Acceptance Criteria**:
 - Identify game screens (title, gameplay, game over)
 - Extract game score/progress when available
 - Detect success/failure conditions
 - Configurable for different games
+**Implementation Notes**:
+- This task is now blocked by T-115 as we'll be using LLM vision capabilities for game state detection
 
 ### [T-105] Environment Configuration System [DONE]
 **Dependencies**: T-001
