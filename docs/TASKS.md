@@ -198,7 +198,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-103] Input Command Interface [DONE]
+### [T-103] Input Command Interface [IN PROGRESS]
 **Dependencies**: T-101
 **Description**: Module to send input commands to PICO-8.
 **Acceptance Criteria**:
@@ -213,19 +213,19 @@ These instructions must not be summarized or removed from this document.
 - Added support for tap and sequence input patterns ✅
 - Added random button generator for testing ✅
 - Window detection via active-win package to ensure commands only sent when PICO-8 is in focus ✅
-- Fixed AppleScript key mapping issues for arrow keys ✅
+- Fixed AppleScript key mapping issues for arrow keys using key codes instead of names ✅
 - Added improved key mapping detection for special keys ✅
-- Created comprehensive test suite for key mapping validation ✅
+- Created interactive test suite with clear visual feedback ✅
 **Testing Status**:
-- Verified that keyboard inputs are successfully sent to PICO-8 ✅
-- Confirmed that random button presses work as expected ✅
-- Tested on macOS (current implementation) ✅
-- Added dedicated key test mode with `--key-test` flag ✅
-- Fixed key press/release/tap handling for different key types ✅
-**Future Enhancements**:
-1. Add support for Windows and Linux
-2. Consider alternatives like nut.js (built on C++/node-ffi-napi) for cross-platform support
-3. Explore native bindings for more precise control on each platform
+- Initial testing shows Z and X buttons work correctly ✅
+- Issues with arrow keys initially identified (incorrect use of text names vs key codes) ✅
+- Improved AppleScript implementation to use key codes for arrow keys ✅
+- Need better testing organization with dedicated testing framework ⏳
+- Need to separate automatic and manual testing scenarios ⏳
+**Issues to Resolve**:
+- Current test script shows console errors that need to be addressed
+- Testing modes need to be better organized (internal vs. user-facing)
+- Need to create a self-test mode that verifies no console errors occur
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/input.ts
@@ -291,6 +291,39 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.md
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
+### [T-116] Create Structured Testing Framework [IN PROGRESS]
+**Dependencies**: T-101, T-103
+**Description**: Implement a structured testing framework for different test scenarios.
+**Acceptance Criteria**:
+- Create a modular testing framework that supports different test types
+- Implement self-test mode for automated verification (no user interaction required)
+- Implement interactive test mode for visual verification (requiring user interaction)
+- Organize tests into clear scenarios with descriptive names
+- Add clear visual feedback during tests with obvious state changes
+- Reduce console errors and improve error handling
+- Ensure all test modes can be easily launched from the command line
+- Add documentation for each test scenario
+**Implementation Plan**:
+1. Refactor the current key test into a modular system
+2. Create a dedicated test runner in a new directory structure
+3. Implement a self-test mode that verifies functionality without visual checks
+4. Improve the interactive test mode with clearer user instructions
+5. Add more comprehensive error handling and reporting
+6. Ensure all tests have standardized output formats
+**Test Types to Implement**:
+- Self-test (system check, no user interaction)
+- Interactive test (visual verification with user)
+- Stress test (rapid input sequences)
+- Focus test (verifies window focus handling)
+- Error handling test (verifies error conditions)
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
+- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/ (directory to create)
+- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
+- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
+- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/processTests.ts
 
 ### [T-115] Vision-Based LLM Feedback System [DONE]
 **Dependencies**: T-102, T-103

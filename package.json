@@ -5,6 +5,11 @@
   "scripts": {
     "start": "bun run index.ts",
     "test:keys": "bun run index.ts --key-test",
+    "test": "bun run src/tests/index.ts",
+    "test:self": "bun run src/tests/index.ts --self",
+    "test:interactive": "bun run src/tests/index.ts",
+    "test:input": "bun run src/tests/index.ts interactive-key-test",
+    "test:input:self": "bun run src/tests/index.ts self-test-key-input --self",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
