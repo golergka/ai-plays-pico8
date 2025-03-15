@@ -198,7 +198,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-103] Input Command Interface [IN PROGRESS]
+### [T-103] Input Command Interface [DONE]
 **Dependencies**: T-101
 **Description**: Module to send input commands to PICO-8.
 **Acceptance Criteria**:
@@ -213,25 +213,29 @@ These instructions must not be summarized or removed from this document.
 - Added support for tap and sequence input patterns ✅
 - Added random button generator for testing ✅
 - Window detection via active-win package to ensure commands only sent when PICO-8 is in focus ✅
-- Fixed AppleScript key mapping issues for arrow keys using key codes instead of names ✅
+- Fixed AppleScript key mapping issues using ASCII character codes (28-31) for arrow keys ✅
+- Simplified AppleScript syntax to use "tell application to" format ✅
 - Added improved key mapping detection for special keys ✅
 - Created interactive test suite with clear visual feedback ✅
+- Implemented dedicated testing framework with self-test capabilities ✅
 **Testing Status**:
-- Initial testing shows Z and X buttons work correctly ✅
-- Issues with arrow keys initially identified (incorrect use of text names vs key codes) ✅
-- Improved AppleScript implementation to use key codes for arrow keys ✅
-- Need better testing organization with dedicated testing framework ⏳
-- Need to separate automatic and manual testing scenarios ⏳
-**Issues to Resolve**:
-- Current test script shows console errors that need to be addressed
-- Testing modes need to be better organized (internal vs. user-facing)
-- Need to create a self-test mode that verifies no console errors occur
+- All buttons confirmed working by human tester ✅
+- Left, right, Z, and X buttons work perfectly ✅
+- Up and down arrow keys work with improved multiple-press testing format ✅
+- Self-tests run without console errors ✅
+- Simplified AppleScript commands for better compatibility ✅
+- Automated and manual testing scenarios clearly separated ✅
+**Future Enhancements**:
+1. Add support for Windows and Linux
+2. Consider alternatives like nut.js (built on C++/node-ffi-napi) for cross-platform support
+3. Explore native bindings for more precise control on each platform
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/input.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.md
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
 
 ### [T-113] Improve PICO-8 Process Lifecycle Management [IN PROGRESS]
 **Dependencies**: T-101, T-103
@@ -292,38 +296,45 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-116] Create Structured Testing Framework [IN PROGRESS]
+### [T-116] Create Structured Testing Framework [DONE]
 **Dependencies**: T-101, T-103
 **Description**: Implement a structured testing framework for different test scenarios.
 **Acceptance Criteria**:
-- Create a modular testing framework that supports different test types
-- Implement self-test mode for automated verification (no user interaction required)
-- Implement interactive test mode for visual verification (requiring user interaction)
-- Organize tests into clear scenarios with descriptive names
-- Add clear visual feedback during tests with obvious state changes
-- Reduce console errors and improve error handling
-- Ensure all test modes can be easily launched from the command line
-- Add documentation for each test scenario
-**Implementation Plan**:
-1. Refactor the current key test into a modular system
-2. Create a dedicated test runner in a new directory structure
-3. Implement a self-test mode that verifies functionality without visual checks
-4. Improve the interactive test mode with clearer user instructions
-5. Add more comprehensive error handling and reporting
-6. Ensure all tests have standardized output formats
-**Test Types to Implement**:
-- Self-test (system check, no user interaction)
-- Interactive test (visual verification with user)
-- Stress test (rapid input sequences)
-- Focus test (verifies window focus handling)
-- Error handling test (verifies error conditions)
+- Create a modular testing framework that supports different test types ✅
+- Implement self-test mode for automated verification (no user interaction required) ✅
+- Implement interactive test mode for visual verification (requiring user interaction) ✅
+- Organize tests into clear scenarios with descriptive names ✅
+- Add clear visual feedback during tests with obvious state changes ✅
+- Reduce console errors and improve error handling ✅
+- Ensure all test modes can be easily launched from the command line ✅
+- Add documentation for each test scenario ✅
+**Implementation Status**:
+- Created a comprehensive test runner framework with TestMode and TestScenario interfaces ✅
+- Implemented self-test mode that can be run internally without requiring user feedback ✅
+- Created human-friendly interactive test mode with clear visual indicators ✅
+- Improved display of up/down arrow tests with multiple distinct presses ✅
+- Added a sustained input test that shows held keys for 5 seconds ✅
+- Fixed AppleScript syntax to eliminate console errors during tests ✅
+- Added npm scripts for all test modes and individual test scenarios ✅
+- Created comprehensive documentation for the test framework ✅
+**Testing Status**:
+- Self-test mode successfully runs all tests with no errors ✅
+- Interactive mode verified by human tester and improved based on feedback ✅
+- Left, right, Z, and X key tests confirmed working correctly ✅
+- Up and down arrow tests improved with multiple distinct presses for better visibility ✅
+- Rapid sequence test replaced with more observable sustained input test ✅
+**Additional Features Implemented**:
+- Standardized output formatting with color-coded headers
+- Error handling and reporting for test failures
+- Automatic PID detection and process cleanup
+- Comprehensive log messages for all test stages
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/README.md
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
-- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/ (directory to create)
-- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
-- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
-- NEW: /Users/maxyankov/Projects/ai-plays-pico8/src/tests/processTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json
 
 ### [T-115] Vision-Based LLM Feedback System [DONE]
 **Dependencies**: T-102, T-103
