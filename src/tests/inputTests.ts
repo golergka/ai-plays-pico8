@@ -197,22 +197,36 @@ export const interactiveKeyTest: TestScenario = {
         debug: false
       })
       
-      // Test UP arrow
+      // Test UP arrow with repeated presses
       printTestHeader('TESTING UP ARROW KEY');
       console.log('The heart should move UP');
       console.log('UP indicator should turn bright red and show "PRESSED"');
-      await input.pressButton(Pico8Button.Up);
-      await setTimeout(3000);  // Hold for 3 seconds for visibility
-      await input.releaseButton(Pico8Button.Up);
+      
+      // Press 3 times with clear pauses between
+      for (let i = 0; i < 3; i++) {
+        console.log(`UP ARROW - Press ${i+1} of 3`);
+        await input.pressButton(Pico8Button.Up);
+        await setTimeout(1000);  // Hold for 1 second for visibility
+        await input.releaseButton(Pico8Button.Up);
+        await setTimeout(1000);  // Clear pause between presses
+      }
+      
       await setTimeout(2000);  // Pause between tests
       
-      // Test DOWN arrow
+      // Test DOWN arrow with repeated presses
       printTestHeader('TESTING DOWN ARROW KEY');
       console.log('The heart should move DOWN');
       console.log('DOWN indicator should turn bright red and show "PRESSED"');
-      await input.pressButton(Pico8Button.Down);
-      await setTimeout(3000);
-      await input.releaseButton(Pico8Button.Down);
+      
+      // Press 3 times with clear pauses between
+      for (let i = 0; i < 3; i++) {
+        console.log(`DOWN ARROW - Press ${i+1} of 3`);
+        await input.pressButton(Pico8Button.Down);
+        await setTimeout(1000);  // Hold for 1 second for visibility
+        await input.releaseButton(Pico8Button.Down);
+        await setTimeout(1000);  // Clear pause between presses
+      }
+      
       await setTimeout(2000);
       
       // Test LEFT arrow
@@ -260,27 +274,28 @@ export const interactiveKeyTest: TestScenario = {
       await input.releaseButton(Pico8Button.Up);
       await setTimeout(2000);
       
-      // Final test - rapid sequence
-      printTestHeader('TESTING RAPID BUTTON SEQUENCE');
-      console.log('All buttons will be pressed in sequence');
-      console.log('Watch for visual feedback for each button');
+      // Optional hold test - allow user to observe sustained input
+      printTestHeader('TESTING SUSTAINED INPUT (UP+RIGHT)');
+      console.log('The heart should move diagonally UP-RIGHT for 5 seconds');
+      console.log('Both UP and RIGHT indicators should remain lit the entire time');
+      console.log('This tests if key input is maintained properly over time');
       
-      const buttons = [
-        Pico8Button.Up,
-        Pico8Button.Down,
-        Pico8Button.Left,
-        Pico8Button.Right,
-        Pico8Button.X,
-        Pico8Button.Z
-      ];
+      // Press both keys and hold them
+      await input.pressButton(Pico8Button.Up);
+      await setTimeout(100);  // Small delay between keys
+      await input.pressButton(Pico8Button.Right);
       
-      for (const button of buttons) {
-        console.log(`Pressing ${button} button...`);
-        await input.pressButton(button);
-        await setTimeout(1000);
-        await input.releaseButton(button);
-        await setTimeout(500);
-      }
+      // Hold for 5 seconds
+      console.log('Holding keys for 5 seconds...');
+      await setTimeout(5000);
+      
+      // Release both keys
+      await input.releaseButton(Pico8Button.Right);
+      await setTimeout(100);  // Small delay between releases
+      await input.releaseButton(Pico8Button.Up);
+      
+      // Additional pause 
+      await setTimeout(2000);
       
       // Test complete
       printTestHeader('KEY TEST COMPLETE');
