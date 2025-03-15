@@ -203,6 +203,15 @@ These instructions must not be summarized or removed from this document.
    bun run test:capture:window
    ```
 
+   **Expected Behavior:**
+   - PICO-8 will launch and close automatically multiple times during testing
+   - Tests should show clear ✅ success messages for each test
+   - The window-specific test may show a warning if window IDs cannot be detected on your system
+   - All tests should complete within ~30 seconds
+   - No errors should be shown (especially no unhandled promise rejections)
+   - Temporary capture files will be saved to your system temp directory
+   - The process should exit cleanly after tests finish
+
 2. **Manual Testing** (only needed if self-tests pass):
    - Run with default cartridge: `CAPTURE_SAVE_TO_DISK=true APP_DEBUG=true bun start`
    - Observe that the PICO-8 window is captured even when it's not the active window
