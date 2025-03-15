@@ -457,46 +457,16 @@ export class InputCommands extends EventEmitter {
       
       // Map arrow keys to their key codes in AppleScript
       if (key === 'left arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 123 down
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 28)`;
       } else if (key === 'right arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 124 down
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 29)`;
       } else if (key === 'up arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 126 down
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 30)`;
       } else if (key === 'down arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 125 down
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 31)`;
       } else {
         // For non-arrow keys, use the standard approach
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key down "${key}"
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to key down "${key}"`;
       }
       
       await execAsync(`osascript -e '${script}'`)
@@ -517,47 +487,14 @@ export class InputCommands extends EventEmitter {
       let script: string;
       
       // Map arrow keys to their key codes in AppleScript
-      if (key === 'left arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 123 up
-          end tell
-        end tell
-        `;
-      } else if (key === 'right arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 124 up
-          end tell
-        end tell
-        `;
-      } else if (key === 'up arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 126 up
-          end tell
-        end tell
-        `;
-      } else if (key === 'down arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 125 up
-          end tell
-        end tell
-        `;
+      // For key releases on arrows, we don't need to do anything 
+      // when using ASCII character method (it's press and release)
+      if (key === 'left arrow' || key === 'right arrow' || key === 'up arrow' || key === 'down arrow') {
+        // No-op for arrow keys when using ASCII character approach
+        return;
       } else {
         // For non-arrow keys, use the standard approach
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key up "${key}"
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to key up "${key}"`;
       }
       
       await execAsync(`osascript -e '${script}'`)
@@ -579,57 +516,19 @@ export class InputCommands extends EventEmitter {
       
       // Map arrow keys to their key codes in AppleScript
       if (key === 'left arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 123
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 28)`;
       } else if (key === 'right arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 124
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 29)`;
       } else if (key === 'up arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 126
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 30)`;
       } else if (key === 'down arrow') {
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key code 125
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke (ASCII character 31)`;
       } else if (key === 'return' || key === 'escape') {
-        // For return and escape, use named keys with explicit down/up
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            key down "${key}"
-            delay 0.05
-            key up "${key}"
-          end tell
-        end tell
-        `;
+        // For return and escape, use explicit down/up
+        script = `tell application "System Events" to keystroke "${key}"`;
       } else {
         // For regular keys, use keystroke which is simpler
-        script = `
-        tell application "System Events"
-          tell application process "pico8"
-            keystroke "${key}"
-          end tell
-        end tell
-        `;
+        script = `tell application "System Events" to keystroke "${key}"`;
       }
       
       await execAsync(`osascript -e '${script}'`)
