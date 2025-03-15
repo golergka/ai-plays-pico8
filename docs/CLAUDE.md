@@ -44,7 +44,7 @@ When human prompts you with a specific task, follow these steps:
 ## Build/Run/Test Commands
 ```bash
 # Run the project
-bun run index.ts
+bun start  # This is preferred over 'bun run index.ts'
 
 # Type checking
 bun run typecheck
@@ -93,4 +93,11 @@ Remember that almost ALL changes to this project require manual testing by the h
 3. Screen capture
 4. Any integration between components
 
-After implementing such changes, you MUST provide testing instructions and not consider the task complete until the human confirms successful testing. Do not skip the manual testing step!
+When providing testing instructions:
+- Keep tests BRIEF - use short timeouts (5-10 seconds) for testing basic functionality
+- Use `bun start` instead of longer commands
+- Be specific about what success looks like
+- Provide clear steps to reproduce and verify fixes
+- List specific failure modes to watch for
+
+After implementing changes, you MUST provide testing instructions and not consider the task complete until the human confirms successful testing. Do not skip the manual testing step!

@@ -183,11 +183,15 @@ These instructions must not be summarized or removed from this document.
 - Automatically stop screen capture when PICO-8 process exits
 - Add configuration options for window detection
 - Update integration in main application
+- Ensure capture works even when PICO-8 window is not in focus or is obscured by other windows
 **Implementation Notes**:
 - Consider using RobotJS (can simulate keystrokes and capture screens with window cropping)
 - Alternative: nut.js (more modern and cross-platform)
 - Alternative: socsieng/sendkeys-macos (GitHub, though it's archived)
 - Ensure screen capture is properly linked to PICO-8 process lifecycle
+- **Window Capture Issue**: Current implementation captures the entire screen when PICO-8 window is not in focus or obscured by other windows - need to find platform-specific solution to capture specific window regardless of focus state
+**Testing Status**:
+- User reported that when the PICO-8 window is not the topmost window, the screenshot captures the entire screen with other windows obscuring the view
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts
