@@ -452,14 +452,52 @@ export class InputCommands extends EventEmitter {
    */
   private async sendMacOSKeyPress(key: string): Promise<void> {
     try {
-      // Use a simpler AppleScript approach
-      const script = `
-      tell application "System Events"
-        tell application process "pico8"
-          key down "${key}"
+      // Handle arrow keys specially using key codes instead of names
+      let script: string;
+      
+      // Map arrow keys to their key codes in AppleScript
+      if (key === 'left arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 123 down
+          end tell
         end tell
-      end tell
-      `
+        `;
+      } else if (key === 'right arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 124 down
+          end tell
+        end tell
+        `;
+      } else if (key === 'up arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 126 down
+          end tell
+        end tell
+        `;
+      } else if (key === 'down arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 125 down
+          end tell
+        end tell
+        `;
+      } else {
+        // For non-arrow keys, use the standard approach
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key down "${key}"
+          end tell
+        end tell
+        `;
+      }
       
       await execAsync(`osascript -e '${script}'`)
     } catch (error) {
@@ -475,14 +513,52 @@ export class InputCommands extends EventEmitter {
    */
   private async sendMacOSKeyRelease(key: string): Promise<void> {
     try {
-      // Use a simpler AppleScript approach
-      const script = `
-      tell application "System Events"
-        tell application process "pico8"
-          key up "${key}"
+      // Handle arrow keys specially using key codes instead of names
+      let script: string;
+      
+      // Map arrow keys to their key codes in AppleScript
+      if (key === 'left arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 123 up
+          end tell
         end tell
-      end tell
-      `
+        `;
+      } else if (key === 'right arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 124 up
+          end tell
+        end tell
+        `;
+      } else if (key === 'up arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 126 up
+          end tell
+        end tell
+        `;
+      } else if (key === 'down arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 125 up
+          end tell
+        end tell
+        `;
+      } else {
+        // For non-arrow keys, use the standard approach
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key up "${key}"
+          end tell
+        end tell
+        `;
+      }
       
       await execAsync(`osascript -e '${script}'`)
     } catch (error) {
@@ -499,11 +575,43 @@ export class InputCommands extends EventEmitter {
    */
   private async sendMacOSKeyTap(key: string): Promise<void> {
     try {
-      // For arrow keys and special keys, we need to use key code instead of keystroke
-      let script: string
+      let script: string;
       
-      // Check if the key is an arrow key or special key
-      if (key.includes('arrow') || key === 'return' || key === 'escape') {
+      // Map arrow keys to their key codes in AppleScript
+      if (key === 'left arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 123
+          end tell
+        end tell
+        `;
+      } else if (key === 'right arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 124
+          end tell
+        end tell
+        `;
+      } else if (key === 'up arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 126
+          end tell
+        end tell
+        `;
+      } else if (key === 'down arrow') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key code 125
+          end tell
+        end tell
+        `;
+      } else if (key === 'return' || key === 'escape') {
+        // For return and escape, use named keys with explicit down/up
         script = `
         tell application "System Events"
           tell application process "pico8"
@@ -512,7 +620,7 @@ export class InputCommands extends EventEmitter {
             key up "${key}"
           end tell
         end tell
-        `
+        `;
       } else {
         // For regular keys, use keystroke which is simpler
         script = `
@@ -521,7 +629,7 @@ export class InputCommands extends EventEmitter {
             keystroke "${key}"
           end tell
         end tell
-        `
+        `;
       }
       
       await execAsync(`osascript -e '${script}'`)
