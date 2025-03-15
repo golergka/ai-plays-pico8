@@ -1,6 +1,7 @@
 import { Pico8Runner } from './src/runners/pico8Runner'
 import { ScreenCapture } from './src/capture/screenCapture'
 import { InputCommands, InputEvent } from './src/input/inputCommands'
+import { Pico8Button } from './src/types/input'
 import { getConfig } from './src/config/env'
 import { existsSync } from 'node:fs'
 import { CaptureEvent } from './src/types/capture'
@@ -166,92 +167,112 @@ async function main() {
       console.log('Waiting briefly for PICO-8 window to appear...')
       await setTimeout(3000)
       
-      /**
-       * Vision Feedback System Demo
-       * 
-       * This section starts the vision feedback system that:
-       * 1. Captures screenshots of the PICO-8 window
-       * 2. Sends them to an LLM for analysis
-       * 3. Receives text feedback and suggested commands
-       * 4. Executes the commands to control the game
-       * 5. Runs for 60 seconds before gracefully shutting down
-       */
-      console.log('Starting vision feedback system...')
+      // Check if we're running the key test demo
+      const runKeyTest = process.argv.includes('--key-test')
       
-      try {
-        // Ensure we have the OpenAI API key
-        if (!config.OPENAI_API_KEY) {
-          throw new Error('OPENAI_API_KEY environment variable is required for vision feedback')
+      if (runKeyTest && input) {
+        // Run a key mapping test sequence using the test cartridge
+        await runKeyMappingTest(input)
+        
+        // Exit after key test
+        console.log('Key mapping test completed, shutting down...')
+        
+        // Force kill PICO-8 to ensure termination
+        if (runner && runner.isRunning()) {
+          console.log('Force killing PICO-8 process...')
+          await runner.close(true, 5000) // Force kill with 5-second timeout
         }
         
-        // Make sure screen capture is enabled
-        if (!config.CAPTURE_ENABLED || !capture) {
-          throw new Error('Screen capture must be enabled for vision feedback system')
+        console.log('Shutdown complete, exiting application.')
+        process.exit(0)
+      } else {
+        /**
+         * Vision Feedback System Demo
+         * 
+         * This section starts the vision feedback system that:
+         * 1. Captures screenshots of the PICO-8 window
+         * 2. Sends them to an LLM for analysis
+         * 3. Receives text feedback and suggested commands
+         * 4. Executes the commands to control the game
+         * 5. Runs for 60 seconds before gracefully shutting down
+         */
+        console.log('Starting vision feedback system...')
+      
+        try {
+          // Ensure we have the OpenAI API key
+          if (!config.OPENAI_API_KEY) {
+            throw new Error('OPENAI_API_KEY environment variable is required for vision feedback')
+          }
+          
+          // Make sure screen capture is enabled
+          if (!config.CAPTURE_ENABLED || !capture) {
+            throw new Error('Screen capture must be enabled for vision feedback system')
+          }
+          
+          // Initialize the vision feedback system
+          console.log('Initializing vision feedback system...')
+          visionSystem = new VisionFeedbackSystem()
+          
+          // Wait briefly for PICO-8 window to fully initialize
+          console.log('Waiting briefly for PICO-8 to initialize...')
+          await setTimeout(3000)
+          
+          // Start the vision feedback system
+          console.log('Starting vision feedback loop for 60 seconds...')
+          
+          // Start the vision feedback system
+          visionSystem.start().catch(error => {
+            console.error('Error in vision feedback system:', error)
+          })
+          
+          // Run for 60 seconds then stop
+          const demoTime = 60000 // 60 seconds
+          console.log(`Vision feedback system will run for ${demoTime/1000} seconds...`)
+          
+          // Wait for the specified demo time
+          await setTimeout(demoTime)
+          
+          // Stop the vision feedback system
+          if (visionSystem) {
+            console.log('Stopping vision feedback system...')
+            visionSystem.stop()
+          }
+          
+          // Wait for vision system to finish processing
+          await setTimeout(1000)
+          
+          console.log('Vision feedback system demo completed')
+        } catch (error) {
+          console.error('Error during vision feedback demo:', error)
         }
         
-        // Initialize the vision feedback system
-        console.log('Initializing vision feedback system...')
-        visionSystem = new VisionFeedbackSystem()
+        // Set up graceful shutdown handler
+        setupGracefulShutdown(runner, capture, input, visionSystem)
         
-        // Wait briefly for PICO-8 window to fully initialize
-        console.log('Waiting briefly for PICO-8 to initialize...')
-        await setTimeout(3000)
+        // Demo is complete, now kill PICO-8 with force
+        console.log('Vision feedback demo completed, forcefully shutting down PICO-8...')
         
-        // Start the vision feedback system
-        console.log('Starting vision feedback loop for 60 seconds...')
-        
-        // Start the vision feedback system
-        visionSystem.start().catch(error => {
-          console.error('Error in vision feedback system:', error)
-        })
-        
-        // Run for 60 seconds then stop
-        const demoTime = 60000 // 60 seconds
-        console.log(`Vision feedback system will run for ${demoTime/1000} seconds...`)
-        
-        // Wait for the specified demo time
-        await setTimeout(demoTime)
-        
-        // Stop the vision feedback system
+        // First make sure vision feedback system is stopped
         if (visionSystem) {
           console.log('Stopping vision feedback system...')
           visionSystem.stop()
         }
         
-        // Wait for vision system to finish processing
-        await setTimeout(1000)
+        // Make sure screen capture is stopped
+        if (capture && capture.isActive()) {
+          console.log('Stopping screen capture...')
+          capture.stop()
+        }
         
-        console.log('Vision feedback system demo completed')
-      } catch (error) {
-        console.error('Error during vision feedback demo:', error)
+        // Force kill PICO-8 to ensure termination
+        if (runner && runner.isRunning()) {
+          console.log('Force killing PICO-8 process...')
+          await runner.close(true, 5000) // Force kill with 5-second timeout
+        }
+        
+        console.log('Shutdown complete, exiting application.')
+        process.exit(0)
       }
-      
-      // Set up graceful shutdown handler
-      setupGracefulShutdown(runner, capture, input, visionSystem)
-      
-      // Demo is complete, now kill PICO-8 with force
-      console.log('Vision feedback demo completed, forcefully shutting down PICO-8...')
-      
-      // First make sure vision feedback system is stopped
-      if (visionSystem) {
-        console.log('Stopping vision feedback system...')
-        visionSystem.stop()
-      }
-      
-      // Make sure screen capture is stopped
-      if (capture && capture.isActive()) {
-        console.log('Stopping screen capture...')
-        capture.stop()
-      }
-      
-      // Force kill PICO-8 to ensure termination
-      if (runner && runner.isRunning()) {
-        console.log('Force killing PICO-8 process...')
-        await runner.close(true, 5000) // Force kill with 5-second timeout
-      }
-      
-      console.log('Shutdown complete, exiting application.')
-      process.exit(0)
     } else {
       console.error(`Failed to launch PICO-8: ${result.error}`)
     }
@@ -349,6 +370,94 @@ async function gracefulShutdown(
     console.log('Exiting application...')
     // Always exit the process
     process.exit(0)
+  }
+}
+
+/**
+ * Run a comprehensive key mapping test
+ * This will test all PICO-8 buttons to ensure they are working correctly
+ * @param input The InputCommands instance to use
+ */
+async function runKeyMappingTest(input: InputCommands): Promise<void> {
+  console.log('Running key mapping test sequence...')
+  console.log('This will test all PICO-8 buttons with visual feedback')
+  
+  try {
+    // First wait a moment to ensure PICO-8 is fully loaded
+    console.log('Waiting for PICO-8 to fully load...')
+    await setTimeout(2000)
+    
+    // Press each arrow key to move the character
+    console.log('Testing arrow keys...')
+    
+    // Up arrow
+    console.log('Testing UP arrow')
+    await input.tapButton(Pico8Button.Up)
+    await setTimeout(500)
+    
+    // Down arrow
+    console.log('Testing DOWN arrow')
+    await input.tapButton(Pico8Button.Down)
+    await setTimeout(500)
+    
+    // Left arrow
+    console.log('Testing LEFT arrow')
+    await input.tapButton(Pico8Button.Left)
+    await setTimeout(500)
+    
+    // Right arrow
+    console.log('Testing RIGHT arrow')
+    await input.tapButton(Pico8Button.Right)
+    await setTimeout(500)
+    
+    // Test holding keys for movement
+    console.log('Testing key hold for RIGHT arrow (2 seconds)')
+    await input.pressButton(Pico8Button.Right)
+    await setTimeout(2000)
+    await input.releaseButton(Pico8Button.Right)
+    await setTimeout(500)
+    
+    // Test action buttons
+    console.log('Testing X and Z buttons...')
+    
+    // X button (O in PICO-8)
+    console.log('Testing X button')
+    await input.tapButton(Pico8Button.X)
+    await setTimeout(500)
+    
+    // Z button (X in PICO-8)
+    console.log('Testing Z button')
+    await input.tapButton(Pico8Button.Z)
+    await setTimeout(500)
+    
+    // Test diagonal movement (combination of keys)
+    console.log('Testing diagonal movement (UP+RIGHT)')
+    await input.pressButton(Pico8Button.Up)
+    await setTimeout(100)
+    await input.pressButton(Pico8Button.Right)
+    await setTimeout(1000)
+    await input.releaseButton(Pico8Button.Right)
+    await setTimeout(100)
+    await input.releaseButton(Pico8Button.Up)
+    await setTimeout(500)
+    
+    // Test button sequences
+    console.log('Testing button sequence...')
+    await input.sendButtonSequence([
+      Pico8Button.Up,
+      Pico8Button.Down,
+      Pico8Button.Left,
+      Pico8Button.Right,
+      Pico8Button.X,
+      Pico8Button.Z
+    ], 200, 300)
+    
+    // Final pause to observe results
+    console.log('Key mapping test completed. Waiting 3 seconds before exit...')
+    await setTimeout(3000)
+    
+  } catch (error) {
+    console.error('Error during key mapping test:', error)
   }
 }
 

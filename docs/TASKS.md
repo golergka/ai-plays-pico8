@@ -198,34 +198,40 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-103] Input Command Interface [IN PROGRESS]
+### [T-103] Input Command Interface [DONE]
 **Dependencies**: T-101
 **Description**: Module to send input commands to PICO-8.
 **Acceptance Criteria**:
-- Send keyboard inputs to PICO-8
-- Support for all PICO-8 button combinations
-- Configurable input mapping
-- Input verification mechanism
+- Send keyboard inputs to PICO-8 ✅
+- Support for all PICO-8 button combinations ✅
+- Configurable input mapping ✅
+- Input verification mechanism ✅
 **Implementation Status**:
-- Initially tried robotjs for keyboard input, but encountered "missing symbol called" errors on macOS
-- Current implementation uses child_process to execute AppleScript commands (osascript) for key events on macOS
-- Added AppleScript commands for key press, key release, and key tap operations
-- Added support for tap and sequence input patterns
-- Added random button generator for testing
-- Window detection via active-win package to ensure commands only sent when PICO-8 is in focus
-**Testing Needed**:
-- Verify that keyboard inputs are successfully sent to PICO-8
-- Confirm that random button presses work as expected
-- Test on macOS (current implementation)
-- Consider adding support for Windows and Linux if needed
-**Alternatives for Future Updates**:
-1. nut.js - built on top of a C++ backend (via node-ffi-napi), more robust for system-level key events
-2. node-key-sender - uses AppleScript under the hood to avoid C-level symbol issues
-3. Swift binary called via child_process for more precise control on macOS
+- Initially tried robotjs for keyboard input, but encountered "missing symbol called" errors on macOS ✅
+- Implemented using child_process to execute AppleScript commands (osascript) for key events on macOS ✅
+- Added AppleScript commands for key press, key release, and key tap operations ✅
+- Added support for tap and sequence input patterns ✅
+- Added random button generator for testing ✅
+- Window detection via active-win package to ensure commands only sent when PICO-8 is in focus ✅
+- Fixed AppleScript key mapping issues for arrow keys ✅
+- Added improved key mapping detection for special keys ✅
+- Created comprehensive test suite for key mapping validation ✅
+**Testing Status**:
+- Verified that keyboard inputs are successfully sent to PICO-8 ✅
+- Confirmed that random button presses work as expected ✅
+- Tested on macOS (current implementation) ✅
+- Added dedicated key test mode with `--key-test` flag ✅
+- Fixed key press/release/tap handling for different key types ✅
+**Future Enhancements**:
+1. Add support for Windows and Linux
+2. Consider alternatives like nut.js (built on C++/node-ffi-napi) for cross-platform support
+3. Explore native bindings for more precise control on each platform
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/input.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.md
 
 ### [T-113] Improve PICO-8 Process Lifecycle Management [IN PROGRESS]
 **Dependencies**: T-101, T-103
@@ -261,21 +267,30 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/test_game.p8
 
-### [T-114] Create Key Mapping Test Cartridge [IN PROGRESS]
+### [T-114] Create Key Mapping Test Cartridge [DONE]
 **Dependencies**: T-103
 **Description**: Create a simple PICO-8 cartridge specifically for testing key mappings.
 **Acceptance Criteria**:
-- Create a cartridge that clearly displays which keys are being pressed
-- Visual feedback should be immediate and obvious
-- Test cartridge should work without complex loading screens or menus
-- Include documentation on how to use the cartridge for testing
+- Create a cartridge that clearly displays which keys are being pressed ✅
+- Visual feedback should be immediate and obvious ✅
+- Test cartridge should work without complex loading screens or menus ✅
+- Include documentation on how to use the cartridge for testing ✅
 **Implementation Status**:
-- Investigating key mapping issues with current implementation
-- Creating a simple cartridge with immediate visual feedback
-- Will update local .env to point to this new test cartridge
+- Created a simple cartridge with immediate visual feedback ✅
+- Fixed macOS AppleScript key mapping issues ✅
+- Implemented separate key tap function for arrow keys ✅
+- Added comprehensive test mode accessible via `--key-test` flag ✅
+- Added detailed documentation in key_test.md ✅
+**Testing Instructions**:
+1. Run `bun start --key-test` with .env pointing to key_test.p8
+2. Observe the visual feedback as each key is pressed
+3. Verify that arrow keys correctly move the heart character
+4. Verify that X and Z buttons show as "PRESSED" when activated
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.md
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
 ### [T-115] Vision-Based LLM Feedback System [DONE]
 **Dependencies**: T-102, T-103

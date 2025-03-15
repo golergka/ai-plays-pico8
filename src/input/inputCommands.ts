@@ -426,14 +426,23 @@ export class InputCommands extends EventEmitter {
           return 'return'
         case Pico8Button.Escape:
           return 'escape'
+        case Pico8Button.Z:
+          // Z is the X button in PICO-8 (secondary action)
+          return 'z'
+        case Pico8Button.X:
+          // X is the O button in PICO-8 (primary action)
+          return 'x'
+        case Pico8Button.P:
+          return 'p'
         // Other keys can be used directly
         default:
-          return button.toLowerCase()
+          this.logger.warn(`Unknown button mapping: ${button}, using lowercase value`)
+          return String(button).toLowerCase()
       }
     }
     
     // Fallback for other platforms
-    return button.toLowerCase()
+    return String(button).toLowerCase()
   }
   
   /**
@@ -490,14 +499,30 @@ export class InputCommands extends EventEmitter {
    */
   private async sendMacOSKeyTap(key: string): Promise<void> {
     try {
-      // Key tap AppleScript (simplified approach for press and release)
-      const script = `
-      tell application "System Events"
-        tell application process "pico8"
-          keystroke "${key}"
+      // For arrow keys and special keys, we need to use key code instead of keystroke
+      let script: string
+      
+      // Check if the key is an arrow key or special key
+      if (key.includes('arrow') || key === 'return' || key === 'escape') {
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            key down "${key}"
+            delay 0.05
+            key up "${key}"
+          end tell
         end tell
-      end tell
-      `
+        `
+      } else {
+        // For regular keys, use keystroke which is simpler
+        script = `
+        tell application "System Events"
+          tell application process "pico8"
+            keystroke "${key}"
+          end tell
+        end tell
+        `
+      }
       
       await execAsync(`osascript -e '${script}'`)
     } catch (error) {

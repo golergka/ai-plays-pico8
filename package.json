@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run index.ts",
+    "test:keys": "bun run index.ts --key-test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
