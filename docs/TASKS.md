@@ -194,10 +194,21 @@ These instructions must not be summarized or removed from this document.
 - ✅ Added window ID caching to maintain capture across focus changes
 - ✅ Added advanced error handling with graceful degradation between capture methods
 **Testing Instructions**:
-1. Run with default cartridge: `bun start`
-2. Observe that the PICO-8 window is captured even when it's not the active window
-3. Test automatic capture stopping by closing PICO-8 (the application should detect this and clean up properly)
-4. Test with different window states (minimized, obscured, etc.) to verify capture resilience
+1. **Automated Self-Tests** (run these first):
+   ```bash
+   # Run basic capture and lifecycle tests
+   bun run test:capture
+   
+   # If on macOS, test window-specific capture
+   bun run test:capture:window
+   ```
+
+2. **Manual Testing** (only needed if self-tests pass):
+   - Run with default cartridge: `CAPTURE_SAVE_TO_DISK=true APP_DEBUG=true bun start`
+   - Observe that the PICO-8 window is captured even when it's not the active window
+   - Test with different window states (minimized, obscured, etc.) to verify capture resilience
+   - Check the captures in the captures directory - they should only show the PICO-8 window
+   - Test automatic cleanup by closing PICO-8 (the application should detect this and exit)
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts

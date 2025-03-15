@@ -6,6 +6,7 @@
 
 import { TestRunner, TestMode } from './testRunner'
 import { inputTestScenarios } from './inputTests'
+import { captureTestScenarios } from './captureTests'
 
 /**
  * Main test runner function
@@ -24,6 +25,7 @@ export async function runTests(args: string[]): Promise<void> {
   
   // Register test scenarios
   runner.registerScenarios(inputTestScenarios)
+  runner.registerScenarios(captureTestScenarios)
   
   // Print test mode info
   console.log(`Running tests in ${mode} mode`)
