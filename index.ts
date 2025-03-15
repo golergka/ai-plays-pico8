@@ -374,90 +374,126 @@ async function gracefulShutdown(
 }
 
 /**
- * Run a comprehensive key mapping test
- * This will test all PICO-8 buttons to ensure they are working correctly
+ * Run an interactive key mapping test
+ * This will test each PICO-8 button individually with clear visual feedback
  * @param input The InputCommands instance to use
  */
 async function runKeyMappingTest(input: InputCommands): Promise<void> {
-  console.log('Running key mapping test sequence...')
-  console.log('This will test all PICO-8 buttons with visual feedback')
+  // Helper function to print visually distinct messages
+  const printTestHeader = (message: string) => {
+    const border = '='.repeat(message.length + 8);
+    console.log('\n\n');
+    console.log('\x1b[36m%s\x1b[0m', border);  // Cyan color
+    console.log('\x1b[36m%s\x1b[0m', `    ${message}    `);  
+    console.log('\x1b[36m%s\x1b[0m', border);
+    console.log('\n');
+  };
   
   try {
-    // First wait a moment to ensure PICO-8 is fully loaded
-    console.log('Waiting for PICO-8 to fully load...')
-    await setTimeout(2000)
+    printTestHeader('PICO-8 KEY TEST STARTING');
+    console.log('This interactive test will help verify all PICO-8 controls');
+    console.log('Watch the PICO-8 window for visual feedback after each key press');
+    console.log('Each key will be kept pressed for 3 seconds for visibility\n');
     
-    // Press each arrow key to move the character
-    console.log('Testing arrow keys...')
+    // Wait for PICO-8 to fully load
+    printTestHeader('WAITING FOR PICO-8 TO LOAD');
+    console.log('Please wait while PICO-8 initializes...');
+    await setTimeout(5000);  // Longer wait to ensure cartridge is loaded
     
-    // Up arrow
-    console.log('Testing UP arrow')
-    await input.tapButton(Pico8Button.Up)
-    await setTimeout(500)
+    // Test UP arrow
+    printTestHeader('TESTING UP ARROW KEY');
+    console.log('The heart should move UP');
+    console.log('UP indicator should turn bright red and show "PRESSED"');
+    await input.pressButton(Pico8Button.Up);
+    await setTimeout(3000);  // Hold for 3 seconds for visibility
+    await input.releaseButton(Pico8Button.Up);
+    await setTimeout(2000);  // Pause between tests
     
-    // Down arrow
-    console.log('Testing DOWN arrow')
-    await input.tapButton(Pico8Button.Down)
-    await setTimeout(500)
+    // Test DOWN arrow
+    printTestHeader('TESTING DOWN ARROW KEY');
+    console.log('The heart should move DOWN');
+    console.log('DOWN indicator should turn bright red and show "PRESSED"');
+    await input.pressButton(Pico8Button.Down);
+    await setTimeout(3000);
+    await input.releaseButton(Pico8Button.Down);
+    await setTimeout(2000);
     
-    // Left arrow
-    console.log('Testing LEFT arrow')
-    await input.tapButton(Pico8Button.Left)
-    await setTimeout(500)
+    // Test LEFT arrow
+    printTestHeader('TESTING LEFT ARROW KEY');
+    console.log('The heart should move LEFT');
+    console.log('LEFT indicator should turn bright red and show "PRESSED"');
+    await input.pressButton(Pico8Button.Left);
+    await setTimeout(3000);
+    await input.releaseButton(Pico8Button.Left);
+    await setTimeout(2000);
     
-    // Right arrow
-    console.log('Testing RIGHT arrow')
-    await input.tapButton(Pico8Button.Right)
-    await setTimeout(500)
+    // Test RIGHT arrow
+    printTestHeader('TESTING RIGHT ARROW KEY');
+    console.log('The heart should move RIGHT');
+    console.log('RIGHT indicator should turn bright red and show "PRESSED"');
+    await input.pressButton(Pico8Button.Right);
+    await setTimeout(3000);
+    await input.releaseButton(Pico8Button.Right);
+    await setTimeout(2000);
     
-    // Test holding keys for movement
-    console.log('Testing key hold for RIGHT arrow (2 seconds)')
-    await input.pressButton(Pico8Button.Right)
-    await setTimeout(2000)
-    await input.releaseButton(Pico8Button.Right)
-    await setTimeout(500)
+    // Test Z button (X in PICO-8)
+    printTestHeader('TESTING Z BUTTON (X in PICO-8)');
+    console.log('Z/O indicator should turn bright red and show "PRESSED"');
+    await input.pressButton(Pico8Button.Z);
+    await setTimeout(3000);
+    await input.releaseButton(Pico8Button.Z);
+    await setTimeout(2000);
     
-    // Test action buttons
-    console.log('Testing X and Z buttons...')
+    // Test X button (O in PICO-8)
+    printTestHeader('TESTING X BUTTON (O in PICO-8)');
+    console.log('X/X indicator should turn bright red and show "PRESSED"');
+    await input.pressButton(Pico8Button.X);
+    await setTimeout(3000);
+    await input.releaseButton(Pico8Button.X);
+    await setTimeout(2000);
     
-    // X button (O in PICO-8)
-    console.log('Testing X button')
-    await input.tapButton(Pico8Button.X)
-    await setTimeout(500)
+    // Test diagonal movement
+    printTestHeader('TESTING DIAGONAL MOVEMENT (UP+RIGHT)');
+    console.log('The heart should move diagonally UP and RIGHT');
+    console.log('Both UP and RIGHT indicators should show "PRESSED"');
+    await input.pressButton(Pico8Button.Up);
+    await input.pressButton(Pico8Button.Right);
+    await setTimeout(3000);
+    await input.releaseButton(Pico8Button.Right);
+    await input.releaseButton(Pico8Button.Up);
+    await setTimeout(2000);
     
-    // Z button (X in PICO-8)
-    console.log('Testing Z button')
-    await input.tapButton(Pico8Button.Z)
-    await setTimeout(500)
+    // Final test - rapid sequence
+    printTestHeader('TESTING RAPID BUTTON SEQUENCE');
+    console.log('All buttons will be pressed in sequence');
+    console.log('Watch for visual feedback for each button');
     
-    // Test diagonal movement (combination of keys)
-    console.log('Testing diagonal movement (UP+RIGHT)')
-    await input.pressButton(Pico8Button.Up)
-    await setTimeout(100)
-    await input.pressButton(Pico8Button.Right)
-    await setTimeout(1000)
-    await input.releaseButton(Pico8Button.Right)
-    await setTimeout(100)
-    await input.releaseButton(Pico8Button.Up)
-    await setTimeout(500)
-    
-    // Test button sequences
-    console.log('Testing button sequence...')
-    await input.sendButtonSequence([
+    const buttons = [
       Pico8Button.Up,
       Pico8Button.Down,
       Pico8Button.Left,
       Pico8Button.Right,
       Pico8Button.X,
       Pico8Button.Z
-    ], 200, 300)
+    ];
     
-    // Final pause to observe results
-    console.log('Key mapping test completed. Waiting 3 seconds before exit...')
-    await setTimeout(3000)
+    for (const button of buttons) {
+      console.log(`Pressing ${button} button...`);
+      await input.pressButton(button);
+      await setTimeout(1000);
+      await input.releaseButton(button);
+      await setTimeout(500);
+    }
+    
+    // Test complete
+    printTestHeader('KEY TEST COMPLETE');
+    console.log('All keys have been tested.');
+    console.log('The test will exit in 5 seconds...');
+    await setTimeout(5000);
     
   } catch (error) {
-    console.error('Error during key mapping test:', error)
+    console.error('\x1b[31m%s\x1b[0m', 'ERROR DURING KEY TEST:'); // Red color
+    console.error(error);
   }
 }
 
