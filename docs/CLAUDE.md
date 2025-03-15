@@ -10,14 +10,23 @@ Follow these steps when asked with autonomusly work on the project:
 2. Select a task to work on. Print the task description and your estimate of work to standard output.
 3. Do the required implementation work. If neccessary, provide brief comments of your activity.
 4. Run all required checks (typecheck, lint, tests if applicable). If you go through fix/test iterations, comment on each iteration.
-5. For tasks that require runtime verification (like UI, graphics, or interaction with external processes):
+5. IMPORTANT: For ALL changes that cannot be fully validated through automated checks:
+   - This includes ANY changes affecting:
+     - Process management (launching, terminating, monitoring processes)
+     - User interaction (input commands, key mappings)
+     - Visual elements (screen capture, UI)
+     - External system interactions (file I/O, APIs)
+     - Configuration changes (.env files)
    - Mark task as IN PROGRESS in TASKS.md
-   - Make ALL necessary configuration changes (including .env files) to ensure testing is streamlined
-   - Commit changes with a clear summary of what needs to be tested
-   - Provide PRECISE testing instructions for the human, including:
-     - Exact commands to run
-     - What specifically to observe/validate
-     - Any configuration needed (if not already handled)
+   - Make ALL necessary configuration changes to ensure testing is streamlined
+   - After implementing and committing the changes, you MUST:
+     - Explicitly tell the human that manual testing is required
+     - Provide PRECISE testing instructions including:
+       - Exact commands to run
+       - Specific behaviors to observe/validate
+       - Expected outcomes that would indicate success
+       - Potential failure modes to watch for
+   - Do not mark a task as DONE until human confirms successful testing
 6. For tasks with clear programmatic validation, update TASKS.md to reflect progress
 7. Commit changes following the git workflow below
 
@@ -74,3 +83,14 @@ bun remove <package>      # Remove a package
 ## Documents and workflows
 - For project tasks and tracking, refer to TASKS.md.
 - For documentation maintenance guidelines, refer to MAINTENANCE.md.
+
+## Important Implementation Notes
+
+### Manual Testing Requirements
+Remember that almost ALL changes to this project require manual testing by the human. This is especially true for:
+1. Process management (PICO-8 launching, termination)
+2. Input systems (keyboard control)
+3. Screen capture
+4. Any integration between components
+
+After implementing such changes, you MUST provide testing instructions and not consider the task complete until the human confirms successful testing. Do not skip the manual testing step!
