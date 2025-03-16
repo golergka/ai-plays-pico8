@@ -545,7 +545,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/package.json
 
-### [T-122] Implement Test Runner Timeout [IN PROGRESS] [URGENT]
+### [T-122] Implement Test Runner Timeout [DONE] [URGENT]
 **Dependencies**: T-116
 **Description**: Add a timeout mechanism to the test runner to prevent tests from hanging indefinitely and ensure proper process cleanup.
 **Acceptance Criteria**:
@@ -558,51 +558,19 @@ These instructions must not be summarized or removed from this document.
 **Implementation Status**:
 - ✅ Added timeout mechanism to both `runScenario` and `runAllScenarios` methods in TestRunner
 - ✅ Implemented using Promise.race to race the test execution against a timeout
-- ✅ Enhanced the terminationTest.ts cleanup to handle timeouts more aggressively
-- ✅ Added helper functions for process verification and forced termination
+- ✅ Enhanced the terminationTest.ts cleanup to handle timeouts and improve process verification
 - ✅ Added timedOut counter in test summary to track timeout occurrences
 - ✅ Improved error reporting for timeout scenarios
-**Testing Instructions**:
-1. **Setup Environment**:
-   ```bash
-   # Ensure this exists in your .env file
-   PICO8_PATH=/Applications/pico-8/PICO-8.app/Contents/MacOS/pico8
-   PICO8_DEFAULT_CARTRIDGE=input/cartridges/test_game.p8
-   APP_DEBUG=true
-   ```
-
-2. **Test Regular Timeout Behavior**:
-   ```bash
-   # Run the termination tests with default timeout
-   bun run test termination-standard
-   ```
-   - Observe that the test should complete normally or terminate after 60 seconds (default timeout)
-   - Verify in the logs that no PICO-8 processes remain running
-
-3. **Test Multiple Test Timeout Behavior**:
-   ```bash
-   # Run all tests to verify timeout behavior across multiple tests
-   bun run test:self
-   ```
-   - Verify that tests progress through each scenario even if some time out
-   - Check that the summary at the end shows correct timeout counts
-   - Confirm no PICO-8 processes remain running after completion
-
-4. **Verify Cleanup After Force Termination**:
-   After running tests, verify that no zombie processes remain:
-   ```bash
-   # On macOS/Linux
-   ps aux | grep pico
-   ```
-   - Only the grep process itself should appear in results
-   - No PICO-8 processes should remain running
-
+- ✅ Ensured processes exit properly after test completion via explicit exit calls
+**Key Fixes**:
+- Fixed the issue where tests would complete but the process would hang indefinitely
+- Added explicit process.exit() call after tests complete to ensure clean termination
+- Implemented proper test timeout detection and reporting
+- Added robust termination test framework for verifying process cleanup
 **Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/terminationTest.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 
 ### [T-115] Vision-Based LLM Feedback System [DONE]
 **Dependencies**: T-102, T-103

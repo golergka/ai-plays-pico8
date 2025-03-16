@@ -7,6 +7,7 @@
 import { TestRunner, TestMode } from './testRunner'
 import { inputTestScenarios } from './inputTests'
 import { captureTestScenarios } from './captureTests'
+import { terminationTestScenarios } from './terminationTest'
 
 /**
  * Main test runner function
@@ -26,6 +27,7 @@ export async function runTests(args: string[]): Promise<void> {
   // Register test scenarios
   runner.registerScenarios(inputTestScenarios)
   runner.registerScenarios(captureTestScenarios)
+  runner.registerScenarios(terminationTestScenarios)
   
   // Print test mode info
   console.log(`Running tests in ${mode} mode`)
@@ -33,14 +35,19 @@ export async function runTests(args: string[]): Promise<void> {
   try {
     if (testName) {
       // Run specific test
-      await runner.runScenario(testName, mode)
+      await runner.runScenario(testName, mode);
     } else {
       // Run all tests
-      await runner.runAllScenarios(mode)
+      await runner.runAllScenarios(mode);
+    }
+    
+    // Ensure process exits after successful test completion
+    if (exitOnComplete) {
+      process.exit(0);
     }
   } catch (error) {
-    console.error('Error running tests:', error)
-    process.exit(1)
+    console.error('Error running tests:', error);
+    process.exit(1);
   }
 }
 
@@ -49,6 +56,7 @@ if (typeof process !== 'undefined' &&
     process.argv[1] && 
     (process.argv[1].endsWith('tests/index.ts') || process.argv[1].endsWith('tests/index.js'))) {
   const args = process.argv.slice(2)
+  
   runTests(args).catch(error => {
     console.error('Unhandled error:', error)
     process.exit(1)

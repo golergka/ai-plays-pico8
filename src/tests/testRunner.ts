@@ -148,8 +148,9 @@ export class TestRunner {
       }
       
       // Create a timeout promise
+      const timeoutMs = this.config.timeout || 60000
+      
       const timeoutPromise = new Promise<never>((_, reject) => {
-        const timeoutMs = this.config.timeout || 60000
         setTimeout(timeoutMs).then(() => {
           reject(new Error(`Test "${name}" timed out after ${timeoutMs}ms`))
         })
