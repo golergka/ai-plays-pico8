@@ -294,35 +294,39 @@ These instructions must not be summarized or removed from this document.
 **Dependencies**: T-101, T-103
 **Description**: Enhance control over the PICO-8 process lifecycle and improve input verification.
 **Acceptance Criteria**:
-- Application has full control over PICO-8 process lifecycle (launch, run, terminate)
-- Automatically terminate PICO-8 when the application exits or at the end of the demo
-- Ensure the demo script doesn't wait for cartridge to load specifically
+- Application has full control over PICO-8 process lifecycle (launch, run, terminate) ✅
+- Automatically terminate PICO-8 when the application exits or at the end of the demo ✅
+- Ensure the demo script doesn't wait for cartridge to load specifically ✅
 - Demo should continuously send input commands for sufficient time to handle any cartridge loading delays
-- Structured input patterns send specific commands with visible feedback
-- Clear visual indication that keyboard inputs are working
-- Improved error handling for PICO-8 process failures
+- Structured input patterns send specific commands with visible feedback ✅
+- Clear visual indication that keyboard inputs are working ✅
+- Improved error handling for PICO-8 process failures ✅
 **Implementation Status**:
-- Added explicit process exit handler to ensure application terminates when PICO-8 exits
-- Improved forced termination logic to ensure PICO-8 process is killed reliably
-- Added timeout-based demo that runs for 10 seconds before terminating
-- Enhanced error handling in the process termination flow
-- Updated key mapping for PICO-8 input verification
+- Added explicit process exit handler to ensure application terminates when PICO-8 exits ✅
+- Improved forced termination logic to ensure PICO-8 process is killed reliably ✅
+- Added timeout-based demo that runs for 10 seconds before terminating ✅
+- Enhanced error handling in the process termination flow ✅
+- Fixed key mapping for PICO-8 input verification by using AppleScript key codes ✅
 - Added robust process termination with platform-specific commands and verification ✅
 - Added isProcessRunning helper method to reliably check process status ✅
 - Fixed force kill logic with multiple termination strategies ✅
+- Improved error handling for window focus changes during tests ✅
+- Fixed arrow key mapping issues by using key codes instead of ASCII characters ✅
 **Current Issues to Fix**:
 - ~~PICO-8 process isn't being killed (fix force kill logic)~~ ✅
-- Key mapping is incorrect (test with simple key mapping test cartridge)
-- Demo duration should be exactly 10 seconds
+- ~~Key mapping is incorrect (test with simple key mapping test cartridge)~~ ✅
+- Demo duration should be exactly 10 seconds ✅
 **Testing Status**:
-- ~~User reported that the PICO-8 process is not being killed properly (termination fails)~~ - Fixed with improved termination logic
-- User reported character movement is not visible, but menu appears/disappears (key mapping issue)
-- Need to create a dedicated test cartridge for key mapping verification
+- ~~User reported that the PICO-8 process is not being killed properly (termination fails)~~ - Fixed with improved termination logic ✅
+- ~~User reported character movement is not visible, but menu appears/disappears (key mapping issue)~~ - Fixed with proper key code mapping ✅
+- ~~Need to create a dedicated test cartridge for key mapping verification~~ - Completed with key_test.p8 cartridge ✅
+- Self-tests for input commands now pass successfully ✅
+- Interactive tests show proper visual feedback for all keys ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/test_game.p8
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
 
 ### [T-114] Create Key Mapping Test Cartridge [DONE]
 **Dependencies**: T-103
@@ -349,24 +353,29 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-117] Process Termination Improvement Epic [IN PROGRESS] [URGENT]
+### [T-117] Process Termination Improvement Epic [IN PROGRESS]
 **Dependencies**: T-101, T-113
 **Description**: Parent task for PICO-8 process termination improvements. PICO-8 processes frequently fail to terminate properly when the application exits, requiring manual termination. This is a critical issue that must be fixed.
 **Current Issues**:
-- PICO-8 processes remain running in the background after application exits
-- Automated tests leave zombie processes
-- Current termination logic is complex and unreliable
+- ~~PICO-8 processes remain running in the background after application exits~~ ✅ Fixed in T-118
+- ~~Automated tests leave zombie processes~~ ✅ Fixed in T-118
+- Current termination logic is complex and could be more maintainable
+**Progress**:
+- ✅ Critical emergency fix implemented (T-118)
+- ☐ Architecture refactoring still pending (T-119)
+- ☐ Platform-specific strategies pending further refinement (T-120)
+- ☐ Comprehensive testing framework pending (T-121)
 **Epic Tasks**:
-- T-118: Emergency fix for reliable PICO-8 process termination
-- T-119: Refactor termination logic architecture
-- T-120: Implement platform-specific termination strategies
-- T-121: Create robust termination testing framework
+- T-118: Emergency fix for reliable PICO-8 process termination ✅ DONE
+- T-119: Refactor termination logic architecture ➡️ TODO
+- T-120: Implement platform-specific termination strategies ➡️ TODO
+- T-121: Create robust termination testing framework ➡️ TODO
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-118] Emergency Fix for PICO-8 Process Termination [IN PROGRESS] [URGENT]
+### [T-118] Emergency Fix for PICO-8 Process Termination [DONE] [URGENT]
 **Dependencies**: T-101
 **Description**: Critical immediate fix to ensure PICO-8 processes are reliably terminated when the application exits or tests run.
 **Reproduction Steps**:
@@ -394,6 +403,7 @@ These instructions must not be summarized or removed from this document.
 - Verified passing TypeScript checks with strict mode enabled
 - Confirmed process termination works as expected with direct testing
 - Ensured no zombie processes remain after tests
+- Self-tests complete successfully without leaving orphaned processes
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
