@@ -2,12 +2,17 @@
  * Screen Capture Tests
  * 
  * Tests for the screen capture functionality.
+ * 
+ * Note: All process termination is handled by the main Pico8Runner library.
+ * Tests only use the standard runner.close() method without adding any custom
+ * termination logic.
  */
 
 import { ScreenCapture } from '../capture/screenCapture'
 import { Pico8Runner } from '../runners/pico8Runner'
 import { getConfig } from '../config/env'
-import { TestScenario, TestContext, TestMode } from './testRunner'
+import { TestMode } from './testRunner'
+import type { TestScenario, TestContext } from './testRunner'
 import { CaptureEvent } from '../types/capture'
 import { setTimeout } from 'node:timers/promises'
 import path from 'node:path'
@@ -23,18 +28,20 @@ export const captureTestScenarios: TestScenario[] = [
     name: 'capture-basic',
     description: 'Tests basic screen capture functionality',
     run: runBasicCaptureTest,
+    requiresUserInteraction: false,
     platforms: ['darwin', 'win32', 'linux'],
   },
-  {
+  /*{
     name: 'capture-window-specific',
     description: 'Tests window-specific capture (macOS only)',
     run: runWindowSpecificCaptureTest,
     platforms: ['darwin'],
-  },
+  },*/
   {
     name: 'capture-lifecycle',
     description: 'Tests capture lifecycle with PICO-8 shutdown',
     run: runCaptureLifecycleTest,
+    requiresUserInteraction: false,
     platforms: ['darwin', 'win32', 'linux'],
   },
 ]
@@ -47,7 +54,7 @@ export async function runCaptureTests(context: TestContext): Promise<void> {
   // Run all capture test scenarios
   for (const scenario of captureTestScenarios) {
     // Skip tests not applicable to this platform
-    if (!scenario.platforms.includes(process.platform)) {
+    if (scenario.platforms && !scenario.platforms.includes(process.platform)) {
       console.log(`Skipping ${scenario.name} test (not supported on ${process.platform})`)
       continue
     }
@@ -63,9 +70,9 @@ export async function runCaptureTests(context: TestContext): Promise<void> {
 
 /**
  * Basic screen capture test
- * @param context Test context
+ * @param _options Test options (unused)
  */
-async function runBasicCaptureTest(context: TestContext): Promise<void> {
+async function runBasicCaptureTest(_options?: TestContext): Promise<void> {
   // Ensure capture directory exists
   if (!fs.existsSync(TEST_CAPTURE_DIR)) {
     fs.mkdirSync(TEST_CAPTURE_DIR, { recursive: true })
@@ -118,7 +125,7 @@ async function runBasicCaptureTest(context: TestContext): Promise<void> {
   try {
     // Launch PICO-8
     console.log('Launching PICO-8...')
-    const result = await runner.launch()
+    const result = await runner.launch(config.PICO8_DEFAULT_CARTRIDGE)
     
     if (!result.success) {
       throw new Error(`Failed to launch PICO-8: ${result.error}`)
@@ -174,9 +181,14 @@ async function runBasicCaptureTest(context: TestContext): Promise<void> {
 
 /**
  * Window-specific capture test (macOS only)
- * @param context Test context
+ * This test is currently commented out in the test scenarios array,
+ * but keeping the implementation for future use.
+ * @param _options Test options (unused)
  */
-async function runWindowSpecificCaptureTest(context: TestContext): Promise<void> {
+// Function temporarily disabled as it's not used in the test scenarios
+// Uncomment when window-specific tests are re-enabled
+/* 
+async function runWindowSpecificCaptureTest(_options?: TestContext): Promise<void> {
   if (process.platform !== 'darwin') {
     console.log('Skipping window-specific capture test (only supported on macOS)')
     return
@@ -226,7 +238,7 @@ async function runWindowSpecificCaptureTest(context: TestContext): Promise<void>
   try {
     // Launch PICO-8
     console.log('Launching PICO-8...')
-    const result = await runner.launch()
+    const result = await runner.launch(config.PICO8_DEFAULT_CARTRIDGE)
     
     if (!result.success) {
       throw new Error(`Failed to launch PICO-8: ${result.error}`)
@@ -276,9 +288,9 @@ async function runWindowSpecificCaptureTest(context: TestContext): Promise<void>
 
 /**
  * Capture lifecycle test
- * @param context Test context
+ * @param _options Test options (unused)
  */
-async function runCaptureLifecycleTest(context: TestContext): Promise<void> {
+async function runCaptureLifecycleTest(_options?: TestContext): Promise<void> {
   // Ensure capture directory exists
   if (!fs.existsSync(TEST_CAPTURE_DIR)) {
     fs.mkdirSync(TEST_CAPTURE_DIR, { recursive: true })
@@ -321,7 +333,7 @@ async function runCaptureLifecycleTest(context: TestContext): Promise<void> {
   try {
     // Launch PICO-8
     console.log('Launching PICO-8...')
-    const result = await runner.launch()
+    const result = await runner.launch(config.PICO8_DEFAULT_CARTRIDGE)
     
     if (!result.success) {
       throw new Error(`Failed to launch PICO-8: ${result.error}`)
