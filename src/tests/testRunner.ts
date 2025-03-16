@@ -147,13 +147,34 @@ export class TestRunner {
         mode
       }
       
-      await scenario.run(mergedOptions)
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        const timeoutMs = this.config.timeout || 60000
+        setTimeout(timeoutMs).then(() => {
+          reject(new Error(`Test "${name}" timed out after ${timeoutMs}ms`))
+        })
+      })
+      
+      // Race the test execution against the timeout
+      await Promise.race([
+        scenario.run(mergedOptions),
+        timeoutPromise
+      ])
       
       this.logger.info(`Test "${name}" completed successfully`)
     } catch (error) {
       this.logger.error(`Error in test "${name}": ${error instanceof Error ? error.message : String(error)}`)
       if (error instanceof Error && error.stack) {
         this.logger.debug(`Stack trace: ${error.stack}`)
+      }
+      
+      // If this is a timeout error, attempt forced cleanup
+      if (error instanceof Error && error.message.includes('timed out')) {
+        this.logger.warn('Test timeout detected, attempting forced cleanup')
+        // Force process exit if cleanup is enabled
+        if (this.config.exitOnComplete) {
+          process.exit(1)
+        }
       }
     }
   }
@@ -170,6 +191,7 @@ export class TestRunner {
     
     let completed = 0
     let failed = 0
+    let timedOut = 0
     
     for (const [name, scenario] of this.scenarios) {
       try {
@@ -188,7 +210,19 @@ export class TestRunner {
           mode
         }
         
-        await scenario.run(mergedOptions)
+        // Create a timeout promise
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          const timeoutMs = this.config.timeout || 60000
+          setTimeout(timeoutMs).then(() => {
+            reject(new Error(`Test "${name}" timed out after ${timeoutMs}ms`))
+          })
+        })
+        
+        // Race the test execution against the timeout
+        await Promise.race([
+          scenario.run(mergedOptions),
+          timeoutPromise
+        ])
         
         this.logger.info(`Test "${name}" completed successfully`)
         completed++
@@ -197,6 +231,13 @@ export class TestRunner {
         if (error instanceof Error && error.stack) {
           this.logger.debug(`Stack trace: ${error.stack}`)
         }
+        
+        // Check if this is a timeout error
+        if (error instanceof Error && error.message.includes('timed out')) {
+          this.logger.warn(`Test "${name}" timed out, attempting to continue with next test`)
+          timedOut++
+        }
+        
         failed++
       }
       
@@ -208,6 +249,7 @@ export class TestRunner {
     this.logger.info(`Total: ${this.scenarios.size}`)
     this.logger.info(`Completed: ${completed}`)
     this.logger.info(`Failed: ${failed}`)
+    this.logger.info(`Timed Out: ${timedOut}`)
     this.logger.info(`Skipped: ${this.scenarios.size - completed - failed}`)
     
     if (this.config.exitOnComplete) {
