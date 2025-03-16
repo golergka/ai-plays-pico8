@@ -38,7 +38,7 @@ export class Pico8Runner {
    * @param cartridgePath Path to the .p8 or .p8.png cartridge file
    * @returns Result of the launch operation
    */
-  async launch(cartridgePath?: string): Promise<Pico8Result> {
+  async launch(cartridgePath: string | undefined): Promise<Pico8Result> {
     // Don't launch if already running
     if (this.process) {
       return {
@@ -462,6 +462,51 @@ export class Pico8Runner {
     this.config = {
       ...this.config,
       ...config
+    }
+  }
+  
+  /**
+   * Synchronously close the PICO-8 process - emergency use only
+   * This method is intended for use in process exit handlers
+   * @param options Termination options
+   * @returns Success status
+   */
+  closeSync(_options: { force: boolean } = { force: true }): boolean {
+    if (!this.process || !this.process.pid) {
+      return false
+    }
+    
+    try {
+      const pid = this.process.pid
+      
+      // Use OS-specific commands for immediate termination
+      if (process.platform === 'darwin') {
+        // Use kill -9 on macOS (SIGKILL) which is immediate
+        try {
+          // Synchronous child_process.execSync for immediate execution
+          require('child_process').execSync(`kill -9 ${pid} 2>/dev/null || true`)
+          require('child_process').execSync('killall -9 "PICO-8" 2>/dev/null || true')
+          require('child_process').execSync('killall -9 "pico8" 2>/dev/null || true')
+        } catch (e) {
+          // Ignore errors in sync mode
+        }
+      }
+      
+      // Kill the direct process with SIGKILL for immediate termination
+      try {
+        this.process.kill('SIGKILL')
+      } catch (e) {
+        // Ignore errors in sync mode
+      }
+      
+      // Update process state
+      this.process = null
+      
+      return true
+    } catch (error) {
+      // In synchronous mode, we can only log the error
+      console.error('Failed to close PICO-8 synchronously:', error)
+      return false
     }
   }
 }

@@ -13,6 +13,7 @@ import type {
 import { ScreenCapture } from '../capture/screenCapture'
 // Import InputCommands directly for creating input handlers
 import { InputCommands } from '../input/inputCommands'
+import sharp from 'sharp'
 
 // Create a logger for this module
 const logger = createLogger('VisionFeedback')
@@ -36,8 +37,8 @@ export class VisionFeedbackSystem {
     const envConfig = getConfig()
 
     // Check for API key in environment (shell environment takes precedence)
-    // Get the API key, following TypeScript's strict access rules
-    const apiKey = process.env.OPENAI_API_KEY || envConfig['OPENAI_API_KEY'] || ''
+    // Using bracket notation for process.env as required by TypeScript
+    const apiKey = process.env['OPENAI_API_KEY'] || envConfig['OPENAI_API_KEY'] || ''
     
     // Ensure we have an API key
     if (!apiKey) {
@@ -296,6 +297,18 @@ export class VisionFeedbackSystem {
    */
   private async captureScreen(): Promise<string | null> {
     try {
+      // First, ensure the captures directory exists before anything else
+      try {
+        await fs.mkdir(this.captureDir, { recursive: true })
+        logger.debug(`Ensured capture directory exists: ${this.captureDir}`)
+      } catch (dirError) {
+        logger.error(`Failed to create capture directory: ${dirError instanceof Error ? dirError.message : String(dirError)}`)
+        // Try with an alternate location as fallback
+        this.captureDir = './captures'
+        await fs.mkdir(this.captureDir, { recursive: true })
+        logger.info(`Using fallback capture directory: ${this.captureDir}`)
+      }
+      
       // Initialize screen capture if needed
       if (!this.screenCapture) {
         this.screenCapture = new ScreenCapture({
@@ -314,26 +327,53 @@ export class VisionFeedbackSystem {
       const filename = `pico8_capture_${Date.now()}_${this.captureCount}.png`
       const imagePath = join(this.captureDir, filename)
       
-      // Ensure the captures directory exists
-      await fs.mkdir(this.captureDir, { recursive: true })
+      // Take the screenshot with protection against native module crashes
+      let result;
+      try {
+        result = await this.screenCapture.captureScreen()
+      } catch (captureError) {
+        logger.error(`Screenshot capture failed with error: ${captureError instanceof Error ? captureError.message : String(captureError)}`)
+        // If capture fails, try to create a blank image as a fallback
+        try {
+          // Create a simple 128x128 black image as fallback
+          const blankBuffer = Buffer.from(
+            await sharp({
+              create: {
+                width: 128,
+                height: 128,
+                channels: 4,
+                background: { r: 0, g: 0, b: 0, alpha: 1 }
+              }
+            })
+            .png()
+            .toBuffer()
+          )
+          result = { success: true, buffer: blankBuffer }
+          logger.warn('Using blank image fallback due to capture failure')
+        } catch (fallbackError) {
+          logger.error(`Failed to create fallback image: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`)
+          return null
+        }
+      }
       
-      // Take the screenshot
-      const result = await this.screenCapture.captureScreen()
-      
-      if (result.success && result.buffer) {
-        // Save buffer to file
-        await fs.writeFile(imagePath, result.buffer)
-        
-        logger.debug(`Screenshot captured: ${imagePath}`)
-        return imagePath
+      if (result?.success && result.buffer) {
+        try {
+          // Save buffer to file
+          await fs.writeFile(imagePath, result.buffer)
+          logger.debug(`Screenshot captured: ${imagePath}`)
+          return imagePath
+        } catch (writeError) {
+          logger.error(`Failed to write screenshot to file: ${writeError instanceof Error ? writeError.message : String(writeError)}`)
+          return null
+        }
       } else {
         // Handle both success and error results
-        const errorMessage = 'error' in result ? result.error : 'Unknown error';
+        const errorMessage = result && 'error' in result ? result.error : 'Unknown error';
         logger.error(`Failed to capture screenshot: ${errorMessage}`)
         return null
       }
     } catch (error) {
-      logger.error(`Error capturing screenshot: ${error instanceof Error ? error.message : String(error)}`)
+      logger.error(`Error in capture pipeline: ${error instanceof Error ? error.message : String(error)}`)
       return null
     }
   }

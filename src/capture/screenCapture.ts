@@ -6,7 +6,7 @@ import screenshot from 'screenshot-desktop'
 import sharp from 'sharp'
 import * as activeWin from 'active-win'
 import captureWindow from 'capture-window'
-import { promisify } from 'node:util'
+// import { promisify } from 'node:util' // No longer used with our custom wrapper
 import { CaptureEvent } from '../types/capture'
 import { createLogger, LogLevel } from '../utils/logger'
 import type { 
@@ -23,9 +23,27 @@ import type {
  * Handles capturing screenshots of the PICO-8 window at regular intervals
  */
 
-// Promisify the captureWindow function
-// The function takes (windowId: number, callback: (err, path) => void)
-const captureWindowAsync = promisify<number, null, null, string>(captureWindow as any)
+// Safe wrapper for the captureWindow function
+// This avoids direct promisification which can lead to crashes if the function fails
+const captureWindowAsync = async (windowId: number): Promise<string | null> => {
+  return new Promise((resolve) => {
+    try {
+      // Wrap the potentially problematic native function call in a try/catch
+      // Use any type to bypass TS checks since the native module has incorrect typing
+      (captureWindow as any)(windowId, null, (err: Error | null, path: string) => {
+        if (err) {
+          console.error('Error in captureWindow:', err)
+          resolve(null)
+        } else {
+          resolve(path)
+        }
+      })
+    } catch (error) {
+      console.error('Exception in captureWindow:', error)
+      resolve(null)
+    }
+  })
+}
 
 export class ScreenCapture extends EventEmitter {
   private config: CaptureConfig
@@ -515,52 +533,73 @@ export class ScreenCapture extends EventEmitter {
       return undefined
     }
     
-    // For testing only - disabling window-specific capture
-    // This is a temporary workaround due to the capture-window library issues
+    // For testing only - disabling window-specific capture in debug mode
+    // This is a protection against the capture-window library issues
     if (this.config.debug) {
-      this.logger.debug('Window-specific capture temporarily disabled in debug/test mode due to known issues')
+      this.logger.debug('Window-specific capture disabled in debug/test mode for stability')
       return undefined
     }
     
     try {
-      this.logger.debug(`Capturing specific window with ID: ${windowId}`)
+      this.logger.debug(`Attempting to capture specific window with ID: ${windowId}`)
       
-      // Use the capture-window library to capture the specific window
-      // It returns a path to the temp file where the image was saved
+      // Add additional protection against invalid input
+      if (!windowId || typeof windowId !== 'number' || windowId <= 0) {
+        this.logger.warn(`Invalid window ID: ${windowId}, skipping window-specific capture`)
+        return undefined
+      }
       
-      // Due to potential crashes with captureWindowAsync, we're implementing a safe version
-      // that will gracefully handle failures
-      let tempPath: string
+      // Use our safer wrapper around the capture-window library
+      let tempPath: string | null = null
       
       try {
-        // Attempt to use captureWindowAsync with a safety timeout
-        const capturePromise = captureWindowAsync(windowId, null, null) as Promise<string>
+        // Set a timeout to prevent hanging if the function doesn't respond
+        const timeoutMs = 2000
         
-        // Add a timeout to prevent hanging if the function fails
-        const timeoutPromise = new Promise<string>((_resolve, reject) => {
-          setTimeout(() => reject(new Error('Window capture timed out')), 2000)
+        // Create a timeout controller
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), timeoutMs)
+        
+        // Attempt the capture with abort signal
+        const capturePromise = new Promise<string | null>(async (resolve) => {
+          const result = await captureWindowAsync(windowId)
+          resolve(result)
         })
         
-        // Race the two promises - whichever completes first wins
+        // Add a timeout promise
+        const timeoutPromise = new Promise<string | null>((_, reject) => {
+          const onAbort = () => reject(new Error('Window capture timed out'))
+          controller.signal.addEventListener('abort', onAbort)
+        })
+        
+        // Race the promises - either capture completes or timeout triggers
         tempPath = await Promise.race([capturePromise, timeoutPromise])
+          .finally(() => clearTimeout(timeout))
       } catch (captureError) {
         this.logger.warn(`Window capture failed: ${captureError instanceof Error ? captureError.message : String(captureError)}`)
         return undefined
       }
       
+      // Check if we have a valid result
       if (!tempPath) {
-        throw new Error('No temp file path returned from capture-window')
+        this.logger.debug('No temp file path returned from capture-window, falling back to screen capture')
+        return undefined
       }
       
-      // Read the captured image into a buffer
-      const tempBuffer = await sharp(tempPath).toBuffer()
-      const metadata = await sharp(tempBuffer).metadata()
-      this.logger.debug(`Window capture dimensions: ${metadata.width}x${metadata.height}`)
-      
-      // Return the buffer
-      return tempBuffer
+      try {
+        // Read the captured image into a buffer
+        const tempBuffer = await sharp(tempPath).toBuffer()
+        const metadata = await sharp(tempBuffer).metadata()
+        this.logger.debug(`Window capture successful: ${metadata.width}x${metadata.height}`)
+        
+        // Return the buffer
+        return tempBuffer
+      } catch (sharpError) {
+        this.logger.warn(`Error processing window capture result: ${sharpError instanceof Error ? sharpError.message : String(sharpError)}`)
+        return undefined
+      }
     } catch (error) {
-      this.logger.error(`Error capturing specific window: ${error instanceof Error ? error.message : String(error)}`)
+      this.logger.error(`Error in window capture process: ${error instanceof Error ? error.message : String(error)}`)
       return undefined
     }
   }
