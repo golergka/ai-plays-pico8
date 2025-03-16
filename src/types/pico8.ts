@@ -47,14 +47,15 @@ export type Pico8Result = Pico8SuccessResult | Pico8ErrorResult
 
 /**
  * Process termination level/strategy
+ * Uses numeric enum for better performance and clearer progression
  */
 export enum TerminationStrategy {
   /** Standard Node.js termination methods (SIGTERM, SIGKILL) */
-  STANDARD = 'standard',
+  STANDARD = 0,
   /** OS-specific commands (kill, taskkill, etc.) */
-  OS_SPECIFIC = 'os-specific',
+  OS_SPECIFIC = 1,
   /** Emergency termination procedures (last resort) */
-  EMERGENCY = 'emergency'
+  EMERGENCY = 2
 }
 
 /**

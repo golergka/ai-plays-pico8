@@ -120,7 +120,7 @@ export class Pico8Runner {
   async close(options: TerminationOptions = {}): Promise<Pico8Result> {
     const { force = false, timeout = 3000, startStrategy = TerminationStrategy.STANDARD } = options
     
-    this.logger.debug(`Close called with force=${force}, timeout=${timeout}ms, strategy=${startStrategy}`)
+    this.logger.debug(`Close called with force=${force}, timeout=${timeout}ms, strategy=${TerminationStrategy[startStrategy]}`)
     
     // Validate process exists
     const validationResult = this.validateProcessBeforeTermination()
@@ -144,7 +144,7 @@ export class Pico8Runner {
       let isStillRunning = true
       
       // Strategy 1: Standard Node.js termination
-      if (startStrategy === TerminationStrategy.STANDARD) {
+      if (startStrategy <= TerminationStrategy.STANDARD) {
         isStillRunning = await this.applyStandardTermination(processRef, pid, force, exitPromise, timeoutPromise)
         
         if (!isStillRunning) {
@@ -315,20 +315,25 @@ export class Pico8Runner {
    * @returns Boolean indicating if the process is still running
    */
   private async applyOSSpecificTermination(processRef: ChildProcess, pid: number): Promise<boolean> {
-    switch (process.platform) {
-      case 'darwin':
-        await this.applyMacOSTermination(pid)
-        break
-      case 'win32':
-        await this.applyWindowsTermination(pid)
-        break
-      case 'linux':
-        await this.applyLinuxTermination(pid)
-        break
-      default:
-        this.logger.warn(`No specific termination strategy for platform ${process.platform}, using generic approach`)
-        processRef.kill('SIGKILL')
-        await setTimeoutPromise(500)
+    try {
+      switch (process.platform) {
+        case 'darwin':
+          await this.applyMacOSTermination(pid)
+          break
+        case 'win32':
+          await this.applyWindowsTermination(pid)
+          break
+        case 'linux':
+          await this.applyLinuxTermination(pid)
+          break
+        default:
+          this.logger.warn(`No specific termination strategy for platform ${process.platform}, using generic approach`)
+          processRef.kill('SIGKILL')
+          await setTimeoutPromise(500)
+      }
+    } catch (error) {
+      this.logger.error(`Error in OS-specific termination: ${error instanceof Error ? error.message : String(error)}`)
+      // Ensure we continue to emergency termination even if platform-specific methods fail
     }
     
     // Verify if process is still running after OS-specific termination
@@ -426,21 +431,26 @@ export class Pico8Runner {
   private async applyEmergencyTermination(processRef: ChildProcess, pid: number): Promise<boolean> {
     this.logger.debug('Attempting emergency termination procedures...')
     
-    switch (process.platform) {
-      case 'darwin':
-        await this.applyMacOSEmergencyTermination(pid)
-        break
-      case 'win32':
-        await this.applyWindowsEmergencyTermination(pid)
-        break
-      case 'linux':
-        await this.applyLinuxEmergencyTermination(processRef, pid)
-        break
-      default:
-        // Generic last-resort approach for unknown platforms
-        this.logger.warn(`No emergency termination strategy for platform ${process.platform}`)
-        processRef.kill('SIGKILL')
-        await setTimeoutPromise(1000)
+    try {
+      switch (process.platform) {
+        case 'darwin':
+          await this.applyMacOSEmergencyTermination(pid)
+          break
+        case 'win32':
+          await this.applyWindowsEmergencyTermination(pid)
+          break
+        case 'linux':
+          await this.applyLinuxEmergencyTermination(processRef, pid)
+          break
+        default:
+          // Generic last-resort approach for unknown platforms
+          this.logger.warn(`No emergency termination strategy for platform ${process.platform}`)
+          processRef.kill('SIGKILL')
+          await setTimeoutPromise(1000)
+      }
+    } catch (error) {
+      this.logger.error(`Emergency termination procedures failed: ${error instanceof Error ? error.message : String(error)}`)
+      // Even if emergency procedures fail, we still want to check if the process is running
     }
     
     // Final verification after emergency termination
@@ -550,26 +560,44 @@ export class Pico8Runner {
     if (!pid) return false
     
     try {
+      // First, check if our internal process reference is still valid
+      // This is the most reliable method if we still have a reference
+      if (this.process && this.process.pid === pid && !this.process.killed) {
+        try {
+          const killResult = this.process.kill(0) // Doesn't actually kill, just tests if we can send signals
+          if (killResult) {
+            this.logger.debug(`Process ${pid} confirmed running via internal reference`)
+            return true
+          }
+        } catch (e) {
+          // If kill(0) throws, the process is gone
+          this.logger.debug(`Process ${pid} not running according to internal reference`)
+          return false
+        }
+      }
+      
+      // Fall back to OS-specific methods
       if (process.platform === 'darwin' || process.platform === 'linux') {
         // On macOS and Linux, we can use ps command
         const { stdout } = await execAsync(`ps -p ${pid} -o pid=`)
-        // If the process exists, stdout will contain the PID
-        return stdout.trim() !== ''
+        const isRunning = stdout.trim() !== ''
+        this.logger.debug(`Process ${pid} running status via ps: ${isRunning}`)
+        return isRunning
       } else if (process.platform === 'win32') {
         // On Windows, we can use tasklist command
         const { stdout } = await execAsync(`tasklist /FI "PID eq ${pid}" /NH`)
-        // If the process exists, stdout will contain information about it
-        return stdout.includes(pid.toString())
+        const isRunning = stdout.includes(pid.toString())
+        this.logger.debug(`Process ${pid} running status via tasklist: ${isRunning}`)
+        return isRunning
       } else {
         // For unsupported platforms, fall back to kill(0) method
         // This will throw an error if the process doesn't exist
-        if (this.process && this.process.pid === pid) {
-          return !this.process.killed && this.process.kill(0)
-        }
+        this.logger.debug(`Unsupported platform, using fallback method for process ${pid}`)
         return false
       }
     } catch (error) {
       // If any error occurs during checking, assume the process is not running
+      this.logger.debug(`Error checking if process ${pid} is running: ${error instanceof Error ? error.message : String(error)}`)
       return false
     }
   }

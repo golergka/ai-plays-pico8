@@ -12,11 +12,12 @@ These instructions must not be summarized or removed from this document.
    - Tasks must have clear acceptance criteria
    - Tasks can be high-level (epics) or low-level (implementation details)
 
-2. **Task States**:
+2. **Task States** (standard sequence):
    - TODO: Not started
-   - IN PROGRESS: Currently being worked on
    - BLOCKED: Cannot proceed due to dependencies
-   - DONE: Completed
+   - IN PROGRESS: Currently being worked on
+   - TESTING: Implementation complete, awaiting human verification
+   - DONE: Completed and verified
    - CANCELLED: Will not be implemented, with reason
 
 3. **Task Maintenance**:
@@ -362,12 +363,12 @@ These instructions must not be summarized or removed from this document.
 - Current termination logic is complex and could be more maintainable
 **Progress**:
 - ✅ Critical emergency fix implemented (T-118)
-- ☐ Architecture refactoring still pending (T-119)
+- 🧪 Architecture refactoring implemented and awaiting testing (T-119)
 - ☐ Platform-specific strategies pending further refinement (T-120)
 - ☐ Comprehensive testing framework pending (T-121)
 **Epic Tasks**:
 - T-118: Emergency fix for reliable PICO-8 process termination ✅ DONE
-- T-119: Refactor termination logic architecture ➡️ TODO
+- T-119: Refactor termination logic architecture 🧪 TESTING
 - T-120: Implement platform-specific termination strategies ➡️ TODO
 - T-121: Create robust termination testing framework ➡️ TODO
 **Relevant Files**:
@@ -409,7 +410,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
 
-### [T-119] Refactor Process Termination Architecture [IN PROGRESS]
+### [T-119] Refactor Process Termination Architecture [TESTING]
 **Dependencies**: T-118
 **Description**: Refactor the process termination code architecture to be more maintainable and modular.
 **Acceptance Criteria**:
@@ -419,13 +420,58 @@ These instructions must not be summarized or removed from this document.
 - ✅ Create clear process lifecycle state management
 - ✅ Add comprehensive logging throughout the termination flow
 **Implementation Status**:
-- Refactored the monolithic `close()` method into multiple smaller, specialized methods
-- Created distinct methods for each termination strategy (standard, OS-specific, emergency)
-- Added platform-specific termination methods (macOS, Windows, Linux)
-- Implemented a clear validation step before termination
-- Added promise-based wait utilities for better code organization
-- Introduced a `TerminationStrategy` enum and `TerminationOptions` interface for better type safety
-- Updated all call sites throughout the codebase to use the new signature
+- ✅ Refactored the monolithic `close()` method into multiple smaller, specialized methods
+- ✅ Created distinct methods for each termination strategy (standard, OS-specific, emergency)
+- ✅ Added platform-specific termination methods (macOS, Windows, Linux)
+- ✅ Implemented a clear validation step before termination
+- ✅ Added promise-based wait utilities for better code organization
+- ✅ Improved the `TerminationStrategy` enum to use numeric values for better performance
+- ✅ Enhanced the process verification method with more robust checks and logging
+- ✅ Added better error handling with try-catch blocks in termination methods
+- ✅ Removed duplicate termination code from index.ts to use centralized runner methods
+- ✅ Added more detailed debug logging throughout the process verification steps
+- ✅ Updated all call sites throughout the codebase to use the new signature
+**Testing Instructions**:
+1. **Setup:**
+   ```bash
+   # Create or update .env file with these settings:
+   PICO8_PATH=/Applications/pico-8/PICO-8.app/Contents/MacOS/pico8
+   PICO8_DEFAULT_CARTRIDGE=input/cartridges/key_test.p8
+   APP_DEBUG=true
+   ```
+
+2. **Test Standard Termination:**
+   ```bash
+   # Run the application
+   bun start
+   # Wait 5 seconds for PICO-8 to fully launch
+   # Press Ctrl+C in the terminal to terminate
+   ```
+   - Verify in the terminal logs that "PICO-8 process terminated successfully" appears
+   - Confirm no PICO-8 processes remain running with: `ps aux | grep pico`
+
+3. **Test Forced Termination:**
+   ```bash
+   # Start the application again
+   bun start
+   # In a separate terminal window, find the process ID
+   ps aux | grep node
+   # Terminate the parent Node.js process with SIGTERM
+   kill -TERM <parent_process_id>
+   ```
+   - Verify the process terminates cleanly with proper shutdown messages
+   - Confirm no PICO-8 processes remain with: `ps aux | grep pico`
+
+4. **Test Emergency Termination:**
+   ```bash
+   # This test might require temporarily modifying the code to force emergency termination
+   # Otherwise, run the normal application and close it with Ctrl+C
+   bun start
+   # Quickly press Ctrl+C multiple times to potentially trigger emergency termination
+   ```
+   - Look for log messages about "attempting emergency procedures"
+   - Verify no processes remain running after termination
+
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts

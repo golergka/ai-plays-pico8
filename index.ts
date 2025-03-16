@@ -9,6 +9,7 @@ import type { CaptureEventData } from './src/types/capture'
 import { setTimeout } from 'node:timers/promises'
 import type { InputEventData } from './src/input/inputCommands'
 import { VisionFeedbackSystem } from './src/llm/visionFeedback'
+import { TerminationStrategy } from './src/types/pico8'
 
 /**
  * Example usage of the PICO-8 Game Runner with Screen Capture and Input Commands
@@ -308,27 +309,12 @@ async function main() {
           await runner.close({ force: true, timeout: 2000 }) // Force kill with shorter timeout
           
           // Extra verification - use strongest OS termination if needed
-          if (runner.isRunning() && runner.process && runner.process.pid) {
-            console.error('CRITICAL: Process still running after close! Using emergency measures...')
-            const pid = runner.process.pid
+          if (runner.isRunning()) {
+            console.error('CRITICAL: Process still running after close! Using emergency termination strategy...')
             
-            // Platform-specific drastic measures
+            // Use the emergency termination strategy which is more robust
             try {
-              if (process.platform === 'darwin') {
-                console.log(`Using kill -9 on PID ${pid}...`)
-                await new Promise<void>((resolve) => {
-                  require('child_process').exec(`kill -9 ${pid} || true`, () => resolve())
-                })
-                console.log(`Using pkill on process name...`)
-                await new Promise<void>((resolve) => {
-                  require('child_process').exec(`pkill -9 -x "pico8" || true`, () => resolve())
-                })
-              } else if (process.platform === 'win32') {
-                console.log(`Using taskkill /F /PID ${pid}...`)
-                await new Promise<void>((resolve) => {
-                  require('child_process').exec(`taskkill /F /PID ${pid}`, () => resolve())
-                })
-              }
+              await runner.close({ force: true, startStrategy: TerminationStrategy.EMERGENCY, timeout: 1000 })
               
               // Wait for termination to take effect
               await setTimeout(500)
@@ -429,30 +415,15 @@ async function gracefulShutdown(
         if (runner.isRunning()) {
           console.error('WARNING: PICO-8 process still running - using emergency measures')
           
-          // Direct OS command as last resort
-          if (runner.process && runner.process.pid) {
-            const pid = runner.process.pid
-            console.log(`Using direct kill command on PID ${pid}...`)
-            
-            // Platform-specific emergency kill
-            if (process.platform === 'darwin') {
-              // On macOS, use kill -9 and pkill
-              console.log('Using kill -9 and pkill commands on macOS...')
-              require('child_process').execSync(`kill -9 ${pid} || true`)
-              require('child_process').execSync('pkill -9 -x "pico8" || true')
-            } else if (process.platform === 'win32') {
-              // On Windows, use taskkill /F
-              console.log('Using taskkill /F command on Windows...')
-              require('child_process').execSync(`taskkill /F /PID ${pid}`)
-            } else if (process.platform === 'linux') {
-              // On Linux, use kill -9 and pkill
-              console.log('Using kill -9 and pkill commands on Linux...')
-              require('child_process').execSync(`kill -9 ${pid} || true`)
-              require('child_process').execSync('pkill -9 -x "pico8" || true')
-            }
+          // Use the emergency termination strategy from the runner for centralized handling
+          try {
+            console.log('Using emergency termination strategy...')
+            await runner.close({ force: true, startStrategy: TerminationStrategy.EMERGENCY, timeout: 1000 })
             
             // Wait a short time for kill to take effect
             await setTimeout(500)
+          } catch (err) {
+            console.error('Error during emergency termination:', err)
           }
           
           // Final verification
