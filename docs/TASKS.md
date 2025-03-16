@@ -1,8 +1,8 @@
 # Tasks
 
-## Current Task ID Counter: T-125
+## Current Task ID Counter: T-126
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-125 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-126 as the next available ID.
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -79,22 +79,35 @@ These instructions must not be summarized or removed from this document.
    - Create clear parent-child task relationships using dependencies
    - Completed tasks should eventually be moved to TASK_ARCHIVE.md for organizational clarity
 
-### [T-125] Implement Test Status Labeling System [TODO]
+### [T-125] Implement Test Status Labeling System [DONE]
 **Dependencies**: None
 **Description**: Create a standardized system for labeling tests based on their expected status, making it immediately clear when test behavior changes unexpectedly.
 **Acceptance Criteria**:
-- Add guidelines to TESTING.md for labeling tests according to implementation status
-- Implement specific status strings in all tests:
+- ✅ Add guidelines to TESTING.md for labeling tests according to implementation status
+- ✅ Implement specific status strings in all tests:
   - For tests expected to fail: "(shouldn't work until T-XXX)"
   - For unexpected success: "(seems like T-XXX is implemented now — you should change my labels)"
   - For tests that should pass: "(expected to work — do not commit before fixing)"
-- Review and update all existing test files to use these status labels
-- Ensure all future tests follow this convention
-- Update test output formatting to highlight these status messages
+- ✅ Review and update all existing test files to use these status labels
+- ✅ Ensure all future tests follow this convention
+- ✅ Update test output formatting to highlight these status messages
+**Implementation**:
+- Added `TestStatusLabel` enum to testRunner.ts with three label types:
+  - `EXPECTED_FAIL`: For tests that are expected to fail until a task is implemented
+  - `UNEXPECTED_PASS`: For tests that were expected to fail but now pass
+  - `EXPECTED_PASS`: For tests that should always pass
+- Added statusLabel property to TestScenario interface
+- Implemented printStatusLabel method to display formatted status messages
+- Updated runScenario and runAllScenarios methods to display status labels
+- Used color coding for status messages to highlight their importance
+- Updated all test files to use the new status label system
+- Added examples of each status type in the test scenarios
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/docs/TESTING.md
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
-- All test files in the src/tests/ directory
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/terminationTest.ts
 
 ---
 

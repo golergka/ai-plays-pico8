@@ -10,7 +10,7 @@ import { InputCommands } from '../input/inputCommands'
 import { Pico8Button } from '../types/input'
 import { setTimeout } from 'node:timers/promises'
 import type { TestScenario, TestContext } from './testRunner'
-// TestMode is only used within the main test runner
+import { TestStatusLabel } from './testRunner'
 import { Logger, LogLevel } from '../utils/logger'
 import { existsSync } from 'node:fs'
 import { getConfig } from '../config/env'
@@ -28,6 +28,9 @@ export const selfTestKeyInput: TestScenario = {
   name: 'self-test-key-input',
   description: 'Fast self-test of key input functionality (no user interaction)',
   requiresUserInteraction: false,
+  statusLabel: {
+    type: TestStatusLabel.EXPECTED_PASS,
+  },
   async run(_options?: TestContext): Promise<void> {
     const logger = new Logger({
       prefix: 'SelfTestKeys',
@@ -132,6 +135,9 @@ export const interactiveKeyTest: TestScenario = {
   name: 'interactive-key-test',
   description: 'Interactive test of key mapping with visual verification',
   requiresUserInteraction: true,
+  statusLabel: {
+    type: TestStatusLabel.EXPECTED_PASS,
+  },
   async run(_options?: TestContext): Promise<void> {
     const logger = new Logger({
       prefix: 'KeyTest',

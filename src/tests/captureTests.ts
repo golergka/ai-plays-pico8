@@ -13,6 +13,7 @@ import { Pico8Runner } from '../runners/pico8Runner'
 import { getConfig } from '../config/env'
 import { TestMode } from './testRunner'
 import type { TestScenario, TestContext } from './testRunner'
+import { TestStatusLabel } from './testRunner'
 import { CaptureEvent } from '../types/capture'
 import { setTimeout } from 'node:timers/promises'
 import path from 'node:path'
@@ -30,19 +31,30 @@ export const captureTestScenarios: TestScenario[] = [
     run: runBasicCaptureTest,
     requiresUserInteraction: false,
     platforms: ['darwin', 'win32', 'linux'],
+    statusLabel: {
+      type: TestStatusLabel.EXPECTED_PASS,
+    },
   },
-  /*{
+  {
     name: 'capture-window-specific',
     description: 'Tests window-specific capture (macOS only)',
-    run: runWindowSpecificCaptureTest,
+    run: async () => { throw new Error('Currently commented out in source code') },
+    requiresUserInteraction: false,
     platforms: ['darwin'],
-  },*/
+    statusLabel: {
+      type: TestStatusLabel.EXPECTED_FAIL,
+      taskId: 'T-111',
+    },
+  },
   {
     name: 'capture-lifecycle',
     description: 'Tests capture lifecycle with PICO-8 shutdown',
     run: runCaptureLifecycleTest,
     requiresUserInteraction: false,
     platforms: ['darwin', 'win32', 'linux'],
+    statusLabel: {
+      type: TestStatusLabel.EXPECTED_PASS,
+    },
   },
 ]
 

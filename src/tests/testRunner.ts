@@ -9,6 +9,18 @@ import { setTimeout } from 'node:timers/promises'
 import { Logger, LogLevel } from '../utils/logger'
 
 /**
+ * Test status label type
+ */
+export enum TestStatusLabel {
+  /** Test should fail (waiting for implementation) */
+  EXPECTED_FAIL = "shouldn't work until", 
+  /** Test unexpectedly passing (implementation exists) */
+  UNEXPECTED_PASS = "seems like",
+  /** Test should pass (core functionality) */
+  EXPECTED_PASS = "expected to work"
+}
+
+/**
  * Test context object passed to test functions
  */
 export interface TestContext {
@@ -34,6 +46,15 @@ export interface TestScenario {
   options?: Record<string, any>
   /** Platforms where this test can run (if not specified, all platforms are supported) */
   platforms?: string[]
+  /** Status label for this test (if applicable) */
+  statusLabel?: {
+    /** Type of status label */
+    type: TestStatusLabel,
+    /** Related task ID (if applicable) */
+    taskId?: string,
+    /** Custom message (if needed) */
+    message?: string
+  }
 }
 
 /**
@@ -134,6 +155,9 @@ export class TestRunner {
       this.logger.info(`Description: ${scenario.description}`)
       this.logger.info(`Mode: ${mode}`)
       
+      // Display status label if present
+      this.printStatusLabel(scenario)
+      
       if (mode === TestMode.INTERACTIVE && scenario.requiresUserInteraction) {
         this.logger.info('\n==== INTERACTIVE TEST ====')
         this.logger.info('This test requires you to observe the results visually')
@@ -203,6 +227,10 @@ export class TestRunner {
         }
         
         this.logger.info(`\nRunning test: ${name}`)
+        this.logger.info(`Description: ${scenario.description}`)
+        
+        // Display status label if present
+        this.printStatusLabel(scenario)
         
         // Run the test with combined options
         const mergedOptions = {
@@ -270,5 +298,40 @@ export class TestRunner {
     console.log('\x1b[36m%s\x1b[0m', `    ${message}    `)
     console.log('\x1b[36m%s\x1b[0m', border)
     console.log('\n')
+  }
+  
+  /**
+   * Format and display the test status label if present
+   * @param scenario The test scenario with potential status label
+   */
+  private printStatusLabel(scenario: TestScenario): void {
+    if (!scenario.statusLabel) return
+    
+    const { type, taskId, message } = scenario.statusLabel
+    let outputMessage = ''
+    let colorCode = '\x1b[0m' // Default/reset
+    
+    switch (type) {
+      case TestStatusLabel.EXPECTED_FAIL:
+        outputMessage = `(${type} ${taskId || ''})`
+        colorCode = '\x1b[33m' // Yellow for warning
+        break
+      case TestStatusLabel.UNEXPECTED_PASS:
+        outputMessage = `(${type} ${taskId || ''} is implemented now — you should change my labels)`
+        colorCode = '\x1b[35m' // Magenta for attention
+        break
+      case TestStatusLabel.EXPECTED_PASS:
+        outputMessage = `(${type} — do not commit before fixing)`
+        colorCode = '\x1b[31m' // Red for critical
+        break
+    }
+    
+    // Add custom message if provided
+    if (message) {
+      outputMessage = `${outputMessage} ${message}`
+    }
+    
+    console.log(`${colorCode}TEST STATUS: ${outputMessage}\x1b[0m`)
+    console.log() // Add empty line after status
   }
 }

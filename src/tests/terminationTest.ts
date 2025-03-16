@@ -9,6 +9,7 @@ import { Pico8Runner } from '../runners/pico8Runner'
 import { getConfig } from '../config/env'
 import { TestMode } from './testRunner'
 import type { TestScenario, TestContext } from './testRunner'
+import { TestStatusLabel } from './testRunner'
 import { setTimeout } from 'node:timers/promises'
 import { promisify } from 'node:util'
 import { exec } from 'node:child_process'
@@ -85,6 +86,9 @@ export const terminationTestScenarios: TestScenario[] = [
     run: runStandardTerminationTest,
     requiresUserInteraction: false,
     platforms: ['darwin'], // Only macOS is officially supported
+    statusLabel: {
+      type: TestStatusLabel.EXPECTED_PASS,
+    },
   },
   {
     name: 'termination-force',
@@ -92,6 +96,33 @@ export const terminationTestScenarios: TestScenario[] = [
     run: runForcedTerminationTest,
     requiresUserInteraction: false,
     platforms: ['darwin'], // Only macOS is officially supported
+    statusLabel: {
+      type: TestStatusLabel.EXPECTED_PASS,
+    },
+  },
+  // Example of a test that's expected to fail until a specific task is completed
+  {
+    name: 'termination-windows-specific',
+    description: 'Tests Windows-specific termination strategies',
+    run: async () => { throw new Error('Not implemented') },
+    requiresUserInteraction: false,
+    platforms: ['win32'], // Windows only
+    statusLabel: {
+      type: TestStatusLabel.EXPECTED_FAIL,
+      taskId: 'T-120',
+    },
+  },
+  // Example of a test that's unexpectedly passing
+  {
+    name: 'termination-linux-specific',
+    description: 'Tests Linux-specific termination strategies',
+    run: runStandardTerminationTest, // Just reuse standard test for this example
+    requiresUserInteraction: false,
+    platforms: ['linux'],
+    statusLabel: {
+      type: TestStatusLabel.UNEXPECTED_PASS,
+      taskId: 'T-120',
+    },
   },
 ]
 

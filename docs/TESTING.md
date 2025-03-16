@@ -10,6 +10,42 @@ This document provides high-level guidance for testing the AI-Plays-PICO8 projec
 4. **This file contains ONLY general principles and main test suite commands**
 5. **For archived tasks, use GrepTool to search in TASK_ARCHIVE.md to find task-specific testing instructions**
 
+## Test Status Labels
+
+All tests must include status labels to clearly indicate their expected behavior. This helps identify when test behavior changes unexpectedly.
+
+### Status Label Types
+
+1. **Tests expected to fail**
+   - Format: `(shouldn't work until T-XXX)`
+   - Example: `Test verifies window-specific capture (shouldn't work until T-111)`
+   - Use when: The test checks functionality not yet implemented
+
+2. **Tests unexpectedly passing**
+   - Format: `(seems like T-XXX is implemented now — you should change my labels)`
+   - Example: `Test verifies process termination (seems like T-119 is implemented now — you should change my labels)`
+   - Use when: A test that was expected to fail is now passing
+
+3. **Tests that should pass**
+   - Format: `(expected to work — do not commit before fixing)`
+   - Example: `Test verifies basic input commands (expected to work — do not commit before fixing)`
+   - Use when: The test checks core functionality that should never break
+
+### Implementation Guidelines
+
+1. **Add labels to all test descriptions**
+   - Place the label at the end of the test description string
+   - Keep the status label format consistent
+
+2. **Review status labels during test runs**
+   - Update labels when functionality is implemented
+   - Investigate unexpected failures in tests labeled as "should pass"
+   - Update labels when unexpected successes occur
+
+3. **Highlight status in test output**
+   - Format test output to make status labels clearly visible
+   - Use color coding to distinguish between different status types
+
 ## Environment Setup
 
 ### Environment Configuration
