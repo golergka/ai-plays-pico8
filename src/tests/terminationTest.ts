@@ -112,16 +112,15 @@ export const terminationTestScenarios: TestScenario[] = [
       taskId: 'T-120',
     },
   },
-  // Example of a test that's unexpectedly passing
+  // Linux tests are now expected to pass since we've refactored the termination architecture
   {
     name: 'termination-linux-specific',
     description: 'Tests Linux-specific termination strategies',
-    run: runStandardTerminationTest, // Just reuse standard test for this example
+    run: runStandardTerminationTest, // Reusing standard test
     requiresUserInteraction: false,
     platforms: ['linux'],
     statusLabel: {
-      type: TestStatusLabel.UNEXPECTED_PASS,
-      taskId: 'T-120',
+      type: TestStatusLabel.EXPECTED_PASS,
     },
   },
 ]
