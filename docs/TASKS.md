@@ -1,5 +1,9 @@
 # Tasks
 
+## Current Task ID Counter: T-123
+
+This counter tracks the highest task ID used so far. When creating a new task, use T-124 as the next available ID.
+
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
 These instructions must not be summarized or removed from this document.
@@ -8,6 +12,8 @@ These instructions must not be summarized or removed from this document.
 
 1. **Task Structure**:
    - Each task has a unique ID (format: T-XXX)
+   - Use the Task ID Counter at the top of this document to determine the next available ID
+   - Increment the counter each time you create a new task
    - Tasks can have dependencies (list of task IDs)
    - Tasks must have clear acceptance criteria
    - Tasks can be high-level (epics) or low-level (implementation details)
@@ -27,8 +33,11 @@ These instructions must not be summarized or removed from this document.
    - When "manual testing" is mentioned, it ALWAYS means asking the human user to test the functionality - AI cannot perform manual testing itself
 
 3. **Task Maintenance**:
-   - Regularly clean up completed tasks
-   - Summarize completed tasks in CHANGELOG.md
+   - When a task is marked as DONE and has been verified, it should LATER be moved to TASK_ARCHIVE.md
+   - Use the archive script to move completed tasks: `./scripts/archive_task.sh T-XXX`
+   - NEVER use the Edit tool directly on the TASK_ARCHIVE.md file
+   - The archive script will automatically extract, append, and remove the task
+   - Links in tasks may refer to archived tasks - use GrepTool to find them in TASK_ARCHIVE.md
    - Break down high-level tasks into low-level tasks as work progresses
    - Do not remove these instructions
    - Reflect on different tasks and make sure that this document doesn't have self-contraditions
@@ -68,6 +77,7 @@ These instructions must not be summarized or removed from this document.
    - If a task is becoming too large or complex, break it down into smaller sub-tasks
    - Each task should be focused on a specific problem or feature
    - Create clear parent-child task relationships using dependencies
+   - Completed tasks should eventually be moved to TASK_ARCHIVE.md for organizational clarity
 
 ---
 
@@ -157,26 +167,6 @@ These instructions must not be summarized or removed from this document.
 - Demo documentation and setup instructions
 
 ## Low-Level Tasks
-
-### [T-101] PICO-8 Game Runner [DONE]
-**Dependencies**: T-001, T-105
-**Description**: Create a module to run PICO-8 games programmatically.
-**Acceptance Criteria**:
-- Can launch PICO-8 with a specific cartridge
-- Can close PICO-8 gracefully
-- Error handling for failed launches
-- Configurable PICO-8 path and options
-- Use environment variables for configuration
-
-### [T-110] Basic PICO-8 Test Cartridge [DONE]
-**Dependencies**: T-101
-**Description**: Create a simple PICO-8 test cartridge for development and testing purposes.
-**Acceptance Criteria**:
-- Simple game loop with recognizable patterns/objects
-- Clear visual elements for screen capture testing
-- Basic interaction via PICO-8 controls
-- Stable and predictable behavior
-- Documentation on how to use the cartridge for testing
 
 ### [T-102] Screen Capture Module [DONE]
 **Dependencies**: T-101
@@ -577,6 +567,49 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/README.md
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/package.json
+
+### [T-123] Task Archival System [DONE]
+**Dependencies**: None
+**Description**: Implement a system for archiving completed tasks to maintain a clean and focused task list while preserving historical information.
+**Acceptance Criteria**:
+- Create a TASK_ARCHIVE.md file with clear usage instructions
+- Update TASKS.md to include guidance on when and how to archive completed tasks
+- Add a task ID counter to TASKS.md to ensure unique task IDs
+- Update task maintenance rules to include archival procedures
+- Ensure cross-reference integrity between active and archived tasks
+- Add guidance for looking up archived tasks in documentation
+- Create script to automate task archival process
+**Implementation Status**:
+- ✅ Created TASK_ARCHIVE.md with warning against loading the entire file
+- ✅ Added task ID counter to TASKS.md with instructions for incrementing
+- ✅ Updated task maintenance rules in TASKS.md
+- ✅ Added guidance for bash-based appending to archive file
+- ✅ Updated TESTING.md with reference to archive lookup
+- ✅ Created script to automate task archival with proper formatting
+- ✅ Successfully tested archival of multiple tasks as examples
+- ✅ Fixed script to ensure proper spacing between archived tasks
+- ✅ Verified error handling for non-existent tasks and tasks not marked as DONE
+**Usage Instructions**:
+To archive a completed task:
+```bash
+# Make the script executable if needed
+chmod +x scripts/archive_task.sh
+
+# Archive a task by ID (e.g., T-101)
+./scripts/archive_task.sh T-101
+```
+The script will:
+1. Extract the task from TASKS.md
+2. Verify it's marked as DONE
+3. Append it to TASK_ARCHIVE.md
+4. Remove it from TASKS.md
+
+Always verify the changes after archival to ensure both files maintain correct formatting.
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/docs/TASKS.md
+- /Users/maxyankov/Projects/ai-plays-pico8/docs/TASK_ARCHIVE.md
+- /Users/maxyankov/Projects/ai-plays-pico8/docs/TESTING.md
+- /Users/maxyankov/Projects/ai-plays-pico8/scripts/archive_task.sh
 
 ### [T-122] Implement Test Runner Timeout [DONE] [URGENT]
 **Dependencies**: T-116

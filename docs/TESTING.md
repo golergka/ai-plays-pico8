@@ -8,6 +8,7 @@ This document provides high-level guidance for testing the AI-Plays-PICO8 projec
 2. **NEVER use generic commands like `bun start` when component-specific tests exist**
 3. **All component-specific test commands are documented ONLY in their respective task entries in TASKS.md**
 4. **This file contains ONLY general principles and main test suite commands**
+5. **For archived tasks, use GrepTool to search in TASK_ARCHIVE.md to find task-specific testing instructions**
 
 ## Environment Setup
 
