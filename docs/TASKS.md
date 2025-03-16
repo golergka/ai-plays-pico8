@@ -435,6 +435,7 @@ These instructions must not be summarized or removed from this document.
   2. macOS-specific forced termination (kill -9, pkill, killall)
 - Remove the emergency termination strategy completely
 - Update tests to only test standard and forced termination
+- Update index.ts to use OS_SPECIFIC instead of EMERGENCY termination strategy
 
 **Implementation Status**:
 - ✅ Refactored the monolithic `close()` method into smaller, specialized methods
@@ -450,12 +451,17 @@ These instructions must not be summarized or removed from this document.
 - ✅ Removed the emergency termination strategy completely
 - ✅ Updated tests to only test standard and forced termination
 - ✅ Fixed test runner to correctly handle multiple test scenarios
+- ✅ Updated index.ts to use OS_SPECIFIC instead of EMERGENCY termination strategy
 
 **Testing Status**:
 - ✅ Automated tests completed and passed (standard and forced termination)
 - ✅ Simplified test framework to focus on macOS only
 - ✅ The emergency termination level and test have been removed
-- ❓ Awaiting human verification with manual testing
+- ❌ Manual testing partially successful:
+  - Automated termination tests (`bun run test:termination`) work correctly
+  - Manual testing with `bun start` + Ctrl+C fails - the Node.js process exits but PICO-8 remains running
+  - Console error: "Assertion failed: (napi_get_value_string_utf8(env, args[0], NULL, 0, &bundle_length) == napi_ok), function capture, file apple.m, line 140."
+  - Terminal output indicates the node process was terminated by SIGABRT signal
 
 **Testing Instructions**:
 1. **Setup:**

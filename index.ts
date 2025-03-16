@@ -310,16 +310,16 @@ async function main() {
           
           // Extra verification - use strongest OS termination if needed
           if (runner.isRunning()) {
-            console.error('CRITICAL: Process still running after close! Using emergency termination strategy...')
+            console.error('CRITICAL: Process still running after close! Using OS-specific termination strategy...')
             
-            // Use the emergency termination strategy which is more robust
+            // Use the OS-specific termination strategy for macOS
             try {
-              await runner.close({ force: true, startStrategy: TerminationStrategy.EMERGENCY, timeout: 1000 })
+              await runner.close({ force: true, startStrategy: TerminationStrategy.OS_SPECIFIC, timeout: 1000 })
               
               // Wait for termination to take effect
               await setTimeout(500)
             } catch (err) {
-              console.error('Error during emergency termination:', err)
+              console.error('Error during OS-specific termination:', err)
             }
           }
         }
@@ -413,24 +413,24 @@ async function gracefulShutdown(
         
         // Double-check process is truly gone
         if (runner.isRunning()) {
-          console.error('WARNING: PICO-8 process still running - using emergency measures')
+          console.error('WARNING: PICO-8 process still running - using OS-specific measures')
           
-          // Use the emergency termination strategy from the runner for centralized handling
+          // Use the OS-specific termination strategy for macOS
           try {
-            console.log('Using emergency termination strategy...')
-            await runner.close({ force: true, startStrategy: TerminationStrategy.EMERGENCY, timeout: 1000 })
+            console.log('Using macOS-specific termination strategy...')
+            await runner.close({ force: true, startStrategy: TerminationStrategy.OS_SPECIFIC, timeout: 1000 })
             
             // Wait a short time for kill to take effect
             await setTimeout(500)
           } catch (err) {
-            console.error('Error during emergency termination:', err)
+            console.error('Error during OS-specific termination:', err)
           }
           
           // Final verification
           if (runner.isRunning()) {
             console.error('CRITICAL: PICO-8 process could not be terminated - may need manual cleanup')
           } else {
-            console.log('Confirmed PICO-8 process is terminated after emergency measures')
+            console.log('Confirmed PICO-8 process is terminated after macOS-specific measures')
           }
         } else {
           console.log('Confirmed PICO-8 process is terminated')
