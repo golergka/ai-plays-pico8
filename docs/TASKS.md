@@ -17,8 +17,13 @@ These instructions must not be summarized or removed from this document.
    - BLOCKED: Cannot proceed due to dependencies
    - IN PROGRESS: Currently being worked on
    - TESTING: Implementation complete, awaiting human verification
-   - DONE: Completed and verified
+   - DONE: Completed and verified (all tests passing and human verified)
    - CANCELLED: Will not be implemented, with reason
+   
+   **Important State Transition Rules:**
+   - A task should ONLY move from TESTING to DONE when ALL tests pass
+   - If any tests fail during the TESTING phase, the task MUST be moved back to IN PROGRESS state
+   - Human verification is required for all state transitions from TESTING to DONE
 
 3. **Task Maintenance**:
    - Regularly clean up completed tasks
@@ -363,12 +368,12 @@ These instructions must not be summarized or removed from this document.
 - Current termination logic is complex and could be more maintainable
 **Progress**:
 - ✅ Critical emergency fix implemented (T-118)
-- 🧪 Architecture refactoring implemented and awaiting testing (T-119)
+- 🛠️ Architecture refactoring implemented but tests failing (T-119)
 - ☐ Platform-specific strategies pending further refinement (T-120)
 - ☐ Comprehensive testing framework pending (T-121)
 **Epic Tasks**:
 - T-118: Emergency fix for reliable PICO-8 process termination ✅ DONE
-- T-119: Refactor termination logic architecture 🧪 TESTING
+- T-119: Refactor termination logic architecture 🔄 IN PROGRESS
 - T-120: Implement platform-specific termination strategies ➡️ TODO
 - T-121: Create robust termination testing framework ➡️ TODO
 **Relevant Files**:
@@ -410,7 +415,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
 
-### [T-119] Refactor Process Termination Architecture [TESTING]
+### [T-119] Refactor Process Termination Architecture [IN PROGRESS]
 **Dependencies**: T-118
 **Description**: Refactor the process termination code architecture to be more maintainable and modular.
 **Acceptance Criteria**:
@@ -419,6 +424,7 @@ These instructions must not be summarized or removed from this document.
 - ✅ Introduce proper error handling and fallback mechanisms
 - ✅ Create clear process lifecycle state management
 - ✅ Add comprehensive logging throughout the termination flow
+- ❌ Ensure all tests pass consistently for all termination methods
 **Implementation Status**:
 - ✅ Refactored the monolithic `close()` method into multiple smaller, specialized methods
 - ✅ Created distinct methods for each termination strategy (standard, OS-specific, emergency)
@@ -431,6 +437,13 @@ These instructions must not be summarized or removed from this document.
 - ✅ Removed duplicate termination code from index.ts to use centralized runner methods
 - ✅ Added more detailed debug logging throughout the process verification steps
 - ✅ Updated all call sites throughout the codebase to use the new signature
+- ❌ Fix the termination tests which currently fail for certain termination methods
+**Testing Status**:
+- First two termination methods (standard and forced) were tested and passed
+- Emergency termination method test failed and needs to be fixed
+- The task was incorrectly moved to TESTING status despite test failures
+- Per process guidelines, task has been moved back to IN PROGRESS until all tests pass
+
 **Testing Instructions**:
 1. **Setup:**
    ```bash
@@ -440,7 +453,20 @@ These instructions must not be summarized or removed from this document.
    APP_DEBUG=true
    ```
 
-2. **Test Standard Termination:**
+2. **Run Automated Termination Tests:**
+   ```bash
+   # Run all termination tests
+   bun run test:termination
+   
+   # Or run specific test scenarios
+   bun run test:termination:standard
+   bun run test:termination:force
+   bun run test:termination:emergency
+   ```
+   - ALL tests must pass before moving to TESTING state
+   - Pay special attention to the emergency termination test which fails
+
+3. **Test Standard Termination Manually:**
    ```bash
    # Run the application
    bun start
@@ -450,7 +476,7 @@ These instructions must not be summarized or removed from this document.
    - Verify in the terminal logs that "PICO-8 process terminated successfully" appears
    - Confirm no PICO-8 processes remain running with: `ps aux | grep pico`
 
-3. **Test Forced Termination:**
+4. **Test Forced Termination Manually:**
    ```bash
    # Start the application again
    bun start
@@ -462,7 +488,7 @@ These instructions must not be summarized or removed from this document.
    - Verify the process terminates cleanly with proper shutdown messages
    - Confirm no PICO-8 processes remain with: `ps aux | grep pico`
 
-4. **Test Emergency Termination:**
+5. **Test Emergency Termination Manually:**
    ```bash
    # This test might require temporarily modifying the code to force emergency termination
    # Otherwise, run the normal application and close it with Ctrl+C

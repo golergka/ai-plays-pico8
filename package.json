@@ -16,6 +16,10 @@
     "test:input:self": "bun run src/tests/index.ts self-test-key-input --self",
     "test:capture": "bun run src/tests/index.ts capture-basic capture-lifecycle --self",
     "test:capture:window": "bun run src/tests/index.ts capture-window-specific --self",
+    "test:termination": "bun run src/tests/index.ts termination-standard termination-force termination-emergency --self",
+    "test:termination:standard": "bun run src/tests/index.ts termination-standard --self",
+    "test:termination:force": "bun run src/tests/index.ts termination-force --self",
+    "test:termination:emergency": "bun run src/tests/index.ts termination-emergency --self",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
