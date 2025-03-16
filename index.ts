@@ -8,8 +8,10 @@ import { CaptureEvent } from './src/types/capture'
 import type { CaptureEventData } from './src/types/capture'
 import { setTimeout } from 'node:timers/promises'
 import type { InputEventData } from './src/input/inputCommands'
-import { VisionFeedbackSystem } from './src/llm/visionFeedback'
+// We don't need to import VisionFeedbackSystem here as we're using the dedicated demo module
+// import { VisionFeedbackSystem } from './src/llm/visionFeedback'
 import { TerminationStrategy } from './src/types/pico8'
+import { runVisionFeedbackDemo } from './src/llm/visionDemo'
 
 /**
  * Example usage of the PICO-8 Game Runner with Screen Capture and Input Commands
@@ -20,11 +22,46 @@ async function main() {
   let runner: Pico8Runner | null = null
   let capture: ScreenCapture | null = null
   let input: InputCommands | null = null
-  let visionSystem: VisionFeedbackSystem | null = null
   
   try {
     // Get configuration from environment variables
     const config = getConfig()
+    
+    // Check for vision demo mode
+    const runVisionDemo = process.argv.includes('--vision-demo')
+    
+    // If in vision demo mode, run the dedicated demo
+    if (runVisionDemo) {
+      console.log('Running Vision Feedback Demo')
+      
+      // Parse step count if specified
+      let steps = 3
+      const stepsArg = process.argv.find(arg => arg.startsWith('--steps='))
+      if (stepsArg) {
+        const stepCount = parseInt(stepsArg.split('=')[1], 10)
+        if (!isNaN(stepCount) && stepCount > 0) {
+          steps = stepCount
+        }
+      }
+      
+      console.log(`Vision demo will run with ${steps} steps`)
+      
+      try {
+        const reportPath = await runVisionFeedbackDemo({
+          steps,
+          delayBetweenSteps: 2000
+        })
+        
+        console.log(`Vision demo completed successfully!`)
+        console.log(`Report saved to: ${reportPath}`)
+        process.exit(0)
+      } catch (error) {
+        console.error('Error running vision demo:', error)
+        process.exit(1)
+      }
+      
+      return
+    }
     
     // Create PICO-8 runner with environment configuration
     runner = new Pico8Runner({
@@ -36,16 +73,16 @@ async function main() {
     console.log('PICO-8 runner initialized successfully')
     
     // Variable to track if we have a valid cartridge to launch
-    let cartridgePath: string | undefined
+    let cartridgePath: string = ''
     
     // Check for default cartridge if specified
     if (config.PICO8_DEFAULT_CARTRIDGE && config.PICO8_DEFAULT_CARTRIDGE !== '') {
-      cartridgePath = config.PICO8_DEFAULT_CARTRIDGE
+      cartridgePath = config.PICO8_DEFAULT_CARTRIDGE || ''
       if (existsSync(cartridgePath)) {
         console.log(`Default cartridge found: ${cartridgePath}`)
       } else {
         console.warn(`Warning: Default cartridge not found at ${cartridgePath}`)
-        cartridgePath = undefined
+        cartridgePath = ''
       }
     } else {
       console.log('No default cartridge specified, launching PICO-8 without a cartridge')
@@ -75,7 +112,7 @@ async function main() {
     
     // Launch PICO-8 with cartridge if specified
     console.log('Launching PICO-8...')
-    const result = await runner.launch(cartridgePath)
+    const result = await runner.launch(cartridgePath || '')
     
     if (result.success) {
       console.log(`PICO-8 launched successfully (PID: ${result.pid})`)
@@ -91,11 +128,7 @@ async function main() {
             capture.stop()
           }
           
-          // Stop vision system if running
-          if (visionSystem) {
-            console.log('Stopping vision feedback system due to PICO-8 process exit')
-            visionSystem.stop()
-          }
+          // No need to stop vision system here as we're using the dedicated module
           
           // Make sure we exit the application
           process.exit(0)
@@ -226,77 +259,11 @@ async function main() {
         console.log('Shutdown complete, exiting application.')
         process.exit(0)
       } else {
-        /**
-         * Vision Feedback System Demo
-         * 
-         * This section starts the vision feedback system that:
-         * 1. Captures screenshots of the PICO-8 window
-         * 2. Sends them to an LLM for analysis
-         * 3. Receives text feedback and suggested commands
-         * 4. Executes the commands to control the game
-         * 5. Runs for 60 seconds before gracefully shutting down
-         */
-        console.log('Starting vision feedback system...')
-      
-        try {
-          // Ensure we have the OpenAI API key
-          if (!config.OPENAI_API_KEY) {
-            throw new Error('OPENAI_API_KEY environment variable is required for vision feedback')
-          }
-          
-          // Make sure screen capture is enabled
-          if (!config.CAPTURE_ENABLED || !capture) {
-            throw new Error('Screen capture must be enabled for vision feedback system')
-          }
-          
-          // Initialize the vision feedback system
-          console.log('Initializing vision feedback system...')
-          visionSystem = new VisionFeedbackSystem()
-          
-          // Wait briefly for PICO-8 window to fully initialize
-          console.log('Waiting briefly for PICO-8 to initialize...')
-          await setTimeout(3000)
-          
-          // Start the vision feedback system
-          console.log('Starting vision feedback loop for 60 seconds...')
-          
-          // Start the vision feedback system
-          visionSystem.start().catch(error => {
-            console.error('Error in vision feedback system:', error)
-          })
-          
-          // Run for exactly 10 seconds then stop
-          const demoTime = 10000 // 10 seconds
-          console.log(`Vision feedback system will run for ${demoTime/1000} seconds...`)
-          
-          // Wait for the specified demo time
-          await setTimeout(demoTime)
-          
-          // Stop the vision feedback system
-          if (visionSystem) {
-            console.log('Stopping vision feedback system...')
-            visionSystem.stop()
-          }
-          
-          // Wait for vision system to finish processing
-          await setTimeout(1000)
-          
-          console.log('Vision feedback system demo completed')
-        } catch (error) {
-          console.error('Error during vision feedback demo:', error)
-        }
-        
         // Set up graceful shutdown handler
-        setupGracefulShutdown(runner, capture, input, visionSystem)
+        setupGracefulShutdown(runner, capture, input)
         
         // Demo is complete, now kill PICO-8 with force
-        console.log('Vision feedback demo completed, forcefully shutting down PICO-8...')
-        
-        // First make sure vision feedback system is stopped
-        if (visionSystem) {
-          console.log('Stopping vision feedback system...')
-          visionSystem.stop()
-        }
+        console.log('Demo completed, forcefully shutting down PICO-8...')
         
         // Make sure screen capture is stopped
         if (capture && capture.isActive()) {
@@ -345,18 +312,17 @@ async function main() {
 function setupGracefulShutdown(
   runner: Pico8Runner, 
   capture: ScreenCapture | null,
-  input: InputCommands | null,
-  visionSystem: VisionFeedbackSystem | null = null
+  input: InputCommands | null
 ): void {
   // Handle Ctrl+C and other termination signals
   process.on('SIGINT', async () => {
     console.log('\nShutting down...')
-    await gracefulShutdown(runner, capture, input, visionSystem)
+    await gracefulShutdown(runner, capture, input)
   })
   
   process.on('SIGTERM', async () => {
     console.log('\nReceived termination signal. Shutting down...')
-    await gracefulShutdown(runner, capture, input, visionSystem)
+    await gracefulShutdown(runner, capture, input)
   })
 }
 
@@ -372,15 +338,9 @@ function setupGracefulShutdown(
 async function gracefulShutdown(
   runner: Pico8Runner, 
   capture: ScreenCapture | null,
-  _input: InputCommands | null,
-  visionSystem: VisionFeedbackSystem | null = null
+  _input: InputCommands | null
 ): Promise<void> {
   try {
-    // Stop vision feedback system if running
-    if (visionSystem) {
-      console.log('Stopping vision feedback system...')
-      visionSystem.stop()
-    }
     
     // Stop screen capture if running
     if (capture && capture.isActive()) {

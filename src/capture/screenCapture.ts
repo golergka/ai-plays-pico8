@@ -197,10 +197,10 @@ export class ScreenCapture extends EventEmitter {
             this.logger.debug(`Cropping to region: x=${x}, y=${y}, width=${width}, height=${height}`)
             
             // Apply safe bounds checking to prevent crop errors
-            const safeX = Math.max(0, Math.min(x, fullScreenMetadata.width - 1))
-            const safeY = Math.max(0, Math.min(y, fullScreenMetadata.height - 1))
-            const safeWidth = Math.min(width, fullScreenMetadata.width - safeX)
-            const safeHeight = Math.min(height, fullScreenMetadata.height - safeY)
+            const safeX = Math.max(0, Math.min(x, (fullScreenMetadata.width || 1920) - 1))
+            const safeY = Math.max(0, Math.min(y, (fullScreenMetadata.height || 1080) - 1))
+            const safeWidth = Math.min(width, (fullScreenMetadata.width || 1920) - safeX)
+            const safeHeight = Math.min(height, (fullScreenMetadata.height || 1080) - safeY)
             
             this.logger.debug(`Using safe crop region: x=${safeX}, y=${safeY}, width=${safeWidth}, height=${safeHeight}`)
             
@@ -406,15 +406,26 @@ export class ScreenCapture extends EventEmitter {
         // for testing purposes only (marked with debug flag)
         if (this.config.debug && windows.length > 0) {
           this.logger.debug('Falling back to first available window for testing purposes')
-          return { 
-            region: {
-              x: windows[0].bounds.x,
-              y: windows[0].bounds.y,
-              width: windows[0].bounds.width,
-              height: windows[0].bounds.height
-            },
-            windowId: (windows[0] as activeWin.MacOSResult).id
+          const firstWindow = windows[0];
+          if (firstWindow && firstWindow.bounds) {
+            const region: CaptureRegion = {
+              x: firstWindow.bounds.x,
+              y: firstWindow.bounds.y,
+              width: firstWindow.bounds.width,
+              height: firstWindow.bounds.height
+            };
+            
+          if (process.platform === 'darwin') {
+              return {
+                region,
+                windowId: (firstWindow as activeWin.MacOSResult).id
+              };
+          } else {
+              return { region };
           }
+          }
+          
+          return { region: undefined }
         }
         
         return { region: undefined }

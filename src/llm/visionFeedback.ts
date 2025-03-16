@@ -1,33 +1,21 @@
 import OpenAI from 'openai'
 import { promises as fs } from 'fs'
 import { join } from 'path'
-import { logger } from '../utils/logger'
+import { createLogger } from '../utils/logger'
 import { getConfig } from '../config/env'
 import { FUNCTION_SCHEMAS } from '../types/llm'
 import type { 
   LLMCommand, 
   LLMConfig, 
-  LLMVisionResponse
+  LLMVisionResponse,
+  MessageContent
 } from '../types/llm'
 import { ScreenCapture } from '../capture/screenCapture'
+// Import InputCommands directly for creating input handlers
 import { InputCommands } from '../input/inputCommands'
 
-// OpenAI-specific types for the API
-type ContentPartText = {
-  type: 'text'
-  text: string
-}
-
-type ContentPartImage = {
-  type: 'image_url'
-  image_url: {
-    url: string
-    detail: 'high' | 'low' | 'auto'
-  }
-}
-
 // Create a logger for this module
-const log = logger.child('visionFeedback')
+const logger = createLogger('VisionFeedback')
 
 /**
  * Class for handling vision-based LLM feedback in PICO-8 games
@@ -35,11 +23,11 @@ const log = logger.child('visionFeedback')
 export class VisionFeedbackSystem {
   private openai: OpenAI
   private config: LLMConfig
-  private isRunning: boolean = false
   private captureDir: string
   private captureCount: number = 0
   private screenCapture: ScreenCapture | null = null
   private inputCommands: InputCommands
+  private runHistory: string[] = []
 
   /**
    * Creates a new vision feedback system
@@ -47,19 +35,23 @@ export class VisionFeedbackSystem {
   constructor() {
     const envConfig = getConfig()
 
+    // Check for API key in environment (shell environment takes precedence)
+    // Get the API key, following TypeScript's strict access rules
+    const apiKey = process.env.OPENAI_API_KEY || envConfig['OPENAI_API_KEY'] || ''
+    
     // Ensure we have an API key
-    if (!envConfig.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is required')
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is required (either in .env file or shell environment)')
     }
 
     // Initialize OpenAI client
     this.openai = new OpenAI({
-      apiKey: envConfig.OPENAI_API_KEY,
+      apiKey, // Will use the API key from environment
     })
 
     // Set up configuration
     this.config = {
-      apiKey: envConfig.OPENAI_API_KEY,
+      apiKey,
       model: envConfig.OPENAI_MODEL || 'gpt-4-vision-preview',
       maxTokens: envConfig.OPENAI_MAX_TOKENS || 300,
       temperature: envConfig.OPENAI_TEMPERATURE || 0.5,
@@ -76,139 +68,241 @@ export class VisionFeedbackSystem {
       debug: envConfig.APP_DEBUG === true
     })
     
-    log.info('Vision feedback system initialized')
+    logger.info('Vision feedback system initialized')
   }
 
   /**
-   * Start the vision feedback loop
+   * Process a single game screen capture and get LLM analysis
+   * @param customPrompt Optional custom prompt to send with the image
+   * @returns The LLM response and image path
    */
-  async start(): Promise<void> {
-    this.isRunning = true
-    log.info('Starting vision feedback loop')
+  async processGameScreen(customPrompt?: string): Promise<{
+    response: LLMVisionResponse | null, 
+    imagePath: string | null
+  }> {
+    try {
+      // Take a screenshot
+      const imagePath = await this.captureScreen()
+      
+      if (!imagePath) {
+        logger.warn('Failed to capture screenshot')
+        return { response: null, imagePath: null }
+      }
 
-    // Create a conversation history for OpenAI
-    const systemMessage = {
-      role: 'system' as const,
-      content: this.getSystemPrompt()
+      // Get feedback from LLM
+      const feedback = await this.analyzeCapturedImage(
+        imagePath, 
+        customPrompt || 'Analyze this PICO-8 game screen and provide feedback.'
+      )
+      
+      return { response: feedback, imagePath }
+    } catch (error) {
+      logger.error(`Error processing game screen: ${error instanceof Error ? error.message : String(error)}`)
+      return { response: null, imagePath: null }
     }
+  }
 
-    // Start the feedback loop
-    while (this.isRunning) {
-      try {
-        // Take a screenshot
-        const imagePath = await this.captureScreen()
-        
-        if (!imagePath) {
-          log.warn('Failed to capture screenshot, waiting before retry')
-          await new Promise(resolve => setTimeout(resolve, this.config.captureInterval))
-          continue
+  /**
+   * Run a simple vision feedback session with a fixed number of steps
+   * @param steps Number of capture-analyze-respond steps to perform
+   * @param captureDelayMs Delay between captures in milliseconds
+   * @returns Summary of the session
+   */
+  async runSimpleSession(steps: number = 3, captureDelayMs: number = 2000): Promise<string> {
+    logger.info(`Starting simple vision feedback session with ${steps} steps`)
+    
+    this.runHistory = []
+    let sessionTimestamp = Date.now()
+    let sessionSummary = `# PICO-8 Vision Feedback Session\n\nSession started: ${new Date(sessionTimestamp).toLocaleString()}\n\n`
+    
+    // Clear previous run markdown files
+    const sessionFilePath = join(this.captureDir, `session_${sessionTimestamp}.md`)
+    
+    for (let i = 0; i < steps; i++) {
+      logger.info(`Step ${i+1}/${steps}: Capturing and analyzing screen`)
+      
+      // Process game screen
+      const { response, imagePath } = await this.processGameScreen()
+      
+      if (!response || !imagePath) {
+        logger.warn(`Step ${i+1}/${steps}: Failed to process screen`)
+        sessionSummary += `## Step ${i+1}: Failed\n\nUnable to capture or analyze screen.\n\n`
+        continue
+      }
+      
+      // Get relative path for markdown
+      const relativeImagePath = imagePath.split('/').pop() || imagePath
+      
+      // Add to session summary
+      sessionSummary += `## Step ${i+1}: Analysis\n\n`
+      sessionSummary += `![Game Screen](${relativeImagePath})\n\n`
+      sessionSummary += `### Feedback\n\n${response.feedback}\n\n`
+      
+      // Process commands if any
+      if (response.commands && response.commands.length > 0) {
+        sessionSummary += `### Commands\n\n`
+        for (const command of response.commands) {
+          sessionSummary += `- ${command.type} ${command.button}${command.duration ? ` for ${command.duration}ms` : ''}\n`
+          
+          // Execute the command
+          try {
+            await this.executeSingleCommand(command)
+            sessionSummary += `  - ✅ Executed successfully\n`
+          } catch (error) {
+            sessionSummary += `  - ❌ Failed: ${error instanceof Error ? error.message : String(error)}\n`
+          }
         }
+        sessionSummary += '\n'
+      }
+      
+      // Add step to history
+      this.runHistory.push(sessionSummary)
+      
+      // Save current progress to file
+      await fs.writeFile(sessionFilePath, sessionSummary)
+      
+      // Wait before next capture
+      if (i < steps - 1) {
+        await new Promise(resolve => setTimeout(resolve, captureDelayMs))
+      }
+    }
+    
+    // Final summary
+    sessionSummary += `\n## Session Complete\n\nTotal steps: ${steps}\nSession ended: ${new Date().toLocaleString()}\n`
+    
+    // Save final result
+    await fs.writeFile(sessionFilePath, sessionSummary)
+    logger.info(`Session complete. Output saved to ${sessionFilePath}`)
+    
+    return sessionFilePath
+  }
 
-        // Get screenshot data as base64
-        const imageData = await fs.readFile(imagePath)
-        const base64Image = imageData.toString('base64')
+  /**
+   * Analyze a captured image using the OpenAI Vision API
+   * @param imagePath Path to the image file
+   * @param promptText Text prompt to send with the image
+   * @returns Structured response from the LLM
+   */
+  private async analyzeCapturedImage(
+    imagePath: string, 
+    promptText: string
+  ): Promise<LLMVisionResponse | null> {
+    try {
+      // Get screenshot data as base64
+      const imageData = await fs.readFile(imagePath)
+      const base64Image = imageData.toString('base64')
 
-        // Create properly typed content elements
-        const textContent: ContentPartText = { 
-          type: 'text', 
-          text: 'Analyze this PICO-8 game screen and provide feedback. What do you see?' 
-        }
-        
-        const imageContent: ContentPartImage = { 
+      // Create message content with text and image
+      const content: MessageContent = [
+        { type: 'text', text: promptText },
+        { 
           type: 'image_url', 
           image_url: { 
             url: `data:image/png;base64,${base64Image}`,
             detail: 'high'
           } 
         }
-        
-        // Create user message with image
-        const userMessage = {
-          role: 'user' as const,
-          content: [textContent, imageContent]
-        }
-
-        // Get feedback from LLM
-        log.info('Sending screenshot to OpenAI for analysis')
-        const response = await this.openai.chat.completions.create({
-          model: this.config.model,
-          messages: [systemMessage, userMessage],
-          max_tokens: this.config.maxTokens,
-          temperature: this.config.temperature,
-          tools: [{ type: 'function', function: FUNCTION_SCHEMAS.analyzeGameState }],
-        })
-
-        // Process the response
-        if (!response.choices || response.choices.length === 0) {
-          log.error('No choices returned in the response')
-          continue
-        }
-        
-        const message = response.choices[0]?.message
-        
-        if (!message) {
-          log.error('No message in response')
-          continue
-        }
-        
-        // Handle function calling response
-        let feedback: LLMVisionResponse | null = null
-        
-        if (message.tool_calls && message.tool_calls.length > 0) {
-          const functionCall = message.tool_calls[0]
-          
-          if (functionCall && functionCall.function.name === 'analyzeGameState') {
-            try {
-              feedback = JSON.parse(functionCall.function.arguments) as LLMVisionResponse
-            } catch (error) {
-              log.error(`Failed to parse function call arguments: ${error instanceof Error ? error.message : String(error)}`)
-            }
-          }
-        }
-
-        // If we got valid feedback, process it
-        if (feedback) {
-          // Log the feedback
-          log.info(`Received LLM feedback: ${feedback.feedback}`)
-
-          // Process any commands
-          if (feedback.commands && feedback.commands.length > 0) {
-            await this.processCommands(feedback.commands)
-          }
-
-        } else {
-          log.warn('No valid feedback received from LLM')
-        }
-
-        // Wait for next capture
-        await new Promise(resolve => setTimeout(resolve, this.config.captureInterval))
-      } catch (error) {
-        log.error(`Error in vision feedback loop: ${error instanceof Error ? error.message : String(error)}`)
-        await new Promise(resolve => setTimeout(resolve, this.config.captureInterval))
+      ]
+      
+      // System message with the instructions
+      const systemMessage = {
+        role: 'system' as const,
+        content: this.getSystemPrompt()
       }
+      
+      // User message with the content
+      const userMessage = {
+        role: 'user' as const,
+        content
+      }
+
+      // Send request to OpenAI
+      logger.info('Sending image to OpenAI for analysis')
+      const response = await this.openai.chat.completions.create({
+        model: this.config.model,
+        messages: [systemMessage, userMessage],
+        max_tokens: this.config.maxTokens,
+        temperature: this.config.temperature,
+        tools: [{ type: 'function', function: FUNCTION_SCHEMAS.analyzeGameState }],
+      })
+
+      // Process the response
+      if (!response.choices || response.choices.length === 0) {
+        logger.error('No choices returned in the response')
+        return null
+      }
+      
+      const message = response.choices[0]?.message
+      
+      if (!message) {
+        logger.error('No message in response')
+        return null
+      }
+      
+      // Handle function calling response
+      let feedback: LLMVisionResponse | null = null
+      
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        const functionCall = message.tool_calls[0]
+        
+        if (functionCall && functionCall.function.name === 'analyzeGameState') {
+          try {
+            feedback = JSON.parse(functionCall.function.arguments) as LLMVisionResponse
+          } catch (error) {
+            logger.error(`Failed to parse function call arguments: ${error instanceof Error ? error.message : String(error)}`)
+          }
+        }
+      }
+      
+      // If function calling didn't work, use the content as plain text
+      if (!feedback && message.content) {
+        feedback = {
+          feedback: message.content
+        }
+      }
+
+      return feedback
+    } catch (error) {
+      logger.error(`Error analyzing image: ${error instanceof Error ? error.message : String(error)}`)
+      return null
     }
   }
 
   /**
-   * Stop the vision feedback loop
+   * Execute a single game command
+   * @param command The command to execute
    */
-  stop(): void {
-    log.info('Stopping vision feedback loop')
-    this.isRunning = false
+  private async executeSingleCommand(command: LLMCommand): Promise<void> {
+    logger.info(`Executing command: ${command.type} ${command.button}`)
+    
+    switch (command.type) {
+      case 'press':
+        await this.inputCommands.pressButton(command.button)
+        break
+      case 'release':
+        await this.inputCommands.releaseButton(command.button)
+        break
+      case 'tap':
+        await this.inputCommands.tapButton(command.button, command.duration)
+        break
+      default:
+        throw new Error(`Unknown command type: ${command.type}`)
+    }
   }
 
   /**
    * Capture a screenshot of the PICO-8 window
+   * @returns Path to the captured image, or null if capture failed
    */
   private async captureScreen(): Promise<string | null> {
     try {
       // Initialize screen capture if needed
       if (!this.screenCapture) {
         this.screenCapture = new ScreenCapture({
-          interval: 1000, // This doesn't matter as we're using it for one-time captures
+          interval: 1000, // Doesn't matter for one-time captures
           saveToDisk: true,
           outputDir: this.captureDir,
-          imageFormat: 'png' as const,
+          imageFormat: 'png',
           imageQuality: 90,
           windowTitle: 'PICO-8',
           autoStopOnWindowClose: true,
@@ -223,49 +317,24 @@ export class VisionFeedbackSystem {
       // Ensure the captures directory exists
       await fs.mkdir(this.captureDir, { recursive: true })
       
-      // Take the screenshot using the screen capture instance
+      // Take the screenshot
       const result = await this.screenCapture.captureScreen()
       
-      if (result.success) {
+      if (result.success && result.buffer) {
         // Save buffer to file
         await fs.writeFile(imagePath, result.buffer)
         
-        log.debug(`Screenshot captured: ${imagePath}`)
+        logger.debug(`Screenshot captured: ${imagePath}`)
         return imagePath
       } else {
-        log.error(`Failed to capture screenshot: ${result.error}`)
+        // Handle both success and error results
+        const errorMessage = 'error' in result ? result.error : 'Unknown error';
+        logger.error(`Failed to capture screenshot: ${errorMessage}`)
         return null
       }
     } catch (error) {
-      log.error(`Failed to capture screenshot: ${error instanceof Error ? error.message : String(error)}`)
+      logger.error(`Error capturing screenshot: ${error instanceof Error ? error.message : String(error)}`)
       return null
-    }
-  }
-
-  /**
-   * Process commands received from the LLM
-   */
-  private async processCommands(commands: LLMCommand[]): Promise<void> {
-    for (const command of commands) {
-      try {
-        log.info(`Processing command: ${command.type} ${command.button}`)
-        
-        switch (command.type) {
-          case 'press':
-            await this.inputCommands.pressButton(command.button)
-            break
-          case 'release':
-            await this.inputCommands.releaseButton(command.button)
-            break
-          case 'tap':
-            await this.inputCommands.tapButton(command.button, command.duration || 100)
-            break
-          default:
-            log.warn(`Unknown command type: ${command.type}`)
-        }
-      } catch (error) {
-        log.error(`Failed to process command: ${error instanceof Error ? error.message : String(error)}`)
-      }
     }
   }
 

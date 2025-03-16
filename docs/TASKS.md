@@ -1,8 +1,8 @@
 # Tasks
 
-## Current Task ID Counter: T-127
+## Current Task ID Counter: T-130
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-127 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-130 as the next available ID.
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -200,28 +200,30 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-113] Improve PICO-8 Process Lifecycle Management [TESTING]
-**Dependencies**: T-101, T-103
+### [T-113] Improve PICO-8 Process Lifecycle Management [BLOCKED]
+**Dependencies**: T-101, T-103, T-129
 **Description**: Enhance control over the PICO-8 process lifecycle and improve input verification.
 **Acceptance Criteria**:
 - ✅ Application has full control over PICO-8 process lifecycle (launch, run, terminate)
 - ✅ Automatically terminate PICO-8 when the application exits or at the end of the demo
 - ✅ Ensure the demo script doesn't wait for cartridge to load specifically
 - ✅ Use simple fixed delay for cartridge loading (see archived task T-124 for detailed findings)
-- ✅ Structured input patterns send specific commands with visible feedback
-- ✅ Clear visual indication that keyboard inputs are working
+- Structured input patterns send specific commands with visible feedback
+- Clear visual indication that keyboard inputs are working
 - ✅ Improved error handling for PICO-8 process failures
 **Implementation Status**:
 - ✅ Added explicit process exit handler to ensure application terminates when PICO-8 exits
 - ✅ Improved forced termination logic to ensure PICO-8 process is killed reliably
 - ✅ Added timeout-based demo that runs for 10 seconds before terminating
 - ✅ Enhanced error handling in the process termination flow
-- ✅ Fixed key mapping for PICO-8 input verification by using AppleScript key codes
+- Partial key mapping for PICO-8 input verification using AppleScript key codes
 - ✅ Added robust process termination with platform-specific commands and verification
 - ✅ Added isProcessRunning helper method to reliably check process status
 - ✅ Fixed force kill logic with multiple termination strategies
 - ✅ Improved error handling for window focus changes during tests
-- ✅ Fixed arrow key mapping issues by using key codes instead of ASCII characters
+- Preliminary arrow key mapping improvements using key codes instead of ASCII characters
+**Implementation Notes**:
+- Task now blocked by T-129 for proper key mapping verification using LLM vision feedback
 **Testing Instructions**:
 1. **Automated Self-Tests** (run these first):
    ```bash
@@ -317,7 +319,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
 
 ### [T-104] Game State Detector [BLOCKED]
-**Dependencies**: T-102, T-115
+**Dependencies**: T-102, T-115, T-128
 **Description**: Detect game state from screen captures.
 **Acceptance Criteria**:
 - Identify game screens (title, gameplay, game over)
@@ -325,7 +327,7 @@ These instructions must not be summarized or removed from this document.
 - Detect success/failure conditions
 - Configurable for different games
 **Implementation Notes**:
-- This task is now blocked by T-115 as we'll be using LLM vision capabilities for game state detection
+- This task is now blocked by T-115 and T-128 as we'll be using LLM vision capabilities for game state detection
 
 ### [T-105] Environment Configuration System [DONE]
 **Dependencies**: T-001
@@ -393,3 +395,72 @@ These instructions must not be summarized or removed from this document.
 - Easily replaceable with more sophisticated logging systems in the future
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/utils/logger.ts
+
+### [T-127] OpenAI Vision Integration via API [DONE]
+**Dependencies**: T-111
+**Description**: Implement basic OpenAI vision model integration to analyze PICO-8 screen captures.
+**Acceptance Criteria**:
+- ✅ Set up OpenAI Vision SDK connection 
+- ✅ Create environment variables for API keys and configuration
+- ✅ Implement function to send single screen capture to vision model
+- ✅ Create prompt template system for game state analysis
+- ✅ Return structured response from model for programmatic use
+- ✅ Add basic error handling and rate limiting support
+**Implementation Details**:
+- ✅ Created VisionFeedbackSystem class for vision model integration
+- ✅ Integrated OpenAI SDK for sending images to GPT-4 Vision
+- ✅ Implemented screen capture integration with existing capture system
+- ✅ Created structured prompt system for game state analysis
+- ✅ Added support for function calling to receive structured data back
+- ✅ Implemented markdown session reporting with screenshots and LLM feedback
+- ✅ Created simple demo command for testing: `bun run vision:demo`
+- ✅ Added configurable steps for multi-step analysis sessions
+**Testing Instructions**:
+1. Ensure you have an OpenAI API key set in your environment
+2. Create a `.env` file based on the `.env.example` or set environment variables
+3. Run the demo:
+   ```bash
+   # Basic demo with 3 steps
+   bun run vision:demo
+   
+   # Demo with custom number of steps
+   bun run vision:demo:steps
+   ```
+4. Check the generated report in the captures directory
+**Note**: The system requires an OpenAI API key with access to GPT-4 Vision
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts (main system)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionDemo.ts (demo runner)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/llm.ts (type definitions)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/config/env.ts (configuration)
+
+### [T-128] Game State Detection via Vision Models [TODO]
+**Dependencies**: T-127
+**Description**: Build exploratory testing framework using vision models to detect game state from screen captures.
+**Acceptance Criteria**:
+- Create testing harness for vision model feedback
+- Implement basic game state detection logic
+- Design structured prompts for different game detection tasks
+- Document vision model response patterns
+- Integrate with existing screen capture system
+- Add examples for different PICO-8 game states
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/test_game.p8
+
+### [T-129] Keyboard Mapping Verification via LLM [TODO]
+**Dependencies**: T-127
+**Description**: Use vision model to verify and fix keyboard input mapping for PICO-8.
+**Acceptance Criteria**:
+- Create vision prompt to detect highlighted keys in PICO-8 key_test cartridge
+- Implement systematic testing of all input keys using vision feedback
+- Create mapping between detected key highlights and input commands
+- Fix input mapping issues in inputCommands.ts
+- Document correct key mappings for all standard PICO-8 inputs
+- Implement verification loop to ensure key mappings are correct
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts

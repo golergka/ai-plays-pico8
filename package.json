@@ -9,6 +9,9 @@
     "preinstall": "node -e \"if(process.env.npm_execpath.includes('npm')) throw new Error('Please use Bun with this project: https://bun.sh')\"",
     "start": "bun run index.ts",
     "test:keys": "bun run index.ts --key-test",
+    "vision:demo": "bun run index.ts --vision-demo",
+    "vision:demo:steps": "bun run index.ts --vision-demo --steps=5",
+    "vision:dev": "TSC_COMPILE_ON_ERROR=true TS_NODE_TRANSPILE_ONLY=true bun run index.ts --vision-demo",
     "test": "bun run src/tests/index.ts",
     "test:self": "bun run src/tests/index.ts --self",
     "test:interactive": "bun run src/tests/index.ts",
@@ -26,7 +29,7 @@
     "capture-window": "^0.2.0",
     "dotenv": "^16.4.1",
     "keyboardjs": "^2.7.0",
-    "openai": "^4.86.2",
+    "openai": "^4.87.3",
     "robotjs": "0.6.0",
     "screenshot-desktop": "^1.15.1",
     "sharp": "^0.33.5"
