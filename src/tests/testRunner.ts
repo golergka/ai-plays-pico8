@@ -9,6 +9,16 @@ import { setTimeout } from 'node:timers/promises'
 import { Logger, LogLevel } from '../utils/logger'
 
 /**
+ * Test context object passed to test functions
+ */
+export interface TestContext {
+  /** Test mode (self-test, interactive, etc.) */
+  mode: TestMode
+  /** Additional options passed to the test */
+  [key: string]: any
+}
+
+/**
  * Test scenario configuration
  */
 export interface TestScenario {
@@ -17,11 +27,13 @@ export interface TestScenario {
   /** Description of what the test verifies */
   description: string
   /** Function that actually runs the test */
-  run: (options?: any) => Promise<void>
+  run: (options?: TestContext) => Promise<void>
   /** Whether this test requires user interaction to validate */
   requiresUserInteraction: boolean
   /** Optional additional configuration options */
   options?: Record<string, any>
+  /** Platforms where this test can run (if not specified, all platforms are supported) */
+  platforms?: string[]
 }
 
 /**

@@ -14,6 +14,8 @@ export interface Pico8Config {
   windowed?: boolean
   /** Sound volume (0-256) */
   soundVolume?: number
+  /** Enable debug logging */
+  debug?: boolean
 }
 
 /**
