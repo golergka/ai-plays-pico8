@@ -4,6 +4,11 @@
 
 This counter tracks the highest task ID used so far. When creating a new task, use T-131 as the next available ID.
 
+## Current Priorities
+1. [T-130] Fix Native Module Crash in Vision Integration - URGENT
+2. [T-127] Complete OpenAI Vision Integration - IN PROGRESS
+3. [T-129] Keyboard Mapping Verification via LLM - BLOCKED by T-127, T-130
+
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
 These instructions must not be summarized or removed from this document.
@@ -396,7 +401,7 @@ These instructions must not be summarized or removed from this document.
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/utils/logger.ts
 
-### [T-127] OpenAI Vision Integration via API [DONE]
+### [T-127] OpenAI Vision Integration via API [IN PROGRESS]
 **Dependencies**: T-111
 **Description**: Implement basic OpenAI vision model integration to analyze PICO-8 screen captures.
 **Acceptance Criteria**:
@@ -406,6 +411,7 @@ These instructions must not be summarized or removed from this document.
 - ✅ Create prompt template system for game state analysis
 - ✅ Return structured response from model for programmatic use
 - ✅ Add basic error handling and rate limiting support
+- Ensure proper directory creation and error handling (now part of T-130)
 **Implementation Details**:
 - ✅ Created VisionFeedbackSystem class for vision model integration
 - ✅ Integrated OpenAI SDK for sending images to GPT-4 Vision
@@ -415,7 +421,15 @@ These instructions must not be summarized or removed from this document.
 - ✅ Implemented markdown session reporting with screenshots and LLM feedback
 - ✅ Created simple demo command for testing: `bun run vision:demo`
 - ✅ Added configurable steps for multi-step analysis sessions
-**Testing Instructions**:
+**Implementation Issues**:
+- Initial implementation has critical bugs that cause crashes (see T-130)
+- Captures directory is not properly created before use
+- Native module errors in capture-window library
+- PICO-8 process not terminated properly when application crashes
+**Testing Status**:
+- Initial manual testing revealed critical issues that need to be fixed before further testing
+- See task T-130 for details on the issues and implementation plan
+**Testing Instructions**: (Do not test until T-130 is completed)
 1. Ensure you have an OpenAI API key set in your environment
 2. Create a `.env` file based on the `.env.example` or set environment variables
 3. Run the demo:
