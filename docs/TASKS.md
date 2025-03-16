@@ -380,26 +380,27 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-117] Process Termination Improvement Epic [IN PROGRESS]
+### [T-117] Process Termination Improvement Epic [DONE]
 **Dependencies**: T-101, T-113
-**Description**: Parent task for PICO-8 process termination improvements. PICO-8 processes frequently fail to terminate properly when the application exits, requiring manual termination. This is a critical issue that must be fixed.
+**Description**: Parent task for PICO-8 process termination improvements. PICO-8 processes frequently fail to terminate properly when the application exits, requiring manual termination. This is a critical issue that has been resolved.
 **Current Issues**:
 - ~~PICO-8 processes remain running in the background after application exits~~ ✅ Fixed in T-118
 - ~~Automated tests leave zombie processes~~ ✅ Fixed in T-118
-- Current termination logic is complex and could be more maintainable
+- ~~Current termination logic is complex and could be more maintainable~~ ✅ Fixed in T-119
 **Progress**:
 - ✅ Critical emergency fix implemented (T-118)
 - ✅ Architecture refactoring complete (T-119)
-- ☐ Platform-specific strategies pending further refinement (T-120)
-- ☐ Comprehensive testing framework pending (T-121)
+- ✅ Termination architecture focused on macOS support only (decision to not implement Windows/Linux)
+- ✅ Basic termination tests implemented
 **Epic Tasks**:
 - T-118: Emergency fix for reliable PICO-8 process termination ✅ DONE
 - T-119: Refactor termination logic architecture ✅ DONE
-- T-120: Implement platform-specific termination strategies ➡️ TODO
-- T-121: Create robust termination testing framework ➡️ TODO
+- T-120: Clean up cross-platform references in termination code ➡️ LOW PRIORITY
+- T-121: Enhance termination testing for critical scenarios ➡️ LOW PRIORITY
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/terminationTest.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
 ### [T-118] Emergency Fix for PICO-8 Process Termination [DONE] [URGENT]
@@ -532,30 +533,28 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-120] Implement Platform-Specific Termination Strategies [TODO]
+### [T-120] Clean Up Cross-Platform References in Termination Code [LOW PRIORITY]
 **Dependencies**: T-119
-**Description**: Create dedicated termination strategies optimized for each supported platform.
+**Description**: Remove unnecessary cross-platform references from termination code since we're focusing only on macOS support.
 **Acceptance Criteria**:
-- Create platform-specific termination modules (macOS, Windows, Linux)
-- Implement macOS-specific termination using effective commands and verification
-- Implement Windows-specific termination with proper task management
-- Implement Linux-specific termination with signal handling
-- Add platform detection and automatic strategy selection
+- Remove Windows/Linux platform-specific code from termination tests
+- Update documentation to clearly indicate macOS-only support
+- Clean up any remaining multi-platform references in the codebase
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/terminationTest.ts
 
-### [T-121] Create Robust Termination Testing Framework [TODO]
+### [T-121] Enhance Termination Testing for Critical Scenarios [LOW PRIORITY]
 **Dependencies**: T-118, T-119
-**Description**: Develop a comprehensive testing framework for process termination.
+**Description**: Expand the existing termination tests to cover more edge cases on macOS.
 **Acceptance Criteria**:
-- Create end-to-end tests for process lifecycle (spawn, manage, terminate)
-- Add tests for various termination scenarios (graceful, forced, application crash)
-- Implement verification to ensure no zombie processes remain
-- Add automated test harness for termination testing
-- Create manual testing procedures for human verification
+- Add tests for application crash scenarios
+- Improve verification to detect and handle zombie processes
+- Create simple manual testing procedures for human verification
+- Document expected behavior for all termination scenarios
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/terminationTest.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
 
 ### [T-116] Create Structured Testing Framework [DONE]
