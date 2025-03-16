@@ -4,6 +4,8 @@
 
 These instructions must not be summarized or removed from this document.
 
+**Testing Requirements**: For general testing guidelines and approach, refer to [TESTING.md](TESTING.md). Each task requiring testing should include specific test procedures directly in its description.
+
 1. **Task Structure**:
    - Each task has a unique ID (format: T-XXX)
    - Tasks can have dependencies (list of task IDs)
@@ -49,6 +51,16 @@ These instructions must not be summarized or removed from this document.
    - High-level tasks (Epics) are larger features or user stories
    - Low-level tasks are specific implementation details or sub-tasks
    - Leaf-level (in terms of trees) tasks should be something that can be implemented in a single session
+
+7. **Critical Rules for Task Management**:
+   - ALWAYS use this file (TASKS.md) as the SINGLE SOURCE OF TRUTH for ALL work
+   - ALL bugs, issues, features, and work items MUST be tracked here
+   - NEVER create separate files like ISSUES.md, BUGS.md, etc.
+   - When finding bugs or issues, add them directly here as new tasks
+   - Mark critical bugs and urgent fixes with [URGENT] tag
+   - If a task is becoming too large or complex, break it down into smaller sub-tasks
+   - Each task should be focused on a specific problem or feature
+   - Create clear parent-child task relationships using dependencies
 
 ---
 
@@ -337,25 +349,94 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-117] Refactor Process Termination Logic [TODO]
+### [T-117] Process Termination Improvement Epic [IN PROGRESS] [URGENT]
 **Dependencies**: T-101, T-113
-**Description**: Refactor and improve PICO-8 process termination logic to prevent zombie processes.
-**Acceptance Criteria**:
-- Split the monolithic `close()` method into smaller, focused helper functions
-- Create platform-specific termination modules (macOS, Windows, Linux)
-- Add multiple verification stages with proper error handling
-- Implement emergency cleanup measures that reliably terminate processes
-- Ensure no zombie PICO-8 processes remain after application exits
-- Add end-to-end tests for process lifecycle
-**Implementation Notes**:
-- Address the issues documented in ISSUES.md (#1)
-- Focus on code modularity and maintainability
-- Add comprehensive logging to help trace termination problems
-- Consider using Node's 'node:process' module for cleaner termination
+**Description**: Parent task for PICO-8 process termination improvements. PICO-8 processes frequently fail to terminate properly when the application exits, requiring manual termination. This is a critical issue that must be fixed.
+**Current Issues**:
+- PICO-8 processes remain running in the background after application exits
+- Automated tests leave zombie processes
+- Current termination logic is complex and unreliable
+**Epic Tasks**:
+- T-118: Emergency fix for reliable PICO-8 process termination
+- T-119: Refactor termination logic architecture
+- T-120: Implement platform-specific termination strategies
+- T-121: Create robust termination testing framework
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
+### [T-118] Emergency Fix for PICO-8 Process Termination [IN PROGRESS] [URGENT]
+**Dependencies**: T-101
+**Description**: Critical immediate fix to ensure PICO-8 processes are reliably terminated when the application exits or tests run.
+**Reproduction Steps**:
+1. Run test suite with `bun run test:capture`
+2. Test fails with native module error
+3. PICO-8 process remains running in the background
+**Acceptance Criteria**:
+- ✅ Implement more aggressive process termination in the close() method
+- ✅ Add direct OS-specific termination commands (kill -9, taskkill, etc.)
+- ✅ Add multiple verification checks to confirm process termination
+- ✅ Update shutdown handlers in index.ts to use these more reliable methods
+- ✅ Verify termination across various exit scenarios
+**Implementation**:
+- Refactored the process termination logic to use a tiered approach:
+  1. Standard Node.js process termination (SIGTERM/SIGKILL)
+  2. OS-specific commands (kill -9, taskkill, pkill)
+  3. Emergency measures for stubborn processes
+- Added multiple verification points throughout termination flow
+- Improved error handling and logging for each termination stage
+- Added platform-specific termination strategies for macOS, Windows, and Linux
+- Removed duplicate termination code from test files
+- Added rigorous verification to ensure processes are truly terminated
+- Added comprehensive logging to trace termination problems
+**Testing**:
+- Verified passing TypeScript checks with strict mode enabled
+- Confirmed process termination works as expected with direct testing
+- Ensured no zombie processes remain after tests
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
+
+### [T-119] Refactor Process Termination Architecture [TODO]
+**Dependencies**: T-118
+**Description**: Refactor the process termination code architecture to be more maintainable and modular.
+**Acceptance Criteria**:
+- Split the monolithic `close()` method into smaller, focused helper functions
+- Separate graceful and forced termination logic
+- Introduce proper error handling and fallback mechanisms
+- Create clear process lifecycle state management
+- Add comprehensive logging throughout the termination flow
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+
+### [T-120] Implement Platform-Specific Termination Strategies [TODO]
+**Dependencies**: T-119
+**Description**: Create dedicated termination strategies optimized for each supported platform.
+**Acceptance Criteria**:
+- Create platform-specific termination modules (macOS, Windows, Linux)
+- Implement macOS-specific termination using effective commands and verification
+- Implement Windows-specific termination with proper task management
+- Implement Linux-specific termination with signal handling
+- Add platform detection and automatic strategy selection
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+
+### [T-121] Create Robust Termination Testing Framework [TODO]
+**Dependencies**: T-118, T-119
+**Description**: Develop a comprehensive testing framework for process termination.
+**Acceptance Criteria**:
+- Create end-to-end tests for process lifecycle (spawn, manage, terminate)
+- Add tests for various termination scenarios (graceful, forced, application crash)
+- Implement verification to ensure no zombie processes remain
+- Add automated test harness for termination testing
+- Create manual testing procedures for human verification
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/testRunner.ts
 
 ### [T-116] Create Structured Testing Framework [DONE]
 **Dependencies**: T-101, T-103

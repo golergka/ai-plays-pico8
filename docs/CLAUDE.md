@@ -64,6 +64,10 @@ bun remove <package>      # Remove a package
 
 ## Code Style Guidelines
 - **TypeScript**: Strict typing with explicit return types
+  - **CRITICAL**: NEVER disable TypeScript's strict features in tsconfig.json
+  - **CRITICAL**: NEVER use `// @ts-ignore` or `// @ts-nocheck` comments
+  - Instead of disabling strict checking, fix the underlying issues properly
+  - For unused parameters in interfaces/callbacks, use the underscore prefix: `_paramName`
 - **Formatting**: 2-space indentation, no semicolons
 - **Imports**: Use ESM imports, group by type (built-in, external, internal)
 - **Naming**: camelCase for variables/functions, PascalCase for classes/interfaces
@@ -81,23 +85,6 @@ bun remove <package>      # Remove a package
 - Example: `feat(controls): add button mapping for PICO-8 controls`
 
 ## Documents and workflows
-- For project tasks and tracking, refer to TASKS.md.
+- For project tasks and tracking, refer to TASKS.md (ALL tasks, bugs, features, and issues must be tracked there).
 - For documentation maintenance guidelines, refer to MAINTENANCE.md.
-
-## Important Implementation Notes
-
-### Manual Testing Requirements
-Remember that almost ALL changes to this project require manual testing by the human. This is especially true for:
-1. Process management (PICO-8 launching, termination)
-2. Input systems (keyboard control)
-3. Screen capture
-4. Any integration between components
-
-When providing testing instructions:
-- Keep tests BRIEF - use short timeouts (5-10 seconds) for testing basic functionality
-- Use `bun start` instead of longer commands
-- Be specific about what success looks like
-- Provide clear steps to reproduce and verify fixes
-- List specific failure modes to watch for
-
-After implementing changes, you MUST provide testing instructions and not consider the task complete until the human confirms successful testing. Do not skip the manual testing step!
+- For testing guidelines and workflow, refer to TESTING.md.
