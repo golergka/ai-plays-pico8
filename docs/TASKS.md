@@ -473,18 +473,23 @@ These instructions must not be summarized or removed from this document.
 - Ensure proper handling of PICO-8 process termination after test completion
 - Implement safer fallback mechanisms when native capture fails
 - Add additional error handling for native module interactions
+- Create captures directory if it doesn't exist before attempting to use it
 - Verify the fix works reliably across multiple test runs
 **Issue Details**:
 ```
 Assertion failed: (napi_get_value_string_utf8(env, args[0], NULL, 0, &bundle_length) == napi_ok), function capture, file apple.m, line 140.
 error: script "vision:demo" was terminated by signal SIGABRT (Abort)
 ```
+**Additional Issues**:
+- Captures folder does not exist, causing additional failures
+- PICO-8 process remains running after crash
 **Implementation Strategy**:
-1. Investigate the specific native module failure in the capture-window library
-2. Implement a safer fallback mechanism that prevents crashes
-3. Improve error handling in the VisionFeedbackSystem class
-4. Ensure proper cleanup of resources when crashes occur
-5. Add a special testing mode that uses screenshots instead of live capture
+1. Fix directory creation issue to ensure captures folder exists before use
+2. Investigate the specific native module failure in the capture-window library
+3. Implement a safer fallback mechanism that prevents crashes
+4. Improve error handling in the VisionFeedbackSystem class
+5. Ensure proper cleanup of resources when crashes occur
+6. Add a special testing mode that uses screenshots instead of live capture
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionDemo.ts
