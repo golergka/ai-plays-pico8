@@ -174,4 +174,4 @@ When testing, consider these common scenarios for verification:
 - **Edge Cases**: Does it handle boundary conditions?
 - **Integration**: Does it work correctly with other components?
 
-Remember: Specific test procedures for individual features should be documented in their corresponding task entries in TASKS.md.
+Remember: Specific test procedures for individual features should be documented in their corresponding task entries in TASKS.md. For archived tasks, use GrepTool to search in TASK_ARCHIVE.md to find task-specific testing instructions.
