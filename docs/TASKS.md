@@ -1,6 +1,6 @@
 # Tasks
 
-## Current Task ID Counter: T-123
+## Current Task ID Counter: T-124
 
 This counter tracks the highest task ID used so far. When creating a new task, use T-124 as the next available ID.
 
@@ -294,7 +294,7 @@ These instructions must not be summarized or removed from this document.
 - Application has full control over PICO-8 process lifecycle (launch, run, terminate) ✅
 - Automatically terminate PICO-8 when the application exits or at the end of the demo ✅
 - Ensure the demo script doesn't wait for cartridge to load specifically ✅
-- Demo should continuously send input commands for sufficient time to handle any cartridge loading delays
+- Demo should continuously send input commands for sufficient time to handle any cartridge loading delays [CLARIFICATION NEEDED - See T-124]
 - Structured input patterns send specific commands with visible feedback ✅
 - Clear visual indication that keyboard inputs are working ✅
 - Improved error handling for PICO-8 process failures ✅
@@ -610,6 +610,19 @@ Always verify the changes after archival to ensure both files maintain correct f
 - /Users/maxyankov/Projects/ai-plays-pico8/docs/TASK_ARCHIVE.md
 - /Users/maxyankov/Projects/ai-plays-pico8/docs/TESTING.md
 - /Users/maxyankov/Projects/ai-plays-pico8/scripts/archive_task.sh
+
+### [T-124] Evaluate Continuous Input Necessity and Clean Up If Needed [TODO]
+**Dependencies**: T-113
+**Description**: Evaluate whether the continuous input functionality during cartridge loading is necessary, and clean up related code if it's not needed for our test cartridges.
+**Acceptance Criteria**:
+- Clarify the exact requirement for "Demo should continuously send input commands for sufficient time to handle any cartridge loading delays"
+- Determine if sendContinuousInputForLoading function is necessary for our self-written test cartridges
+- Either justify keeping the implementation or remove it (with proper documentation updates)
+- Update T-113 status accordingly once decision is made
+- Ensure no functionality is broken regardless of decision
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/docs/TASKS.md
 
 ### [T-122] Implement Test Runner Timeout [DONE] [URGENT]
 **Dependencies**: T-116
