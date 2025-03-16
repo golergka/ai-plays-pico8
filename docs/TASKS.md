@@ -1,8 +1,8 @@
 # Tasks
 
-## Current Task ID Counter: T-130
+## Current Task ID Counter: T-131
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-130 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-131 as the next available ID.
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -464,3 +464,28 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/input/cartridges/key_test.p8
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
+
+### [T-130] Fix Native Module Crash in Vision Integration [URGENT] [TODO]
+**Dependencies**: T-127
+**Description**: Fix critical crash issue in the OpenAI vision integration related to the capture-window native module.
+**Acceptance Criteria**:
+- Fix the native module assertion failure in the capture-window library
+- Ensure proper handling of PICO-8 process termination after test completion
+- Implement safer fallback mechanisms when native capture fails
+- Add additional error handling for native module interactions
+- Verify the fix works reliably across multiple test runs
+**Issue Details**:
+```
+Assertion failed: (napi_get_value_string_utf8(env, args[0], NULL, 0, &bundle_length) == napi_ok), function capture, file apple.m, line 140.
+error: script "vision:demo" was terminated by signal SIGABRT (Abort)
+```
+**Implementation Strategy**:
+1. Investigate the specific native module failure in the capture-window library
+2. Implement a safer fallback mechanism that prevents crashes
+3. Improve error handling in the VisionFeedbackSystem class
+4. Ensure proper cleanup of resources when crashes occur
+5. Add a special testing mode that uses screenshots instead of live capture
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionFeedback.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/llm/visionDemo.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
