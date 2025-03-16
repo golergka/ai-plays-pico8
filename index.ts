@@ -168,8 +168,9 @@ async function main() {
       })
       
       // Wait for PICO-8 to partially initialize
-      // Note: We don't wait for the cartridge to fully load as that would require game-specific detection
-      // Instead, we'll start sending inputs continuously which will work whether the cartridge is loaded or not
+      // Note: We use a simple fixed delay rather than waiting for the cartridge to fully load
+      // This works well for our simple test cartridges which have minimal loading requirements
+      // For more complex games with loading screens, this approach might need to be enhanced
       console.log('Waiting briefly for PICO-8 window to appear...')
       await setTimeout(3000)
       
