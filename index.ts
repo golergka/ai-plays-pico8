@@ -36,9 +36,12 @@ async function main() {
       
       // Parse step count if specified
       let steps = 3
-      const stepsArg = process.argv.find(arg => arg.startsWith('--steps='))
+      const stepsArg = process.argv.find(arg => typeof arg === 'string' && arg.startsWith('--steps='))
       if (stepsArg) {
-        const stepCount = parseInt(stepsArg.split('=')[1], 10)
+        const parts = stepsArg.split('=')
+        const stepValueMaybe = parts[1]
+        const stepStr = typeof stepValueMaybe === 'string' ? stepValueMaybe : ''
+        const stepCount = parseInt(stepStr, 10)
         if (!isNaN(stepCount) && stepCount > 0) {
           steps = stepCount
         }
@@ -73,16 +76,16 @@ async function main() {
     console.log('PICO-8 runner initialized successfully')
     
     // Variable to track if we have a valid cartridge to launch
-    let cartridgePath: string = ''
+    let cartridgePath: string | undefined = undefined
     
     // Check for default cartridge if specified
     if (config.PICO8_DEFAULT_CARTRIDGE && config.PICO8_DEFAULT_CARTRIDGE !== '') {
-      cartridgePath = config.PICO8_DEFAULT_CARTRIDGE || ''
+      cartridgePath = config.PICO8_DEFAULT_CARTRIDGE
       if (existsSync(cartridgePath)) {
         console.log(`Default cartridge found: ${cartridgePath}`)
       } else {
         console.warn(`Warning: Default cartridge not found at ${cartridgePath}`)
-        cartridgePath = ''
+        cartridgePath = undefined
       }
     } else {
       console.log('No default cartridge specified, launching PICO-8 without a cartridge')
@@ -112,7 +115,7 @@ async function main() {
     
     // Launch PICO-8 with cartridge if specified
     console.log('Launching PICO-8...')
-    const result = await runner.launch(cartridgePath || '')
+    const result = await runner.launch(cartridgePath)
     
     if (result.success) {
       console.log(`PICO-8 launched successfully (PID: ${result.pid})`)
