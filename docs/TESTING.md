@@ -164,6 +164,34 @@ For each task requiring manual testing:
 5. **Human Verification**: Request human confirmation of successful testing
 6. **Status Update**: Only mark tasks as DONE after human verification
 
+## Bug Verification Process
+
+When fixing bugs, follow this strict verification process:
+
+1. **Document Exact Reproduction Steps**:
+   - Record the precise commands that trigger the bug
+   - Document the exact error messages or unexpected behaviors
+   - Note the environment conditions (OS, configuration) if relevant
+   - Include these reproduction steps in the task description
+
+2. **Verify Using Original Reproduction Steps**:
+   - Always test bug fixes using the EXACT same reproduction steps
+   - Never consider a bug fixed until it passes the original reproduction test
+   - Don't rely on similar or alternative tests as substitutes
+
+3. **Bug Fix Verification Checklist**:
+   - ✓ Run the exact command or procedure that originally triggered the bug
+   - ✓ Verify the error no longer occurs
+   - ✓ Check that the behavior now matches expected functionality
+   - ✓ Look for any new or related issues that might have been introduced
+   - ✓ Run automated tests to ensure no regressions
+
+4. **Status Update Rules**:
+   - Keep bug tasks in IN PROGRESS state until verified with original steps
+   - Only move to TESTING when the fix passes all verification checks
+   - Only move to DONE after human confirmation of the fix
+   - If verification fails, move back to IN PROGRESS and document findings
+
 ## Common Test Scenarios
 
 When testing, consider these common scenarios for verification:
