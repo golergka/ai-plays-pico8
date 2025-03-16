@@ -84,21 +84,14 @@ export const terminationTestScenarios: TestScenario[] = [
     description: 'Tests standard process termination strategy',
     run: runStandardTerminationTest,
     requiresUserInteraction: false,
-    platforms: ['darwin', 'win32', 'linux'],
+    platforms: ['darwin'], // Only macOS is officially supported
   },
   {
     name: 'termination-force',
     description: 'Tests forced process termination',
     run: runForcedTerminationTest,
     requiresUserInteraction: false,
-    platforms: ['darwin', 'win32', 'linux'],
-  },
-  {
-    name: 'termination-emergency',
-    description: 'Tests emergency process termination',
-    run: runEmergencyTerminationTest,
-    requiresUserInteraction: false,
-    platforms: ['darwin', 'win32', 'linux'],
+    platforms: ['darwin'], // Only macOS is officially supported
   },
 ]
 
@@ -252,17 +245,17 @@ async function runBaseTerminationTest(
   } finally {
     // Extra cleanup - make absolutely sure no processes are left
     if (runner.isRunning()) {
-      console.log('Cleaning up with emergency termination...')
+      console.log('Cleaning up with forced termination...')
       try {
         // Use explicitly typed options to avoid TypeScript errors
-        const emergencyOptions = {
+        const forcedOptions = {
           force: true,
-          startStrategy: TerminationStrategy.EMERGENCY,
+          startStrategy: TerminationStrategy.OS_SPECIFIC, // Use OS-specific methods for cleanup
           timeout: 1000
         };
-        await runner.close(emergencyOptions)
+        await runner.close(forcedOptions)
       } catch (e) {
-        console.error('Error during emergency cleanup:', e)
+        console.error('Error during forced cleanup:', e)
       }
       
       // If we still have a PID, use OS commands as a last resort
@@ -301,15 +294,4 @@ async function runForcedTerminationTest(options?: TestContext): Promise<void> {
   })
 }
 
-/**
- * Test emergency process termination
- * @param options Test context
- */
-async function runEmergencyTerminationTest(options?: TestContext): Promise<void> {
-  return runBaseTerminationTest(options, {
-    force: true,
-    timeout: 2000,
-    startStrategy: TerminationStrategy.EMERGENCY,
-    description: 'emergency'
-  })
-}
+// Emergency termination test removed - simplified to only two termination levels

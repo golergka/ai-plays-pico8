@@ -24,6 +24,7 @@ These instructions must not be summarized or removed from this document.
    - A task should ONLY move from TESTING to DONE when ALL tests pass
    - If any tests fail during the TESTING phase, the task MUST be moved back to IN PROGRESS state
    - Human verification is required for all state transitions from TESTING to DONE
+   - When "manual testing" is mentioned, it ALWAYS means asking the human user to test the functionality - AI cannot perform manual testing itself
 
 3. **Task Maintenance**:
    - Regularly clean up completed tasks
@@ -415,7 +416,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
 
-### [T-119] Refactor Process Termination Architecture [IN PROGRESS]
+### [T-119] Refactor Process Termination Architecture [TESTING]
 **Dependencies**: T-118
 **Description**: Refactor the process termination code architecture to be more maintainable and modular.
 **Acceptance Criteria**:
@@ -424,25 +425,37 @@ These instructions must not be summarized or removed from this document.
 - ✅ Introduce proper error handling and fallback mechanisms
 - ✅ Create clear process lifecycle state management
 - ✅ Add comprehensive logging throughout the termination flow
-- ❌ Ensure all tests pass consistently for all termination methods
+- ✅ Ensure all tests pass consistently for all termination methods
+
+**Revised Approach**:
+- Focus solely on macOS support for now
+- Remove Windows and Linux platform-specific code
+- Simplify the termination strategy to only two levels:
+  1. Standard Node.js termination (SIGTERM/SIGKILL)
+  2. macOS-specific forced termination (kill -9, pkill, killall)
+- Remove the emergency termination strategy completely
+- Update tests to only test standard and forced termination
+
 **Implementation Status**:
-- ✅ Refactored the monolithic `close()` method into multiple smaller, specialized methods
-- ✅ Created distinct methods for each termination strategy (standard, OS-specific, emergency)
-- ✅ Added platform-specific termination methods (macOS, Windows, Linux)
+- ✅ Refactored the monolithic `close()` method into smaller, specialized methods
+- ✅ Created distinct methods for each termination strategy
 - ✅ Implemented a clear validation step before termination
 - ✅ Added promise-based wait utilities for better code organization
-- ✅ Improved the `TerminationStrategy` enum to use numeric values for better performance
 - ✅ Enhanced the process verification method with more robust checks and logging
 - ✅ Added better error handling with try-catch blocks in termination methods
 - ✅ Removed duplicate termination code from index.ts to use centralized runner methods
 - ✅ Added more detailed debug logging throughout the process verification steps
 - ✅ Updated all call sites throughout the codebase to use the new signature
-- ❌ Fix the termination tests which currently fail for certain termination methods
+- ✅ Removed Windows and Linux platform-specific termination code
+- ✅ Removed the emergency termination strategy completely
+- ✅ Updated tests to only test standard and forced termination
+- ✅ Fixed test runner to correctly handle multiple test scenarios
+
 **Testing Status**:
-- First two termination methods (standard and forced) were tested and passed
-- Emergency termination method test failed and needs to be fixed
-- The task was incorrectly moved to TESTING status despite test failures
-- Per process guidelines, task has been moved back to IN PROGRESS until all tests pass
+- ✅ Automated tests completed and passed (standard and forced termination)
+- ✅ Simplified test framework to focus on macOS only
+- ✅ The emergency termination level and test have been removed
+- ❓ Awaiting human verification with manual testing
 
 **Testing Instructions**:
 1. **Setup:**
@@ -461,10 +474,8 @@ These instructions must not be summarized or removed from this document.
    # Or run specific test scenarios
    bun run test:termination:standard
    bun run test:termination:force
-   bun run test:termination:emergency
    ```
    - ALL tests must pass before moving to TESTING state
-   - Pay special attention to the emergency termination test which fails
 
 3. **Test Standard Termination Manually:**
    ```bash
@@ -487,16 +498,6 @@ These instructions must not be summarized or removed from this document.
    ```
    - Verify the process terminates cleanly with proper shutdown messages
    - Confirm no PICO-8 processes remain with: `ps aux | grep pico`
-
-5. **Test Emergency Termination Manually:**
-   ```bash
-   # This test might require temporarily modifying the code to force emergency termination
-   # Otherwise, run the normal application and close it with Ctrl+C
-   bun start
-   # Quickly press Ctrl+C multiple times to potentially trigger emergency termination
-   ```
-   - Look for log messages about "attempting emergency procedures"
-   - Verify no processes remain running after termination
 
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts

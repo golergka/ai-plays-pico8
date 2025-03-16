@@ -2,6 +2,13 @@
 
 This document provides high-level guidance for testing the AI-Plays-PICO8 project. It describes the general approach to testing rather than specific test procedures for individual features.
 
+## IMPORTANT - TEST SELECTION POLICY
+
+1. **ALWAYS use test instructions from TASKS.md for the specific task you're working on**
+2. **NEVER use generic commands like `bun start` when component-specific tests exist**
+3. **All component-specific test commands are documented ONLY in their respective task entries in TASKS.md**
+4. **This file contains ONLY general principles and main test suite commands**
+
 ## Environment Setup
 
 ### Environment Configuration
@@ -42,21 +49,17 @@ Always ensure proper environment configuration before testing:
 - **Regression Prevention**: Use to verify that new changes don't break existing functionality
 - **Basic Validation**: Confirm core functionality works before human testing
 
-### Available Automated Test Commands
+### Main Test Suite Commands
 
 ```bash
 # Type checking - ALWAYS run this first
 bun run typecheck
 
-# Self-tests (non-interactive, fast)
+# Run all tests
+bun run test
+
+# Run all self-tests (non-interactive, fast)
 bun run test:self
-
-# Component-specific tests
-bun run test:input:self    # Input system tests
-bun run test:capture       # Screen capture tests
-
-# Key mapping tests (partially automated)
-bun run test:keys
 ```
 
 ### Automated Test Interpretation
@@ -78,18 +81,20 @@ Manual testing by a human is **REQUIRED** for features involving:
 - Timing-dependent behaviors
 - External system integration
 
+**IMPORTANT**: "Manual testing" ALWAYS refers to testing performed by the human user - AI cannot perform manual testing itself. When manual testing is needed, the AI must explicitly ask the human to test the functionality and provide clear testing instructions.
+
 ### Manual Test Design Guidelines
 
 When designing manual tests:
 
 1. **Be Specific**: 
-   - Provide exact commands to run
+   - Provide exact task-specific test commands from the TASKS.md file
    - Include specific steps to reproduce the behavior
+   - NEVER use generic commands like `bun start` when specialized test commands exist
 
 2. **Be Concise**: 
    - Keep test procedures as short as possible
    - Use short timeouts (5-10 seconds) for testing basic functionality
-   - Use `bun start` instead of longer commands when possible
 
 3. **Be Clear**: 
    - Define precise success criteria
@@ -115,11 +120,12 @@ For each task requiring manual testing:
 
 ## Testing Workflow
 
-1. **Automated First**: Begin with all available automated tests
-2. **Fix Issues**: Address any failures in automated tests
-3. **Document Manual Tests**: Create clear manual testing instructions
-4. **Human Verification**: Request human confirmation of successful testing
-5. **Status Update**: Only mark tasks as DONE after human verification
+1. **Find Task-Specific Tests**: Look in TASKS.md for the specific task's testing instructions
+2. **Run Automated Tests First**: Begin with all available automated tests for the specific component
+3. **Fix Issues**: Address any failures in automated tests
+4. **Document Manual Tests**: Create clear manual testing instructions
+5. **Human Verification**: Request human confirmation of successful testing
+6. **Status Update**: Only mark tasks as DONE after human verification
 
 ## Common Test Scenarios
 

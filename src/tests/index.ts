@@ -15,7 +15,7 @@ import { terminationTestScenarios } from './terminationTest'
  */
 export async function runTests(args: string[]): Promise<void> {
   // Parse command line arguments
-  const testName = args.find(arg => !arg.startsWith('--'))
+  const testNames = args.filter(arg => !arg.startsWith('--'))
   const mode = args.includes('--self') ? TestMode.SELF_TEST : TestMode.INTERACTIVE
   const exitOnComplete = !args.includes('--no-exit')
   
@@ -33,9 +33,12 @@ export async function runTests(args: string[]): Promise<void> {
   console.log(`Running tests in ${mode} mode`)
   
   try {
-    if (testName) {
-      // Run specific test
-      await runner.runScenario(testName, mode);
+    if (testNames.length > 0) {
+      // Run specific tests in sequence
+      for (const testName of testNames) {
+        await runner.runScenario(testName, mode);
+        console.log(); // Add empty line between tests
+      }
     } else {
       // Run all tests
       await runner.runAllScenarios(mode);
