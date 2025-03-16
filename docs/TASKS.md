@@ -212,12 +212,27 @@ These instructions must not be summarized or removed from this document.
    - Temporary capture files will be saved to your system temp directory
    - The process should exit cleanly after tests finish
 
-2. **Manual Testing** (only needed if self-tests pass):
-   - Run with default cartridge: `CAPTURE_SAVE_TO_DISK=true APP_DEBUG=true bun start`
-   - Observe that the PICO-8 window is captured even when it's not the active window
-   - Test with different window states (minimized, obscured, etc.) to verify capture resilience
-   - Check the captures in the captures directory - they should only show the PICO-8 window
-   - Test automatic cleanup by closing PICO-8 (the application should detect this and exit)
+2. **Manual Testing** (specific steps, only needed if self-tests pass):
+   
+   **Test 1: Window-Specific Capture**
+   1. Run: `CAPTURE_SAVE_TO_DISK=true APP_DEBUG=true bun start`
+   2. Wait for PICO-8 to fully launch (~5 seconds)
+   3. Open another window (browser, text editor, etc.) that partially overlaps the PICO-8 window
+   4. Wait 10-15 seconds for multiple captures to be taken
+   5. Press Ctrl+C in your terminal to stop the application
+   6. Navigate to the captures directory: `cd captures && ls -la`
+   7. Open 2-3 of the most recent PNG files to verify they show ONLY the PICO-8 window, not the overlapping windows
+   
+   **Test 2: Process Lifecycle**
+   1. Run: `APP_DEBUG=true bun start`
+   2. Wait for PICO-8 to fully launch (~5 seconds)
+   3. Close the PICO-8 window by clicking the X button (don't use Ctrl+C in terminal)
+   4. Verify that the application detects PICO-8 has closed and automatically shuts down
+   5. Check the terminal output for messages like "PICO-8 process exited, stopping screen capture"
+   
+   **Success Criteria:**
+   - In Test 1: The PNG captures show only the PICO-8 window content, with no parts of overlapping windows
+   - In Test 2: The application cleanly exits when PICO-8 is closed manually
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/capture/screenCapture.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/capture.ts
