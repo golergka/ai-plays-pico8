@@ -185,7 +185,40 @@ async function main() {
         // Force kill PICO-8 to ensure termination
         if (runner && runner.isRunning()) {
           console.log('Force killing PICO-8 process...')
-          await runner.close(true, 5000) // Force kill with 5-second timeout
+          try {
+            // Use a shorter timeout for faster termination
+            await runner.close(true, 2000)
+            
+            // Double-check process truly exited
+            if (runner.isRunning()) {
+              console.error('CRITICAL: Process still running after standard termination!')
+              
+              // Direct OS command as last resort
+              if (runner.process && runner.process.pid) {
+                const pid = runner.process.pid
+                console.log(`Using direct kill command on PID ${pid}...`)
+                
+                // Platform-specific emergency kill
+                if (process.platform === 'darwin') {
+                  // On macOS, use kill -9 and pkill
+                  console.log('Using kill -9 and pkill commands on macOS...')
+                  require('child_process').execSync(`kill -9 ${pid} || true`)
+                  require('child_process').execSync('pkill -9 -x "pico8" || true')
+                } else if (process.platform === 'win32') {
+                  // On Windows, use taskkill /F
+                  console.log('Using taskkill /F command on Windows...')
+                  require('child_process').execSync(`taskkill /F /PID ${pid}`)
+                } else if (process.platform === 'linux') {
+                  // On Linux, use kill -9 and pkill
+                  console.log('Using kill -9 and pkill commands on Linux...')
+                  require('child_process').execSync(`kill -9 ${pid} || true`)
+                  require('child_process').execSync('pkill -9 -x "pico8" || true')
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error during PICO-8 termination:', error)
+          }
         }
         
         console.log('Shutdown complete, exiting application.')
@@ -230,8 +263,8 @@ async function main() {
             console.error('Error in vision feedback system:', error)
           })
           
-          // Run for 60 seconds then stop
-          const demoTime = 60000 // 60 seconds
+          // Run for exactly 10 seconds then stop
+          const demoTime = 10000 // 10 seconds
           console.log(`Vision feedback system will run for ${demoTime/1000} seconds...`)
           
           // Wait for the specified demo time
@@ -269,10 +302,40 @@ async function main() {
           capture.stop()
         }
         
-        // Force kill PICO-8 to ensure termination
+        // Force kill PICO-8 to ensure termination with extra safety measures
         if (runner && runner.isRunning()) {
           console.log('Force killing PICO-8 process...')
-          await runner.close(true, 5000) // Force kill with 5-second timeout
+          await runner.close(true, 2000) // Force kill with shorter timeout
+          
+          // Extra verification - use strongest OS termination if needed
+          if (runner.isRunning() && runner.process && runner.process.pid) {
+            console.error('CRITICAL: Process still running after close! Using emergency measures...')
+            const pid = runner.process.pid
+            
+            // Platform-specific drastic measures
+            try {
+              if (process.platform === 'darwin') {
+                console.log(`Using kill -9 on PID ${pid}...`)
+                await new Promise<void>((resolve) => {
+                  require('child_process').exec(`kill -9 ${pid} || true`, () => resolve())
+                })
+                console.log(`Using pkill on process name...`)
+                await new Promise<void>((resolve) => {
+                  require('child_process').exec(`pkill -9 -x "pico8" || true`, () => resolve())
+                })
+              } else if (process.platform === 'win32') {
+                console.log(`Using taskkill /F /PID ${pid}...`)
+                await new Promise<void>((resolve) => {
+                  require('child_process').exec(`taskkill /F /PID ${pid}`, () => resolve())
+                })
+              }
+              
+              // Wait for termination to take effect
+              await setTimeout(500)
+            } catch (err) {
+              console.error('Error during emergency termination:', err)
+            }
+          }
         }
         
         console.log('Shutdown complete, exiting application.')
@@ -342,31 +405,67 @@ async function gracefulShutdown(
     if (runner && runner.isRunning()) {
       console.log('Closing PICO-8...')
       
-      // First attempt graceful shutdown with 3 second timeout
-      const result = await runner.close(false, 3000)
-      
-      if (result.success) {
-        console.log('PICO-8 closed successfully')
-      } else {
-        console.error(`Failed to close PICO-8: ${result.error}`)
-        console.log('Attempting force close...')
+      try {
+        // First attempt graceful shutdown with 3 second timeout
+        const result = await runner.close(false, 3000)
         
-        // Force kill with SIGKILL if graceful shutdown failed
-        const forceResult = await runner.close(true)
-        
-        if (forceResult.success) {
-          console.log('PICO-8 force closed successfully')
+        if (result.success) {
+          console.log('PICO-8 closed successfully')
         } else {
-          console.error(`Failed to force close PICO-8: ${forceResult.error}`)
-          // We'll still exit but log the failure
+          console.error(`Failed to close PICO-8: ${result.error}`)
+          console.log('Attempting force close...')
+          
+          // Force kill with SIGKILL if graceful shutdown failed
+          const forceResult = await runner.close(true, 2000)
+          
+          if (forceResult.success) {
+            console.log('PICO-8 force closed successfully')
+          } else {
+            console.error(`Failed to force close PICO-8: ${forceResult.error}`)
+          }
         }
-      }
-      
-      // Double-check process is truly gone
-      if (runner.isRunning()) {
-        console.error('WARNING: PICO-8 process may still be running despite termination attempts')
-      } else {
-        console.log('Confirmed PICO-8 process is terminated')
+        
+        // Double-check process is truly gone
+        if (runner.isRunning()) {
+          console.error('WARNING: PICO-8 process still running - using emergency measures')
+          
+          // Direct OS command as last resort
+          if (runner.process && runner.process.pid) {
+            const pid = runner.process.pid
+            console.log(`Using direct kill command on PID ${pid}...`)
+            
+            // Platform-specific emergency kill
+            if (process.platform === 'darwin') {
+              // On macOS, use kill -9 and pkill
+              console.log('Using kill -9 and pkill commands on macOS...')
+              require('child_process').execSync(`kill -9 ${pid} || true`)
+              require('child_process').execSync('pkill -9 -x "pico8" || true')
+            } else if (process.platform === 'win32') {
+              // On Windows, use taskkill /F
+              console.log('Using taskkill /F command on Windows...')
+              require('child_process').execSync(`taskkill /F /PID ${pid}`)
+            } else if (process.platform === 'linux') {
+              // On Linux, use kill -9 and pkill
+              console.log('Using kill -9 and pkill commands on Linux...')
+              require('child_process').execSync(`kill -9 ${pid} || true`)
+              require('child_process').execSync('pkill -9 -x "pico8" || true')
+            }
+            
+            // Wait a short time for kill to take effect
+            await setTimeout(500)
+          }
+          
+          // Final verification
+          if (runner.isRunning()) {
+            console.error('CRITICAL: PICO-8 process could not be terminated - may need manual cleanup')
+          } else {
+            console.log('Confirmed PICO-8 process is terminated after emergency measures')
+          }
+        } else {
+          console.log('Confirmed PICO-8 process is terminated')
+        }
+      } catch (error) {
+        console.error('Error during termination:', error)
       }
     }
   } catch (error) {

@@ -3,6 +3,7 @@ import { setTimeout as setTimeoutPromise } from 'node:timers/promises'
 import { setTimeout } from 'node:timers'
 import { promisify } from 'node:util'
 import { type Pico8Config, type Pico8Result } from '../types/pico8'
+import { createLogger } from '../utils/logger'
 
 // Promisify exec for async usage
 const execAsync = promisify(exec)
@@ -14,6 +15,7 @@ const execAsync = promisify(exec)
 export class Pico8Runner {
   process: ChildProcess | null = null
   private config: Pico8Config
+  private logger = createLogger('Pico8Runner')
   
   /**
    * Creates a new PICO-8 Runner
@@ -23,6 +25,11 @@ export class Pico8Runner {
     this.config = {
       launchTimeout: 5000, // 5 seconds default timeout
       ...config
+    }
+    
+    // Enable debug logging if specified
+    if (this.config.debug) {
+      this.logger.debug('Debug logging enabled for Pico8Runner')
     }
   }
 

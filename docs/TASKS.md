@@ -337,6 +337,26 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/input/inputCommands.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
+### [T-117] Refactor Process Termination Logic [TODO]
+**Dependencies**: T-101, T-113
+**Description**: Refactor and improve PICO-8 process termination logic to prevent zombie processes.
+**Acceptance Criteria**:
+- Split the monolithic `close()` method into smaller, focused helper functions
+- Create platform-specific termination modules (macOS, Windows, Linux)
+- Add multiple verification stages with proper error handling
+- Implement emergency cleanup measures that reliably terminate processes
+- Ensure no zombie PICO-8 processes remain after application exits
+- Add end-to-end tests for process lifecycle
+**Implementation Notes**:
+- Address the issues documented in ISSUES.md (#1)
+- Focus on code modularity and maintainability
+- Add comprehensive logging to help trace termination problems
+- Consider using Node's 'node:process' module for cleaner termination
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
 ### [T-116] Create Structured Testing Framework [DONE]
 **Dependencies**: T-101, T-103
 **Description**: Implement a structured testing framework for different test scenarios.
