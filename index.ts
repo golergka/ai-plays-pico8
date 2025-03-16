@@ -187,7 +187,7 @@ async function main() {
           console.log('Force killing PICO-8 process...')
           try {
             // Use a shorter timeout for faster termination
-            await runner.close(true, 2000)
+            await runner.close({ force: true, timeout: 2000 })
             
             // Double-check process truly exited
             if (runner.isRunning()) {
@@ -305,7 +305,7 @@ async function main() {
         // Force kill PICO-8 to ensure termination with extra safety measures
         if (runner && runner.isRunning()) {
           console.log('Force killing PICO-8 process...')
-          await runner.close(true, 2000) // Force kill with shorter timeout
+          await runner.close({ force: true, timeout: 2000 }) // Force kill with shorter timeout
           
           // Extra verification - use strongest OS termination if needed
           if (runner.isRunning() && runner.process && runner.process.pid) {
@@ -407,7 +407,7 @@ async function gracefulShutdown(
       
       try {
         // First attempt graceful shutdown with 3 second timeout
-        const result = await runner.close(false, 3000)
+        const result = await runner.close({ force: false, timeout: 3000 })
         
         if (result.success) {
           console.log('PICO-8 closed successfully')
@@ -416,7 +416,7 @@ async function gracefulShutdown(
           console.log('Attempting force close...')
           
           // Force kill with SIGKILL if graceful shutdown failed
-          const forceResult = await runner.close(true, 2000)
+          const forceResult = await runner.close({ force: true, timeout: 2000 })
           
           if (forceResult.success) {
             console.log('PICO-8 force closed successfully')

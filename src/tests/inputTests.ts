@@ -115,7 +115,7 @@ export const selfTestKeyInput: TestScenario = {
       // Always close PICO-8
       if (runner && runner.isRunning()) {
         logger.info('Closing PICO-8...')
-        await runner.close(true)
+        await runner.close({ force: true })
       }
     }
   }
@@ -311,7 +311,7 @@ export const interactiveKeyTest: TestScenario = {
       // Always close PICO-8
       if (runner && runner.isRunning()) {
         logger.info('Closing PICO-8...');
-        await runner.close(true);
+        await runner.close({ force: true });
       }
     }
   }

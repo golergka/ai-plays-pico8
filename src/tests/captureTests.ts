@@ -169,7 +169,7 @@ async function runBasicCaptureTest(_options?: TestContext): Promise<void> {
     // Cleanup - force close PICO-8
     if (runner.isRunning()) {
       console.log('Cleaning up - closing PICO-8...')
-      await runner.close(true)
+      await runner.close({ force: true })
     }
     
     // Cleanup - stop capture if still running
@@ -276,7 +276,7 @@ async function runWindowSpecificCaptureTest(_options?: TestContext): Promise<voi
     // Cleanup - force close PICO-8
     if (runner.isRunning()) {
       console.log('Cleaning up - closing PICO-8...')
-      await runner.close(true)
+      await runner.close({ force: true })
     }
     
     // Cleanup - stop capture if still running
@@ -285,6 +285,7 @@ async function runWindowSpecificCaptureTest(_options?: TestContext): Promise<voi
     }
   }
 }
+*/
 
 /**
  * Capture lifecycle test
@@ -359,7 +360,7 @@ async function runCaptureLifecycleTest(_options?: TestContext): Promise<void> {
     
     // Force close PICO-8 to test auto-stop
     console.log('Force closing PICO-8 to test autoStop behavior...')
-    await runner.close(true)
+    await runner.close({ force: true })
     
     // Wait for events to process
     await setTimeout(1000)
@@ -387,7 +388,7 @@ async function runCaptureLifecycleTest(_options?: TestContext): Promise<void> {
     // Cleanup - force close PICO-8 if still running
     if (runner.isRunning()) {
       console.log('Cleaning up - closing PICO-8...')
-      await runner.close(true)
+      await runner.close({ force: true })
     }
     
     // Cleanup - stop capture if still running

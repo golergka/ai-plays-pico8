@@ -44,3 +44,27 @@ export interface Pico8ErrorResult {
  * Result of a PICO-8 process operation (union type)
  */
 export type Pico8Result = Pico8SuccessResult | Pico8ErrorResult
+
+/**
+ * Process termination level/strategy
+ */
+export enum TerminationStrategy {
+  /** Standard Node.js termination methods (SIGTERM, SIGKILL) */
+  STANDARD = 'standard',
+  /** OS-specific commands (kill, taskkill, etc.) */
+  OS_SPECIFIC = 'os-specific',
+  /** Emergency termination procedures (last resort) */
+  EMERGENCY = 'emergency'
+}
+
+/**
+ * Termination options for controlling process shutdown behavior
+ */
+export interface TerminationOptions {
+  /** Whether to force kill the process immediately */
+  force?: boolean
+  /** Timeout in milliseconds before escalating termination strategy */
+  timeout?: number
+  /** Starting termination strategy (defaults to STANDARD) */
+  startStrategy?: TerminationStrategy
+}

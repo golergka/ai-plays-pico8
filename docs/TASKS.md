@@ -409,18 +409,29 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
 
-### [T-119] Refactor Process Termination Architecture [TODO]
+### [T-119] Refactor Process Termination Architecture [IN PROGRESS]
 **Dependencies**: T-118
 **Description**: Refactor the process termination code architecture to be more maintainable and modular.
 **Acceptance Criteria**:
-- Split the monolithic `close()` method into smaller, focused helper functions
-- Separate graceful and forced termination logic
-- Introduce proper error handling and fallback mechanisms
-- Create clear process lifecycle state management
-- Add comprehensive logging throughout the termination flow
+- ✅ Split the monolithic `close()` method into smaller, focused helper functions
+- ✅ Separate graceful and forced termination logic
+- ✅ Introduce proper error handling and fallback mechanisms
+- ✅ Create clear process lifecycle state management
+- ✅ Add comprehensive logging throughout the termination flow
+**Implementation Status**:
+- Refactored the monolithic `close()` method into multiple smaller, specialized methods
+- Created distinct methods for each termination strategy (standard, OS-specific, emergency)
+- Added platform-specific termination methods (macOS, Windows, Linux)
+- Implemented a clear validation step before termination
+- Added promise-based wait utilities for better code organization
+- Introduced a `TerminationStrategy` enum and `TerminationOptions` interface for better type safety
+- Updated all call sites throughout the codebase to use the new signature
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/runners/pico8Runner.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/pico8.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/tests/inputTests.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
 ### [T-120] Implement Platform-Specific Termination Strategies [TODO]
 **Dependencies**: T-119
