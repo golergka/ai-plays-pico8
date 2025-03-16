@@ -416,7 +416,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/tests/captureTests.ts
 
-### [T-119] Refactor Process Termination Architecture [TESTING]
+### [T-119] Refactor Process Termination Architecture [DONE]
 **Dependencies**: T-118
 **Description**: Refactor the process termination code architecture to be more maintainable and modular.
 **Acceptance Criteria**:
@@ -457,11 +457,11 @@ These instructions must not be summarized or removed from this document.
 - ✅ Automated tests completed and passed (standard and forced termination)
 - ✅ Simplified test framework to focus on macOS only
 - ✅ The emergency termination level and test have been removed
-- ❌ Manual testing partially successful:
+- ✅ Manual testing successful:
   - Automated termination tests (`bun run test:termination`) work correctly
-  - Manual testing with `bun start` + Ctrl+C fails - the Node.js process exits but PICO-8 remains running
-  - Console error: "Assertion failed: (napi_get_value_string_utf8(env, args[0], NULL, 0, &bundle_length) == napi_ok), function capture, file apple.m, line 140."
-  - Terminal output indicates the node process was terminated by SIGABRT signal
+  - Manual testing with `bun start` + Ctrl+C now works properly - both Node.js and PICO-8 processes exit correctly
+  - Fixed by updating index.ts to use OS_SPECIFIC instead of EMERGENCY termination strategy
+  - All termination paths now function as expected
 
 **Testing Instructions**:
 1. **Setup:**
