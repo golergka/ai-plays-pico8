@@ -119,7 +119,10 @@ export class Pico8Runner {
    * @returns Result of the close operation
    */
   async close(force = false, timeout = 3000): Promise<Pico8Result> {
+    this.logger.debug(`Close called with force=${force}, timeout=${timeout}ms`)
+    
     if (!this.process) {
+      this.logger.debug('No PICO-8 process is running')
       return {
         success: false,
         error: 'No PICO-8 process is running'
@@ -129,6 +132,7 @@ export class Pico8Runner {
     try {
       const pid = this.process.pid
       if (!pid) {
+        this.logger.debug('PICO-8 process has no valid PID')
         this.process = null
         return {
           success: false,
@@ -136,7 +140,7 @@ export class Pico8Runner {
         }
       }
       
-      console.log(`Terminating PICO-8 process (PID: ${pid})...`)
+      this.logger.info(`Terminating PICO-8 process (PID: ${pid})...`)
       
       // Store reference to process and keep the reference until we confirm termination
       const processRef = this.process
@@ -144,7 +148,7 @@ export class Pico8Runner {
       // Create a promise that resolves when the process exits
       const exitPromise = new Promise<void>((resolve) => {
         processRef.once('exit', () => {
-          console.log('Process exit event received')
+          this.logger.debug('Process exit event received')
           resolve()
         })
       })
@@ -152,21 +156,22 @@ export class Pico8Runner {
       // Create a timeout promise
       const timeoutPromise = new Promise<void>((resolve) => {
         const timer = setTimeout(() => {
-          console.log(`Timeout reached after ${timeout}ms waiting for PICO-8 to exit`)
+          this.logger.debug(`Timeout reached after ${timeout}ms waiting for PICO-8 to exit`)
           resolve()
         }, timeout)
         // Avoid keeping the Node.js event loop active
         if (timer.unref) timer.unref()
       })
       
-      // First termination attempt
+      // Step 1: Try standard Node.js process termination
+      // ----------------------------------------------------
       if (force) {
         // Force kill the process immediately
-        console.log('Force killing PICO-8 process with SIGKILL...')
+        this.logger.debug('Force killing PICO-8 process with SIGKILL...')
         processRef.kill('SIGKILL')
       } else {
         // Gracefully terminate the process
-        console.log('Sending SIGTERM to PICO-8...')
+        this.logger.debug('Sending SIGTERM to PICO-8...')
         processRef.kill('SIGTERM')
         
         // Wait for process to exit or timeout
@@ -174,153 +179,228 @@ export class Pico8Runner {
         
         // Check if process is still running
         try {
-          // isProcessRunning will return true if process still exists
           const isStillRunning = await this.isProcessRunning(pid)
           
           if (isStillRunning) {
-            console.log('Process still exists after SIGTERM, force killing with SIGKILL...')
+            this.logger.debug('Process still exists after SIGTERM, force killing with SIGKILL...')
             processRef.kill('SIGKILL')
             
             // Wait a bit to ensure kill takes effect
-            await setTimeoutPromise(1000)
+            await setTimeoutPromise(500)
           } else {
-            console.log('Process already terminated after SIGTERM')
+            this.logger.debug('Process already terminated after SIGTERM')
           }
         } catch (err) {
-          console.log('Error checking process state, assuming still running:', err)
-          // Assume process is still running, try SIGKILL
+          this.logger.warn('Error checking process state, assuming still running:', err)
           processRef.kill('SIGKILL')
-          await setTimeoutPromise(1000)
+          await setTimeoutPromise(500)
         }
       }
       
-      // OS-specific termination as a stronger approach
-      if (process.platform === 'darwin') {
-        // On macOS, use kill command to ensure termination
-        try {
-          // First, check if process is still running
-          const isStillRunning = await this.isProcessRunning(pid)
-          
-          if (isStillRunning) {
-            console.log(`Process still running after kill attempts, using system kill command (PID: ${pid})...`)
-            // Force kill with signal 9 (SIGKILL)
-            await execAsync(`kill -9 ${pid} || true`)
-            
-            // Wait a bit to ensure kill takes effect
-            await setTimeoutPromise(500)
-            
-            // Final verification check
-            const finalCheck = await this.isProcessRunning(pid)
-            if (finalCheck) {
-              console.log(`WARNING: Process with PID ${pid} is still running after all termination attempts!`)
-            } else {
-              console.log(`Confirmed process with PID ${pid} is terminated via system commands`)
-            }
-          } else {
-            console.log(`Confirmed process with PID ${pid} is already terminated`)
-          }
-        } catch (externalKillError) {
-          console.error('Error using system kill command:', externalKillError)
-          // Last resort - try killing by process name (macOS specific)
-          try {
-            await execAsync('pkill -9 -x "PICO-8" || true')
-            console.log('Attempted to kill all PICO-8 processes by name')
-          } catch (pkillError) {
-            console.error('Error using pkill command:', pkillError)
-          }
-        }
-      } else if (process.platform === 'win32') {
-        // Windows-specific termination check and force kill if needed
-        try {
-          const isStillRunning = await this.isProcessRunning(pid)
-          
-          if (isStillRunning) {
-            console.log(`Process still running, using Windows taskkill (PID: ${pid})...`)
-            await execAsync(`taskkill /F /PID ${pid}`)
-          }
-        } catch (winKillError) {
-          console.error('Error using taskkill command:', winKillError)
-        }
-      } else if (process.platform === 'linux') {
-        // Linux-specific termination check
-        try {
-          const isStillRunning = await this.isProcessRunning(pid)
-          
-          if (isStillRunning) {
-            console.log(`Process still running, using Linux kill command (PID: ${pid})...`)
-            await execAsync(`kill -9 ${pid} || true`)
-            
-            // Additional attempt by name if needed
-            await execAsync('pkill -9 -x "pico8" || true')
-          }
-        } catch (linuxKillError) {
-          console.error('Error using Linux kill commands:', linuxKillError)
-        }
-      }
-      
-      // Final verification check
-      const finalRunningState = await this.isProcessRunning(pid)
-      if (finalRunningState) {
-        console.error(`WARNING: PICO-8 process (PID: ${pid}) could not be terminated after multiple attempts`)
-      } else {
-        console.log(`PICO-8 process (PID: ${pid}) successfully terminated`)
-      }
-      
-      // Only clear our reference after all termination attempts
-      this.process = null
-      
-      console.log('PICO-8 termination process complete')
-      
-      // Return appropriate result object based on termination success
-      if (finalRunningState) {
-        return {
-          success: false,
-          error: 'Process could not be fully terminated',
-          pid: pid
-        }
-      } else {
+      // Verification 1: Check if process is still running after standard Node termination
+      let isStillRunning = await this.isProcessRunning(pid)
+      if (!isStillRunning) {
+        this.logger.info('PICO-8 process terminated successfully with standard Node.js methods')
+        this.process = null
         return {
           success: true,
           pid: pid
         }
       }
-    } catch (error) {
-      console.error(`Error during PICO-8 termination: ${error instanceof Error ? error.message : String(error)}`)
       
-      // In case of error, still try to force kill to ensure cleanup
-      if (this.process && this.process.pid) {
-        const processRef = this.process
-        const pid = processRef.pid
+      // Step 2: OS-specific termination with stronger methods
+      // ----------------------------------------------------
+      this.logger.warn(`PICO-8 process (PID: ${pid}) still running after standard termination. Using OS-specific methods...`)
+      
+      // Platform-specific termination strategies
+      if (process.platform === 'darwin') {
+        // macOS: Try multiple approaches
         
+        // First try kill -9
+        this.logger.debug(`Using macOS kill -9 command on PID ${pid}...`)
         try {
-          console.log('Error occurred during regular termination, attempting emergency kill...')
-          processRef.kill('SIGKILL')
+          await execAsync(`kill -9 ${pid} || true`);
+          await setTimeoutPromise(300);
           
-          // Platform-specific emergency kill
-          if (process.platform === 'darwin') {
-            await execAsync(`kill -9 ${pid} || true`).catch(() => {})
-            await execAsync('pkill -9 -x "PICO-8" || true').catch(() => {})
-          } else if (process.platform === 'win32') {
-            await execAsync(`taskkill /F /PID ${pid}`).catch(() => {})
-          } else if (process.platform === 'linux') {
-            await execAsync(`kill -9 ${pid} || true`).catch(() => {})
-            await execAsync('pkill -9 -x "pico8" || true').catch(() => {})
+          isStillRunning = await this.isProcessRunning(pid);
+          if (!isStillRunning) {
+            this.logger.debug(`Successfully terminated process with kill -9`);
+          } else {
+            // If still running, try pkill with both uppercase and lowercase names
+            this.logger.debug('Process still running, trying pkill commands on process name...');
+            
+            // Try multiple variants of the process name to ensure we catch it
+            try {
+              await execAsync('pkill -9 -x "PICO-8" || true');
+              await execAsync('pkill -9 -x "pico8" || true');
+              await execAsync('pkill -9 -x "pico-8" || true');
+              await setTimeoutPromise(300);
+            } catch (pkillError) {
+              this.logger.error('Error using pkill command:', pkillError);
+            }
           }
-          
-          // Wait a bit to ensure kill takes effect
-          await setTimeoutPromise(1000)
         } catch (killError) {
-          console.error('Emergency kill also failed:', killError)
+          this.logger.error('Error using kill -9 command:', killError);
+        }
+      } else if (process.platform === 'win32') {
+        // Windows: Use taskkill with force option
+        this.logger.debug(`Using Windows taskkill /F /PID ${pid}...`);
+        try {
+          await execAsync(`taskkill /F /PID ${pid}`);
+          await setTimeoutPromise(300);
+          
+          // If still having issues, try by image name
+          isStillRunning = await this.isProcessRunning(pid);
+          if (isStillRunning) {
+            this.logger.debug('Process still running, trying taskkill by image name...');
+            // Try multiple possible image names
+            await execAsync('taskkill /F /IM "pico8.exe" 2>nul || echo Not found');
+            await execAsync('taskkill /F /IM "PICO-8.exe" 2>nul || echo Not found');
+            await setTimeoutPromise(300);
+          }
+        } catch (taskkillError) {
+          this.logger.error('Error using taskkill command:', taskkillError);
+        }
+      } else if (process.platform === 'linux') {
+        // Linux: Use kill -9 and then pkill as fallback
+        this.logger.debug(`Using Linux kill -9 command on PID ${pid}...`);
+        try {
+          await execAsync(`kill -9 ${pid} || true`);
+          await setTimeoutPromise(300);
+          
+          isStillRunning = await this.isProcessRunning(pid);
+          if (isStillRunning) {
+            this.logger.debug('Process still running, trying pkill commands...');
+            await execAsync('pkill -9 -x "pico8" || true');
+            await execAsync('pkill -9 -x "PICO-8" || true');
+            await execAsync('pkill -9 -x "pico-8" || true');
+            await setTimeoutPromise(300);
+          }
+        } catch (linuxKillError) {
+          this.logger.error('Error using Linux kill commands:', linuxKillError);
         }
       }
       
-      // Clear reference after all attempts
-      this.process = null
+      // Verification 2: Check again after OS-specific methods
+      isStillRunning = await this.isProcessRunning(pid);
+      if (!isStillRunning) {
+        this.logger.info('PICO-8 process terminated successfully with OS-specific methods');
+        this.process = null;
+        return {
+          success: true,
+          pid: pid
+        };
+      }
+      
+      // Step 3: Last resort - emergency termination
+      // ----------------------------------------------------
+      this.logger.error(`CRITICAL: PICO-8 process (PID: ${pid}) still running after multiple termination attempts!`);
+      this.logger.debug('Attempting emergency termination procedures...');
+      
+      // For macOS, try a more aggressive approach with multiple commands
+      if (process.platform === 'darwin') {
+        try {
+          // Try a sequence of increasingly aggressive commands
+          await execAsync(`killall -KILL "PICO-8" 2>/dev/null || true`);
+          await execAsync(`killall -KILL "pico8" 2>/dev/null || true`);
+          await execAsync(`kill -9 ${pid} 2>/dev/null || true`);
+          await execAsync(`sudo kill -9 ${pid} 2>/dev/null || true`);
+          await setTimeoutPromise(500);
+        } catch (macosEmergencyError) {
+          this.logger.error('macOS emergency termination failed:', macosEmergencyError);
+        }
+      } else if (process.platform === 'win32') {
+        try {
+          // On Windows, try these more aggressive commands
+          await execAsync(`taskkill /F /T /PID ${pid} 2>nul || echo Failed`);
+          await execAsync(`wmic process where ProcessId=${pid} delete 2>nul || echo Failed`);
+          await setTimeoutPromise(500);
+        } catch (windowsEmergencyError) {
+          this.logger.error('Windows emergency termination failed:', windowsEmergencyError);
+        }
+      } else if (process.platform === 'linux') {
+        try {
+          // On Linux, try these more aggressive commands
+          await execAsync(`kill -9 -${processRef.pid} 2>/dev/null || true`); // Kill process group
+          await execAsync(`killall -9 pico8 2>/dev/null || true`);
+          await execAsync(`sudo kill -9 ${pid} 2>/dev/null || true`);
+          await setTimeoutPromise(500);
+        } catch (linuxEmergencyError) {
+          this.logger.error('Linux emergency termination failed:', linuxEmergencyError);
+        }
+      }
+      
+      // Final verification
+      isStillRunning = await this.isProcessRunning(pid);
+      
+      // Always clear our process reference regardless of termination success
+      this.process = null;
+      
+      this.logger.info('PICO-8 termination process complete');
+      
+      if (isStillRunning) {
+        this.logger.error(`CRITICAL: PICO-8 process (PID: ${pid}) could not be terminated despite all attempts`);
+        this.logger.error(`You may need to manually terminate this process`);
+        return {
+          success: false,
+          error: 'Process could not be fully terminated despite emergency measures',
+          pid: pid
+        };
+      } else {
+        this.logger.info(`PICO-8 process (PID: ${pid}) successfully terminated`);
+        return {
+          success: true,
+          pid: pid
+        };
+      }
+    } catch (error) {
+      this.logger.error(`Error during PICO-8 termination: ${error instanceof Error ? error.message : String(error)}`);
+      
+      // Even in case of error, make maximum effort to kill the process
+      if (this.process && this.process.pid) {
+        const pid = this.process.pid;
+        
+        try {
+          this.logger.debug('Error occurred during regular termination, attempting desperate emergency kill...');
+          
+          // Platform-specific desperate emergency kill attempts with all possible methods
+          if (process.platform === 'darwin') {
+            await Promise.allSettled([
+              execAsync(`kill -9 ${pid} || true`),
+              execAsync('pkill -9 -x "PICO-8" || true'),
+              execAsync('pkill -9 -x "pico8" || true'),
+              execAsync('killall -9 "PICO-8" || true'),
+              execAsync('killall -9 "pico8" || true')
+            ]);
+          } else if (process.platform === 'win32') {
+            await Promise.allSettled([
+              execAsync(`taskkill /F /PID ${pid}`),
+              execAsync('taskkill /F /IM "pico8.exe"'),
+              execAsync('taskkill /F /IM "PICO-8.exe"')
+            ]);
+          } else if (process.platform === 'linux') {
+            await Promise.allSettled([
+              execAsync(`kill -9 ${pid} || true`),
+              execAsync('pkill -9 -x "pico8" || true'),
+              execAsync('pkill -9 -x "PICO-8" || true'),
+              execAsync('killall -9 pico8 || true')
+            ]);
+          }
+          
+          // Final emergency wait
+          await setTimeoutPromise(1000);
+        } catch (finalKillError) {
+          this.logger.error('Emergency kill procedures failed completely:', finalKillError);
+        }
+      }
+      
+      // Always clear reference at the end
+      this.process = null;
       
       return {
         success: false,
         error: `Failed to close PICO-8: ${error instanceof Error ? error.message : String(error)}`
-      }
+      };
     }
   }
   
