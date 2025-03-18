@@ -116,7 +116,7 @@ export class LLMPlayer implements GamePlayer {
           reflect: reflectTool,
           action: actionTool
         },
-        toolChoice: { type: 'tool', tool: 'action' }, // Force the action tool
+        toolChoice: 'auto', // Let the AI choose which tool to use
         maxSteps: 5,
         system: this.options.systemPrompt,
         prompt: gameOutput
