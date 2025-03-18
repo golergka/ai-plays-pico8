@@ -1,15 +1,17 @@
 # Tasks
 
-## Current Task ID Counter: T-014
+## Current Task ID Counter: T-016
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-015 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-017 as the next available ID.
 
 ## Current Priorities
-1. [T-001] Setup Project Structure
-2. [T-002] Implement Core Schema System
-3. [T-003] Create AI Player Interface
-4. [T-014] Create LLM Player Demo Script
-5. [T-004] Build Game Launcher
+1. [T-015] Fix LLM Player Timeout Issues
+2. [T-016] Create Short Demo Game
+3. [T-001] Setup Project Structure
+4. [T-002] Implement Core Schema System
+5. [T-003] Create AI Player Interface
+6. [T-014] Create LLM Player Demo Script
+7. [T-004] Build Game Launcher
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -159,6 +161,35 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 
 ## Low-level tasks
+
+### [T-015] Fix LLM Player Timeout Issues [TODO]
+**Dependencies**: T-014
+**Description**: Fix the timeout errors that appear during the LLM player demo script execution, even though the AI continues to play the game successfully. The errors appear after each action while the mock LLM is still responding.
+**Acceptance Criteria**:
+- Identify the cause of timeout errors in the mock LLM implementation
+- Fix the race condition between the timeout and response promises
+- Ensure no timeout errors appear during normal script execution
+- Maintain the proper timeout behavior if the LLM truly doesn't respond
+- Update tests to verify the fix works correctly
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.test.ts
+
+### [T-016] Create Short Demo Game [TODO]
+**Dependencies**: T-005
+**Description**: Create a shorter, faster text adventure demo game that can be completed in 10-15 actions. This will serve as a quick introduction to the system for new users, while keeping the current more extensive text adventure as a second option.
+**Acceptance Criteria**:
+- Create a new compact text adventure game implementation
+- Design a game that can be completed in 10-15 actions
+- Include basic game mechanics (movement, items, using items)
+- Ensure the game has clear win/lose conditions
+- Update the play-ai.ts and play-human.ts scripts to support selecting this new game
+- Update documentation to mention both game options
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-human.ts
 
 ### [T-014] Create LLM Player Demo Script [TESTING]
 **Dependencies**: T-003, T-005
