@@ -23,7 +23,7 @@ Tasks are automatically added here by the archive_task.sh script when they're ma
 
 
 ### [T-013] Create Terminal UI Interface and Test Human Player [DONE]
-**Dependencies**: T-010
+**Dependencies**: PLAY-002
 **Description**: Extract an interface from the TerminalUI class and create unit tests for the HumanPlayer functionality with a mock UI implementation. This will improve testability and ensure the human player interface works correctly with any UI implementation.
 **Acceptance Criteria**:
 - Extract an ITerminalUI interface from the current TerminalUI class ✅

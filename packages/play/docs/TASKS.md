@@ -2,14 +2,15 @@
 
 ## Project Task Prefix: PLAY
 
-## Current Task ID Counter: PLAY-000
+## Current Task ID Counter: PLAY-004
 
-This counter tracks the highest task ID used so far. When creating a new task, use PLAY-001 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use PLAY-005 as the next available ID.
 
 ## Current Priorities
-1. Setup basic Play package structure
-2. Design core interfaces for game playing
-3. Implement basic game controller logic
+1. [PLAY-001] Setup Basic Play Package Structure [TODO]
+2. [PLAY-002] Implement Human Player Interface [TODO]
+3. [PLAY-003] Add Platform-Level Game Playtime Limit [TODO]
+4. [PLAY-004] Implement Game State Display in AI Player [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -88,7 +89,7 @@ These instructions must not be summarized or removed from this document.
 
 ## High-level tasks (epics)
 
-### [PLAY-001] Setup Play Package Structure [TODO]
+### [PLAY-001] Setup Basic Play Package Structure [TODO]
 **Dependencies**: None
 **Description**: Set up the basic project structure for the Play package with all necessary configs based on the architecture document.
 **Acceptance Criteria**:
@@ -102,28 +103,88 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/packages/play/package.json
 - /Users/maxyankov/Projects/ai-plays-pico8/packages/play/README.md
 
-### [PLAY-002] Design Game Controller Interface [TODO]
-**Dependencies**: PLAY-001
-**Description**: Design a core interface for game controllers that can be implemented by various game-specific controllers.
-**Acceptance Criteria**:
-- Interface definition for game controllers
-- Documentation of interface methods and properties
-- Unit tests for interface validation
-**Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/interfaces/
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/interfaces/game-controller.ts
-
 ## Low-level tasks
 
-### [PLAY-003] Create Core Directory Structure [TODO]
-**Dependencies**: None
-**Description**: Create the initial directory structure for the Play package based on architecture requirements.
+### [PLAY-002] Implement Human Player Interface [TODO]
+**Dependencies**: PLAY-001
+**Description**: Create a generic human player interface for playing games in the terminal, allowing users to test any game directly without AI assistance. The interface should be game-agnostic and not require any game-specific code or subclassing.
 **Acceptance Criteria**:
-- Create src/ directory with appropriate subdirectories
-- Set up structure for core components
-- Ensure proper separation of concerns
+- Command-line interface for human input
+- Display game output in terminal
+- Generic input handling system that can be adapted to different game schemas
+- Proper help text and command suggestions
+- Interface that respects the Game interface contract
+- Game-agnostic design that doesn't require game-specific implementations
+- Ability to run any game with the human player interface
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/interfaces/
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/controllers/
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/utils/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/human-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/terminal-ui.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/scripts/play-human.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/package.json
+
+### [PLAY-003] Add Platform-Level Game Playtime Limit [TODO]
+**Dependencies**: PLAY-001, PLAY-002
+**Description**: Add automatic game completion after a certain number of steps to prevent infinite loops and ensure that tests and demos always terminate within a reasonable timeframe. This is a platform-level feature that should be implemented in the core interfaces and infrastructure, not in specific game implementations.
+**Acceptance Criteria**:
+- Add a maximum steps limit to the LLM player options
+- Ensure the limit is configurable with a sensible default (10 steps)
+- Implement step counting in the LLM player
+- Throw an error when max steps is reached
+- Update the play-ai.ts script to accept and pass through a max steps parameter
+- Document the feature in relevant files
+- IMPORTANT: Do NOT modify specific game implementations directly - the changes should be at the platform/interface level only
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/scripts/play-ai.ts
+
+**Manual Testing Instructions**:
+1. Run the AI player with a limited number of steps:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 5
+   ```
+   - Verify that the game terminates with an error after exactly 5 steps
+   - Check that the error message shows "Maximum number of steps (5) reached"
+   - Confirm that the step counter works correctly
+
+2. Try with a different step limit:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 3
+   ```
+   - Verify that the game terminates after exactly 3 steps
+   - Confirm that the step limit works consistently
+
+3. Test with the default step limit:
+   ```
+   bun run play:ai compact-adventure
+   ```
+   - Verify that the game defaults to 10 steps as specified in the code
+
+### [PLAY-004] Implement Game State Display in AI Player [TODO]
+**Dependencies**: PLAY-001, PLAY-003
+**Description**: When the AI is playing a game, the current game state is not visible to the user in the terminal output. This task is to update the AI player to display the full game state after each step, similar to how it's shown to the LLM, so that users can see what information the AI is receiving.
+**Acceptance Criteria**:
+- Display the full game state after each AI action in the terminal
+- Show the game state in a consistent format matching human player display
+- Update the terminal UI to properly format and display this information
+- Add a clear section header to differentiate game state from LLM thinking/responses
+- Ensure this doesn't interfere with existing event display (thinking, response, action, error)
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/terminal-ui.ts
+
+**Manual Testing Instructions**:
+1. Run the AI player with the compact adventure:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 5
+   ```
+   - Verify that before each AI action, the game state is displayed in the terminal
+   - Check that the display shows the same information in the same format as in the human player mode
+   - Confirm that the game state includes room name, description, inventory items, and available exits
+
+2. Verify display clarity:
+   ```
+   bun run play:ai text-adventure
+   ```
+   - Check that the game state display is properly formatted with a clear "Game State" header
+   - Verify that it's easy to distinguish between game state and LLM's thinking/actions
+   - Confirm the overall flow is logical and easy to follow

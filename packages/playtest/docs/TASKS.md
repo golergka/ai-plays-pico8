@@ -7,14 +7,18 @@
 This counter tracks the highest task ID used so far. When creating a new task, use T-026 as the next available ID.
 
 ## Current Priorities
-1. [T-019] Add Game Playtime Limit [TESTING]
-2. [T-020] Adjust Game Logic for Completion [TODO]
-3. [T-024] Fix Game State Handling Issues [TODO] 
-4. [T-025] Implement Game State Display in AI Player [DONE]
-5. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
-6. [T-001] Setup Project Structure [IN PROGRESS]
-7. [T-002] Implement Core Schema System [TODO]
-8. [T-004] Build Game Launcher [TODO]
+1. [T-020] Adjust Game Logic for Completion [TODO]
+2. [T-024] Fix Game State Handling Issues [TODO] 
+3. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+4. [T-001] Setup Project Structure [IN PROGRESS]
+5. [T-002] Implement Core Schema System [TODO]
+6. [T-004] Build Game Launcher [TODO]
+
+## Moved to Play Package
+The following tasks have been moved to the Play package:
+- [T-010] ➡️ [PLAY-002] Implement Human Player Interface
+- [T-019] ➡️ [PLAY-003] Add Game Playtime Limit
+- [T-025] ➡️ [PLAY-004] Implement Game State Display in AI Player
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -192,22 +196,9 @@ These instructions must not be summarized or removed from this document.
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/README.md
 
-### [T-010] Implement Human Player Interface [TESTING]
+### [T-010] Implement Human Player Interface [MOVED]
 **Dependencies**: T-005
-**Description**: Create a generic human player interface for playing games in the terminal, allowing users to test any game directly without AI assistance. The interface should be game-agnostic and not require any game-specific code or subclassing.
-**Acceptance Criteria**:
-- Command-line interface for human input ✅
-- Display game output in terminal ✅
-- Generic input handling system that can be adapted to different game schemas ✅
-- Proper help text and command suggestions ✅
-- Interface that respects the Game interface contract ✅
-- Game-agnostic design that doesn't require game-specific implementations ✅
-- Ability to run any game with the human player interface ✅
-**Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/cli/human-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/cli/terminal-ui.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/scripts/play-human.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/package.json
+**Description**: This task has been moved to the Play package as [PLAY-002].
 
 ### [T-011] [URGENT] Fix Action Schema System [TESTING]
 **Dependencies**: T-002, T-007
@@ -225,7 +216,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/types/game.ts
 
 ### [T-012] Enhance Text Adventure With Action Feedback [TESTING]
-**Dependencies**: T-005, T-010
+**Dependencies**: T-005, PLAY-002
 **Description**: Enhance the text adventure demo game to provide clear feedback after each action. Currently, the game shows the current state but doesn't provide explicit feedback about the result of the last action taken.
 **Acceptance Criteria**:
 - Modify the text adventure game to store the result of the last action ✅
@@ -247,6 +238,7 @@ These instructions must not be summarized or removed from this document.
    - Try different actions: move, look, examine, take, use, inventory, help
    - Check that error messages are shown when actions fail
    - Verify that winning/losing shows appropriate messages
+   - Note: This uses the human player interface from the Play package (PLAY-002)
 
 2. Test the action feedback in the compact adventure:
    ```
@@ -256,43 +248,9 @@ These instructions must not be summarized or removed from this document.
    - Try special interactions like using the torch and key
    - Check dark room behavior with/without lit torch
 
-### [T-019] Add Platform-Level Game Playtime Limit [TESTING]
+### [T-019] Add Platform-Level Game Playtime Limit [MOVED]
 **Dependencies**: T-015, T-016
-**Description**: Add automatic game completion after a certain number of steps to prevent infinite loops and ensure that tests and demos always terminate within a reasonable timeframe. This is a platform-level feature that should be implemented in the core interfaces and infrastructure, not in specific game implementations.
-**Acceptance Criteria**:
-- Add a maximum steps limit to the LLM player options ✅
-- Ensure the limit is configurable with a sensible default (10 steps) ✅
-- Implement step counting in the LLM player ✅
-- Throw an error when max steps is reached ✅
-- Update the play-ai.ts script to accept and pass through a max steps parameter ✅
-- Document the feature in relevant files ✅
-- IMPORTANT: Do NOT modify specific game implementations directly - the changes should be at the platform/interface level only ✅
-
-**Manual Testing Instructions**:
-1. Run the AI player with a limited number of steps:
-   ```
-   bun run play:ai compact-adventure gpt-4 3 5
-   ```
-   - Verify that the game terminates with an error after exactly 5 steps
-   - Check that the error message shows "Maximum number of steps (5) reached"
-   - Confirm that the step counter works correctly
-
-2. Try with a different step limit:
-   ```
-   bun run play:ai compact-adventure gpt-4 3 3
-   ```
-   - Verify that the game terminates after exactly 3 steps
-   - Confirm that the step limit works consistently
-
-3. Test with the default step limit:
-   ```
-   bun run play:ai compact-adventure
-   ```
-   - Verify that the game defaults to 10 steps as specified in the code
-
-**Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/llm-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/scripts/play-ai.ts
+**Description**: This task has been moved to the Play package as [PLAY-003].
 
 ### [T-020] Adjust Specific Game Logic for Completion [TODO]
 **Dependencies**: T-016
@@ -344,35 +302,9 @@ These instructions must not be summarized or removed from this document.
    - Check that the metadata in the game result includes visited rooms and inventory
    - Confirm that the game state is correctly tracked across actions
 
-### [T-025] Implement Game State Display in AI Player [DONE]
+### [T-025] Implement Game State Display in AI Player [MOVED]
 **Dependencies**: T-024
-**Description**: When the AI is playing a game, the current game state is not visible to the user in the terminal output. This task is to update the AI player to display the full game state after each step, similar to how it's shown to the LLM, so that users can see what information the AI is receiving.
-**Acceptance Criteria**:
-- Display the full game state after each AI action in the terminal ✅
-- Show the game state in a consistent format matching human player display ✅
-- Update the terminal UI to properly format and display this information ✅
-- Add a clear section header to differentiate game state from LLM thinking/responses ✅
-- Ensure this doesn't interfere with existing event display (thinking, response, action, error) ✅
-**Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/play-ai.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/cli/terminal-ui.ts
-
-**Manual Testing Instructions**:
-1. Run the AI player with the compact adventure:
-   ```
-   bun run play:ai compact-adventure gpt-4 3 5
-   ```
-   - Verify that before each AI action, the game state is displayed in the terminal
-   - Check that the display shows the same information in the same format as in the human player mode
-   - Confirm that the game state includes room name, description, inventory items, and available exits
-
-2. Verify display clarity:
-   ```
-   bun run play:ai text-adventure
-   ```
-   - Check that the game state display is properly formatted with a clear "Game State" header
-   - Verify that it's easy to distinguish between game state and LLM's thinking/actions
-   - Confirm the overall flow is logical and easy to follow
+**Description**: This task has been moved to the Play package as [PLAY-004].
 
 ### [T-021] Clean Up Platform-Level OpenAI Wrapper and LLM Player [TODO]
 **Dependencies**: T-018
