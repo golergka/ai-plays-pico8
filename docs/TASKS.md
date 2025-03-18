@@ -162,22 +162,22 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-015] Fix LLM Player Timeout Issues [TODO]
+### [T-015] Implement LLM Player with proper AI package [BLOCKED]
 **Dependencies**: T-014
-**Description**: Fix the timeout errors that appear during the LLM player demo script execution, even though the AI continues to play the game successfully. The errors appear after each action while the mock LLM is still responding.
+**Description**: The current LLM Player implementation is incomplete and uses a mock LLM for development. We need a proper implementation using a real AI package. The mock implementation had timeout errors that appear during the LLM player demo script execution, which need to be addressed in the real implementation.
 **Acceptance Criteria**:
-- Identify the cause of timeout errors in the mock LLM implementation
-- Fix the race condition between the timeout and response promises
-- Ensure no timeout errors appear during normal script execution
-- Maintain the proper timeout behavior if the LLM truly doesn't respond
-- Update tests to verify the fix works correctly
-**Additional Bug Information**:
-- After AI completes the game (either win or loss condition), multiple timeout errors (about 20) appear before the game finally exits
-- Error pattern: "Timeout of 30000ms exceeded waiting for LLM response" appears repeatedly after game completion
-- Appears to be related to improper cleanup or continued LLM calls after game state is marked as finished
+- Properly integrate a real AI package (like Vercel's `ai`)
+- Implement the getAction method to use the AI package's chat API
+- Ensure conversation history is maintained correctly
+- Provide proper error handling and retry mechanisms
+- Ensure cleanup properly releases all resources
+- Add proper documentation in JSDoc comments
+**Additional Information**:
+- Will need to coordinate with project owner on the AI package strategy and selection
+- Need to determine if we'll use hosted models or local models
+- Requires proper understanding of the selected AI package's API
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.test.ts
 
 ### [T-016] Create Short Demo Game [TESTING]
 **Dependencies**: T-005

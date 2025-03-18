@@ -11,8 +11,7 @@ async function main() {
   const args = process.argv.slice(2)
   const gameType = args[0] || 'text-adventure'
   const model = args[1] || 'gpt-4'
-  const timeout = parseInt(args[2] || '30000', 10)
-  const maxRetries = parseInt(args[3] || '3', 10)
+  const maxRetries = parseInt(args[2] || '3', 10)
 
   // Create a terminal UI for displaying messages
   const ui = new TerminalUI()
@@ -26,17 +25,15 @@ async function main() {
 
   // Display usage instructions
   ui.displayHeader('LLM Player Demo')
-  ui.display(`Usage: bun run play:ai [game-type] [model] [timeout-ms] [max-retries]`)
+  ui.display(`Usage: bun run play:ai [game-type] [model] [max-retries]`)
   ui.display(`  game-type   : Game to play (default: text-adventure)`)
   ui.display(`              : Options: text-adventure, compact-adventure`)
   ui.display(`  model       : Model to use (default: gpt-4)`)
-  ui.display(`  timeout-ms  : Timeout in ms (default: 30000)`)
   ui.display(`  max-retries : Max retries for invalid responses (default: 3)`)
   ui.display(``)
   ui.display(`Current settings:`)
   ui.display(`  Game: ${gameType}`)
   ui.display(`  Model: ${model}`)
-  ui.display(`  Timeout: ${timeout}ms`)
   ui.display(`  Max retries: ${maxRetries}`)
   ui.display(``)
 
@@ -45,7 +42,6 @@ async function main() {
     // Create LLM player with event handler
     const player = new LLMPlayer({
       model,
-      timeout,
       maxRetries,
       onEvent: handleLLMEvent(ui)
     })
