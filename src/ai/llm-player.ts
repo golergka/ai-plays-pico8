@@ -1,0 +1,196 @@
+import type { GamePlayer } from '../types'
+import type { Schema, SchemaType } from '../schema/utils'
+import { toJsonSchema } from '../schema/utils'
+
+/**
+ * Interface for LLM models that can process chat messages
+ */
+export interface LLMModel {
+  sendChatMessage: (message: string) => Promise<string>
+}
+
+/**
+ * Options for the LLM player
+ */
+export interface LLMPlayerOptions {
+  /**
+   * Maximum number of retries for getting a valid action
+   */
+  maxRetries?: number
+  
+  /**
+   * Timeout in milliseconds for getting a valid action
+   */
+  timeout?: number
+  
+  /**
+   * System prompt for the LLM
+   */
+  systemPrompt?: string
+}
+
+/**
+ * LLM player implementation.
+ * Maintains stateful chat history and handles LLM interaction.
+ * Uses function calling pattern where the LLM responds with a JSON structure:
+ * { "function": "<actionName>", "args": <json> }
+ */
+export class LLMPlayer implements GamePlayer {
+  private chatHistory: string[] = []
+  private model: LLMModel
+  private maxRetries: number
+  private timeout: number
+  private systemPrompt: string
+  
+  /**
+   * Create a new LLM player
+   * 
+   * @param model LLM model instance with sendChatMessage method
+   * @param options Optional configuration options
+   */
+  constructor(
+    model: LLMModel, 
+    options: LLMPlayerOptions = {}
+  ) {
+    this.model = model
+    this.maxRetries = options.maxRetries ?? 3
+    this.timeout = options.timeout ?? 30000
+    this.systemPrompt = options.systemPrompt ?? 
+      "You are an AI playing a text adventure game. " +
+      "Respond with a function call in the format: " +
+      "{ \"function\": \"<actionName>\", \"args\": <json> }. " +
+      "You may think through your decisions in plain text before providing the function call."
+    
+    // Initialize chat history with system prompt
+    this.chatHistory.push(`system: ${this.systemPrompt}`)
+  }
+  
+  /**
+   * Convert Zod schemas to plain JSON definitions for the LLM
+   * 
+   * @param actionSchemas Map of action names to schemas
+   * @returns JSON definitions of the schemas
+   */
+  private schemaToJson<T extends Record<string, Schema<any>>>(
+    actionSchemas: T
+  ): Record<string, any> {
+    return Object.entries(actionSchemas).reduce(
+      (acc, [key, schema]) => {
+        acc[key] = toJsonSchema(schema)
+        return acc
+      },
+      {} as Record<string, any>
+    )
+  }
+  
+  /**
+   * Get an action from the LLM player based on game output and action schemas
+   * 
+   * @param gameOutput Text description of current game state
+   * @param actionSchemas Map of action names to schemas defining valid actions
+   * @returns Promise resolving with a tuple of action name and the corresponding action data
+   */
+  async getAction<T extends Record<string, Schema<any>>>(
+    gameOutput: string,
+    actionSchemas: T
+  ): Promise<[keyof T, SchemaType<T[keyof T]>]> {
+    // Add game state to chat history
+    this.chatHistory.push(`game state: ${gameOutput}`)
+    
+    // Create a prompt with available actions and instructions
+    const schemaDefinitions = this.schemaToJson(actionSchemas)
+    const prompt = `available actions: ${JSON.stringify(schemaDefinitions)}. 
+respond as a function call: {"function": "<actionName>", "args": <json>}. 
+if you're thinking through your decision, just output plain text and I'll wait for your final answer.`
+    
+    this.chatHistory.push(`system: ${prompt}`)
+    
+    // Create a promise that resolves when we get a valid action
+    const actionPromise = this.getActionWithRetries(actionSchemas)
+    
+    // Create a promise that rejects when the timeout is reached
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Timeout of ${this.timeout}ms exceeded waiting for LLM response`))
+      }, this.timeout)
+    })
+    
+    // Race the two promises
+    return Promise.race([actionPromise, timeoutPromise])
+  }
+  
+  /**
+   * Get an action with retries
+   * 
+   * @param actionSchemas Map of action names to schemas defining valid actions
+   * @returns Promise resolving with a tuple of action name and the corresponding action data
+   */
+  private async getActionWithRetries<T extends Record<string, Schema<any>>>(
+    actionSchemas: T
+  ): Promise<[keyof T, SchemaType<T[keyof T]>]> {
+    let retries = 0
+    
+    while (retries < this.maxRetries) {
+      try {
+        // Send the entire chat history to the model
+        const response = await this.model.sendChatMessage(this.chatHistory.join('\n'))
+        
+        // Add the response to chat history regardless of validity
+        this.chatHistory.push(`assistant: ${response}`)
+        
+        // Try parsing the response as a function call
+        let functionCall: { function?: string; args?: any }
+        
+        try {
+          functionCall = JSON.parse(response.trim())
+        } catch (err) {
+          // Not valid JSON, treat as thinking aloud and continue
+          console.log("LLM thinking aloud, waiting for valid function call...")
+          retries++
+          continue
+        }
+        
+        // Check if the function call structure is valid
+        if (!functionCall.function || typeof functionCall.args === "undefined") {
+          console.log("Invalid function call structure, retrying...")
+          retries++
+          continue
+        }
+        
+        // Check if the function name exists in action schemas
+        const actionName = functionCall.function as keyof T
+        const schema = actionSchemas[actionName]
+        
+        if (!schema) {
+          console.log(`Function name "${String(actionName)}" not found in action schemas, retrying...`)
+          retries++
+          continue
+        }
+        
+        // Parse and validate the arguments
+        const parseResult = schema.safeParse(functionCall.args)
+        
+        if (!parseResult.success) {
+          console.log("Invalid function arguments:", parseResult.error)
+          retries++
+          continue
+        }
+        
+        // Return the valid action
+        return [actionName, parseResult.data]
+      } catch (error) {
+        console.error("Error getting action from LLM:", error)
+        retries++
+      }
+    }
+    
+    throw new Error(`Failed to get valid action after ${this.maxRetries} retries`)
+  }
+  
+  /**
+   * Clean up resources
+   */
+  async cleanup(): Promise<void> {
+    // No resources to cleanup
+  }
+}
