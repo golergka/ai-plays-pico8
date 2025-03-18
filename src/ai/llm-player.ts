@@ -87,22 +87,29 @@ export class LLMPlayer implements GamePlayer {
       // For each schema, add a type field with the action name
       const actionTypes = Object.keys(actionSchemas) as [string, ...string[]];
       
-      // Create a discriminated union of all schemas
-      const unionSchemas = actionTypes.map(actionType => {
-        // Get the original schema
-        const originalSchema = actionSchemas[actionType];
+      // First, create a simple schema for each action type that just includes the type field
+      const unionSchemas: z.ZodObject<any, any, any>[] = [];
+      
+      // Process each action type
+      for (const actionType of actionTypes) {
+        // Create a schema that has a type field and allows any other fields
+        // We'll validate those other fields separately
+        const schema = z.object({
+          type: z.literal(actionType)
+        }).passthrough();
         
-        // Create a new schema that extends the original with a type field
-        return z.object({
-          type: z.literal(actionType),
-          // The rest of the properties come from the original schema
-          // We'll cast the schema to handle any type as needed
-          ...originalSchema.shape as Record<string, z.ZodTypeAny>,
-        });
-      }) as [z.ZodObject<any>, ...z.ZodObject<any>[]];
+        unionSchemas.push(schema);
+      }
+      
+      // Make sure we have at least one schema
+      if (unionSchemas.length === 0) {
+        throw new Error('No action schemas provided');
+      }
       
       // Combine them into a discriminated union
-      const actionUnionSchema = z.discriminatedUnion('type', unionSchemas);
+      // The as cast is necessary to satisfy TypeScript's requirement for a tuple with at least one element
+      const actionUnionSchema = z.discriminatedUnion('type', unionSchemas as [z.ZodObject<any, any, any>, ...z.ZodObject<any, any, any>[]]);
+      
       
       // Create the action tool using the combined schema
       const actionTool = tool({
