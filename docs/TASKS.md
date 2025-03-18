@@ -1,23 +1,24 @@
 # Tasks
 
-## Current Task ID Counter: T-022
+## Current Task ID Counter: T-023
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-022 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-023 as the next available ID.
 
 ## Current Priorities
-1. [T-019] Add Game Playtime Limit [TODO]
-2. [T-020] Adjust Game Logic for Completion [TODO]
-3. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
-4. [T-022] Remove Excessive Debug Logging [DONE]
-5. [T-018] Create Direct LLM API Abstraction Layer [DONE]
-6. [T-017] Fix Game Schemas to Use Required Parameters Only [DONE]
-7. [T-015] Implement LLM Player with proper AI package [DONE]
-8. [T-016] Create Short Demo Game [DONE]
-9. [T-001] Setup Project Structure [IN PROGRESS]
-10. [T-002] Implement Core Schema System [TODO]
-11. [T-003] Create AI Player Interface [DONE]
-12. [T-014] Create LLM Player Demo Script [DONE]
-13. [T-004] Build Game Launcher [TODO]
+1. [T-023] Refactor Game Architecture to Use Step-Based Model [TODO]
+2. [T-019] Add Game Playtime Limit [TESTING]
+3. [T-020] Adjust Game Logic for Completion [TODO]
+4. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+5. [T-022] Remove Excessive Debug Logging [DONE]
+6. [T-018] Create Direct LLM API Abstraction Layer [DONE]
+7. [T-017] Fix Game Schemas to Use Required Parameters Only [DONE]
+8. [T-015] Implement LLM Player with proper AI package [DONE]
+9. [T-016] Create Short Demo Game [DONE]
+10. [T-001] Setup Project Structure [IN PROGRESS]
+11. [T-002] Implement Core Schema System [TODO]
+12. [T-003] Create AI Player Interface [DONE]
+13. [T-014] Create LLM Player Demo Script [DONE]
+14. [T-004] Build Game Launcher [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -500,6 +501,27 @@ The LLM player demo script has been implemented and tested:
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+
+### [T-023] Refactor Game Architecture to Use Step-Based Model [TODO]
+**Dependencies**: T-019, T-015
+**Description**: Refactor the Game interface and implementations to use a step-based model instead of a single run method with a player parameter. This will allow for more control over the game flow, better handling of steps/turns, and a clearer separation between game logic and player logic.
+**Acceptance Criteria**:
+- Add a `step` method to the Game interface that takes no player parameters and returns either game state or game result (in a discriminated union)
+- Remove the player parameter from the `run` method, making players the responsibility of the caller
+- Implement proper state handling for the first step (no user input)
+- Move step limiting from LLMPlayer to the play-ai.ts script
+- Update all game implementations to match the new interface
+- Update play-ai.ts and play-human.ts to implement the game loop with the new architecture
+- Ensure typechecking and tests continue to pass
+- Document the new architecture pattern
+
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-human.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
 
 ### [T-021] Clean Up Platform-Level OpenAI Wrapper and LLM Player [TODO]
 **Dependencies**: T-018
