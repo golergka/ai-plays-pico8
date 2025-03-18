@@ -93,14 +93,11 @@ export class LLMPlayer implements GamePlayer {
         parameterSchemas[key] = actionSchemas[key];
       });
       
+      // Let's completely simplify - use a known working pattern
       const combinedActionSchema = z.object({
         command: commandEnum.describe('The action command to execute'),
-        // Create parameters for the specific command
-        parameters: z.object({
-          // We need specific properties for OpenAI's tool validation
-          name: z.string().optional().describe('Parameter name'),
-          value: z.string().optional().describe('Parameter value'),
-        }).describe('Parameters for the selected command')
+        // Create a simple primitive parameter
+        text: z.string().describe('Additional information for the command')
       })
       
       // Create the action tool using the combined schema
@@ -133,7 +130,7 @@ export class LLMPlayer implements GamePlayer {
       }
       
       // Extract the command and parameters
-      const { command, parameters } = actionCall.args
+      const { command, text } = actionCall.args
       
       // Validate the parameters against the corresponding schema
       const selectedSchema = actionSchemas[command as keyof T]
@@ -141,9 +138,10 @@ export class LLMPlayer implements GamePlayer {
         throw new Error(`Unknown action command: ${command}`)
       }
       
-      // We'll create a simple object from the parameters for now
-      // In a real implementation, you'd parse this more carefully
-      const validatedParams = selectedSchema.parse(parameters)
+      // For a simple implementation, use the text as the parameter
+      // The real implementation should parse the text into a more structured format
+      const params = { text }
+      const validatedParams = selectedSchema.parse(params)
       
       this.emitEvent('action', `Selected action: ${command}`, { command, data: validatedParams })
       
