@@ -1,14 +1,15 @@
 # Tasks
 
-## Current Task ID Counter: T-013
+## Current Task ID Counter: T-014
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-014 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-015 as the next available ID.
 
 ## Current Priorities
 1. [T-001] Setup Project Structure
 2. [T-002] Implement Core Schema System
 3. [T-003] Create AI Player Interface
-4. [T-004] Build Game Launcher
+4. [T-014] Create LLM Player Demo Script
+5. [T-004] Build Game Launcher
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -158,6 +159,24 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 
 ## Low-level tasks
+
+### [T-014] Create LLM Player Demo Script [TODO]
+**Dependencies**: T-003, T-005
+**Description**: Create a script that allows a human to run and observe an LLM playing the text adventure game, with full visibility into the LLM's internal thought process, function calls, and game state transitions.
+**Acceptance Criteria**:
+- Create a script in src/scripts/play-ai.ts similar to play-human.ts
+- Add OpenAI model integration using existing openai dependency
+- Implement event handlers for LLMPlayer to expose chat history and responses
+- Display both LLM thinking process and final actions in console
+- Format console output for readability (colors, sections, etc.)
+- Add retry/timeout configuration options via command line args
+- Create a bun script command in package.json
+- Provide usage instructions in console output
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 
 ### [T-006] Setup Core Directory Structure [IN PROGRESS]
 **Dependencies**: None
