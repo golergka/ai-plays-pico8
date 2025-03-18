@@ -1,13 +1,21 @@
 import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
 import { toJsonSchema } from '../schema/utils'
+import { Chat } from '@vercel/ai'
 
 /**
- * Interface for LLM models that can process chat messages
+ * Event emitted during LLM player operation
  */
-export interface LLMModel {
-  sendChatMessage: (message: string) => Promise<string>
+export interface LLMPlayerEvent {
+  type: 'thinking' | 'response' | 'error' | 'action'
+  content: string
+  data?: any
 }
+
+/**
+ * Event handler for LLM player events
+ */
+export type LLMPlayerEventHandler = (event: LLMPlayerEvent) => void
 
 /**
  * Options for the LLM player
@@ -27,6 +35,16 @@ export interface LLMPlayerOptions {
    * System prompt for the LLM
    */
   systemPrompt?: string
+
+  /**
+   * LLM model to use
+   */
+  model?: string
+
+  /**
+   * Event handler for LLM player events
+   */
+  onEvent?: LLMPlayerEventHandler
 }
 
 /**
@@ -37,22 +55,18 @@ export interface LLMPlayerOptions {
  */
 export class LLMPlayer implements GamePlayer {
   private chatHistory: string[] = []
-  private model: LLMModel
+  private chat: Chat
   private maxRetries: number
   private timeout: number
   private systemPrompt: string
+  private onEvent: LLMPlayerEventHandler | null = null
   
   /**
    * Create a new LLM player
    * 
-   * @param model LLM model instance with sendChatMessage method
    * @param options Optional configuration options
    */
-  constructor(
-    model: LLMModel, 
-    options: LLMPlayerOptions = {}
-  ) {
-    this.model = model
+  constructor(options: LLMPlayerOptions = {}) {
     this.maxRetries = options.maxRetries ?? 3
     this.timeout = options.timeout ?? 30000
     this.systemPrompt = options.systemPrompt ?? 
@@ -60,9 +74,27 @@ export class LLMPlayer implements GamePlayer {
       "Respond with a function call in the format: " +
       "{ \"function\": \"<actionName>\", \"args\": <json> }. " +
       "You may think through your decisions in plain text before providing the function call."
+    // Set the event handler if provided
+    this.onEvent = options.onEvent || null
+    
+    // Initialize Vercel AI Chat
+    this.chat = new Chat({
+      model: options.model ?? 'gpt-4',
+      memoize: true,
+    })
     
     // Initialize chat history with system prompt
     this.chatHistory.push(`system: ${this.systemPrompt}`)
+  }
+  
+  /**
+   * Emit an event to the event handler if one is set
+   */
+  private emitEvent(event: LLMPlayerEvent): void {
+    // Only call the event handler if it's not null
+    if (this.onEvent) {
+      this.onEvent(event)
+    }
   }
   
   /**
@@ -111,6 +143,10 @@ if you're thinking through your decision, just output plain text and I'll wait f
     // Create a promise that rejects when the timeout is reached
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
+        this.emitEvent({
+          type: 'error',
+          content: `Timeout of ${this.timeout}ms exceeded waiting for LLM response`
+        })
         reject(new Error(`Timeout of ${this.timeout}ms exceeded waiting for LLM response`))
       }, this.timeout)
     })
@@ -133,7 +169,7 @@ if you're thinking through your decision, just output plain text and I'll wait f
     while (retries < this.maxRetries) {
       try {
         // Send the entire chat history to the model
-        const response = await this.model.sendChatMessage(this.chatHistory.join('\n'))
+        const response = await this.chat.send(this.chatHistory.join('\n'))
         
         // Add the response to chat history regardless of validity
         this.chatHistory.push(`assistant: ${response}`)
@@ -143,16 +179,27 @@ if you're thinking through your decision, just output plain text and I'll wait f
         
         try {
           functionCall = JSON.parse(response.trim())
+          this.emitEvent({
+            type: 'response',
+            content: response,
+            data: functionCall
+          })
         } catch (err) {
           // Not valid JSON, treat as thinking aloud and continue
-          console.log("LLM thinking aloud, waiting for valid function call...")
+          this.emitEvent({
+            type: 'thinking',
+            content: response
+          })
           retries++
           continue
         }
         
         // Check if the function call structure is valid
         if (!functionCall.function || typeof functionCall.args === "undefined") {
-          console.log("Invalid function call structure, retrying...")
+          this.emitEvent({
+            type: 'thinking',
+            content: "LLM thinking aloud, waiting for valid function call..."
+          })
           retries++
           continue
         }
@@ -162,7 +209,10 @@ if you're thinking through your decision, just output plain text and I'll wait f
         const schema = actionSchemas[actionName]
         
         if (!schema) {
-          console.log(`Function name "${String(actionName)}" not found in action schemas, retrying...`)
+          this.emitEvent({
+            type: 'error',
+            content: `Function name "${String(actionName)}" not found in action schemas, retrying...`
+          })
           retries++
           continue
         }
@@ -171,20 +221,43 @@ if you're thinking through your decision, just output plain text and I'll wait f
         const parseResult = schema.safeParse(functionCall.args)
         
         if (!parseResult.success) {
-          console.log("Invalid function arguments:", parseResult.error)
+          this.emitEvent({
+            type: 'error',
+            content: `Invalid function arguments: ${parseResult.error}`
+          })
           retries++
           continue
         }
         
+        // Emit the successful action
+        this.emitEvent({
+          type: 'action',
+          content: `Taking action: ${String(actionName)}`,
+          data: {
+            action: actionName,
+            args: parseResult.data
+          }
+        })
+        
         // Return the valid action
         return [actionName, parseResult.data]
       } catch (error) {
-        console.error("Error getting action from LLM:", error)
+        this.emitEvent({
+          type: 'error',
+          content: `Error getting action from LLM: ${error}`
+        })
         retries++
       }
     }
     
     throw new Error(`Failed to get valid action after ${this.maxRetries} retries`)
+  }
+  
+  /**
+   * Get the chat history
+   */
+  getChatHistory(): string[] {
+    return [...this.chatHistory]
   }
   
   /**

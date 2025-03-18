@@ -160,18 +160,18 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-014] Create LLM Player Demo Script [TODO]
+### [T-014] Create LLM Player Demo Script [TESTING]
 **Dependencies**: T-003, T-005
 **Description**: Create a script that allows a human to run and observe an LLM playing the text adventure game, with full visibility into the LLM's internal thought process, function calls, and game state transitions.
 **Acceptance Criteria**:
-- Create a script in src/scripts/play-ai.ts similar to play-human.ts
-- Add OpenAI model integration using existing openai dependency
-- Implement event handlers for LLMPlayer to expose chat history and responses
-- Display both LLM thinking process and final actions in console
-- Format console output for readability (colors, sections, etc.)
-- Add retry/timeout configuration options via command line args
-- Create a bun script command in package.json
-- Provide usage instructions in console output
+- Create a script in src/scripts/play-ai.ts similar to play-human.ts ✅
+- Update LLMPlayer implementation with event-based system ✅
+- Implement event handlers to expose chat history and responses ✅
+- Display both LLM thinking process and final actions in console ✅
+- Format console output for readability (colors, sections, etc.) ✅
+- Add retry/timeout configuration options via command line args ✅
+- Create a bun script command in package.json ✅
+- Provide usage instructions in console output ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
