@@ -4,7 +4,7 @@ import type { Schema } from '../schema/utils'
 // import { combineSchemas, extractAction } from '../schema/utils'
 // import { generateText } from 'ai'
 // import { openai } from '@ai-sdk/openai'
-import { callOpenAI } from './api'
+import { callOpenAI, extractToolCalls } from './api'
 import 'dotenv/config'
 
 /**
@@ -171,17 +171,18 @@ export class LLMPlayer implements GamePlayer {
         const responseData = await callOpenAI(requestBody);
         console.log("DEBUG: OpenAI API direct response:", JSON.stringify(responseData, null, 2));
         
-        // Check if there's a tool call in the response
-        if (responseData?.choices?.[0]?.message?.tool_calls?.[0]) {
-          const toolCall = responseData.choices[0].message.tool_calls[0];
-          console.log("DEBUG: Tool call function:", JSON.stringify(toolCall.function, null, 2));
-          
-          // Parse the arguments
-          try {
-            const args = JSON.parse(toolCall.function.arguments);
+        // Extract tool calls using our helper function
+        const toolCalls = extractToolCalls(responseData);
+        
+        if (toolCalls.length > 0) {
+          const toolCall = toolCalls[0];
+          // TypeScript now enforces that we check for undefined
+          if (toolCall) {
+            console.log("DEBUG: Tool call function:", JSON.stringify(toolCall.function, null, 2));
+            
+            // Arguments are already parsed by our schema
+            const args = toolCall.function.arguments;
             console.log("DEBUG: Parsed arguments:", JSON.stringify(args, null, 2));
-          } catch (e) {
-            console.log("DEBUG: Error parsing arguments:", e);
           }
         }
         
