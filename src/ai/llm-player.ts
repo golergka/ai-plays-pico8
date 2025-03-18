@@ -41,6 +41,12 @@ export interface LLMPlayerOptions {
    * Event handler for LLM player events
    */
   onEvent?: LLMPlayerEventHandler
+
+  /**
+   * Maximum number of steps/actions the LLM can take before terminating
+   * Default: 10
+   */
+  maxSteps?: number
 }
 
 /**
@@ -56,13 +62,15 @@ export class LLMPlayer implements GamePlayer {
   private chatHistory: Message[] = []
   private options: Required<LLMPlayerOptions>
   private onEvent: LLMPlayerEventHandler
+  private actionCount: number = 0
   
   constructor(options: LLMPlayerOptions) {
     this.options = {
       maxRetries: options.maxRetries || 3,
       systemPrompt: options.systemPrompt || 'You are playing a game. Analyze the game state and take the most appropriate action.',
       model: options.model || 'gpt-4o',
-      onEvent: options.onEvent || (() => {})
+      onEvent: options.onEvent || (() => {}),
+      maxSteps: options.maxSteps || 10
     }
     
     this.onEvent = this.options.onEvent
@@ -88,6 +96,14 @@ export class LLMPlayer implements GamePlayer {
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
     try {
+      // Check if we've reached the maximum number of steps
+      this.actionCount++
+      if (this.actionCount > this.options.maxSteps) {
+        const error = new Error(`Maximum number of steps (${this.options.maxSteps}) reached`)
+        this.emitEvent('error', error.message)
+        throw error
+      }
+
       // Add game output to chat history
       this.chatHistory.push({
         role: 'user',
@@ -198,7 +214,8 @@ export class LLMPlayer implements GamePlayer {
    * Clean up resources
    */
   async cleanup(): Promise<void> {
-    // Clear the chat history
+    // Clear the chat history and reset action count
     this.chatHistory = []
+    this.actionCount = 0
   }
 }

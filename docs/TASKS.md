@@ -449,19 +449,42 @@ The LLM player demo script has been implemented and tested:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/mock-terminal-ui.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.test.ts
 
-### [T-019] Add Platform-Level Game Playtime Limit [TODO]
+### [T-019] Add Platform-Level Game Playtime Limit [TESTING]
 **Dependencies**: T-015, T-016
 **Description**: Add automatic game completion after a certain number of steps to prevent infinite loops and ensure that tests and demos always terminate within a reasonable timeframe. This is a platform-level feature that should be implemented in the core interfaces and infrastructure, not in specific game implementations.
 **Acceptance Criteria**:
-- Add a maximum steps limit option to the Game interface in `src/types/game.ts`
-- Create a platform-level mechanism for enforcing this limit through the game interface
-- Ensure the limit is configurable with a sensible default (e.g., 100 steps)
-- Define a standard "timeout" or "too many steps" ending condition separate from win/lose
-- Update the play-ai.ts script to accept and pass through a max steps parameter
-- Document the feature in relevant files
-- IMPORTANT: Do NOT modify specific game implementations directly - the changes should be at the platform/interface level only
+- Add a maximum steps limit to the LLM player options ✅
+- Ensure the limit is configurable with a sensible default (10 steps) ✅
+- Implement step counting in the LLM player ✅
+- Throw an error when max steps is reached ✅
+- Update the play-ai.ts script to accept and pass through a max steps parameter ✅
+- Document the feature in relevant files ✅
+- IMPORTANT: Do NOT modify specific game implementations directly - the changes should be at the platform/interface level only ✅
+
+**Manual Testing Instructions**:
+1. Run the AI player with a limited number of steps:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 5
+   ```
+   - Verify that the game terminates with an error after exactly 5 steps
+   - Check that the error message shows "Maximum number of steps (5) reached"
+   - Confirm that the step counter works correctly
+
+2. Try with a different step limit:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 3
+   ```
+   - Verify that the game terminates after exactly 3 steps
+   - Confirm that the step limit works consistently
+
+3. Test with the default step limit:
+   ```
+   bun run play:ai compact-adventure
+   ```
+   - Verify that the game defaults to 10 steps as specified in the code
+
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 
 ### [T-020] Adjust Specific Game Logic for Completion [TODO]

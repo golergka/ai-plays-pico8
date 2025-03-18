@@ -12,6 +12,7 @@ async function main() {
   const gameType = args[0] || 'text-adventure'
   const model = args[1] || 'gpt-4'
   const maxRetries = parseInt(args[2] || '3', 10)
+  const maxSteps = parseInt(args[3] || '10', 10)
 
   // Create a terminal UI for displaying messages
   const ui = new TerminalUI()
@@ -25,16 +26,18 @@ async function main() {
 
   // Display usage instructions
   ui.displayHeader('LLM Player Demo')
-  ui.display(`Usage: bun run play:ai [game-type] [model] [max-retries]`)
+  ui.display(`Usage: bun run play:ai [game-type] [model] [max-retries] [max-steps]`)
   ui.display(`  game-type   : Game to play (default: text-adventure)`)
   ui.display(`              : Options: text-adventure, compact-adventure`)
   ui.display(`  model       : Model to use (default: gpt-4)`)
   ui.display(`  max-retries : Max retries for invalid responses (default: 3)`)
+  ui.display(`  max-steps   : Max steps before forced termination (default: 10)`)
   ui.display(``)
   ui.display(`Current settings:`)
   ui.display(`  Game: ${gameType}`)
   ui.display(`  Model: ${model}`)
   ui.display(`  Max retries: ${maxRetries}`)
+  ui.display(`  Max steps: ${maxSteps}`)
   ui.display(``)
 
   // Run the game with the LLM player
@@ -42,6 +45,7 @@ async function main() {
     // Create LLM player with event handler
     const player = new LLMPlayer({
       maxRetries,
+      maxSteps,
       onEvent: handleLLMEvent(ui)
     })
 
