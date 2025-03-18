@@ -80,73 +80,99 @@ export function createFunctionSchema(
 }
 
 /**
- * Combines schemas into a discriminated union with a 'type' field
- * This function takes a map of schemas and returns a combined schema
- * that includes a 'type' discriminator field.
+ * Combines schemas into a single object schema compatible with OpenAI's function calling API.
+ * The returned schema enforces that exactly one valid command is provided.
  * 
  * @param schemas Record of schemas where the key is the action type
- * @returns Zod schema with discriminated union of all provided schemas
+ * @returns Zod object schema compatible with OpenAI's function calling API
  */
 export function combineSchemas<T extends Record<string, Schema<unknown>>>(
   schemas: T
-): z.ZodDiscriminatedUnion<"type", [z.ZodObject<any, any, any>, ...z.ZodObject<any, any, any>[]]> {
-  // Create a union array of schemas with type field
-  const unionSchemas: z.ZodObject<any, any, any>[] = [];
+): z.ZodType<any, any, any> {
+  // Create an object schema where each property is a command
+  const commandProperties: Record<string, z.ZodTypeAny> = {};
   
-  // Process each schema
-  for (const [key, schema] of Object.entries(schemas)) {
-    // For each schema, create a new schema with a 'type' field
-    // Handle both object schemas and non-object schemas
-    const schemaObj = schema instanceof z.ZodObject 
-      ? schema as z.ZodObject<any, any, any>
-      : z.object({});
+  // For each command schema, create an optional property in our object
+  for (const [commandName, schema] of Object.entries(schemas)) {
+    // Only one command should be provided at a time
+    commandProperties[commandName] = schema.optional().describe(
+      `Execute a '${commandName}' command with its required parameters. Only provide one command at a time.`
+    );
+  }
+  
+  // If no schemas provided, add a placeholder
+  if (Object.keys(commandProperties).length === 0) {
+    commandProperties['none'] = z.object({}).optional().describe('No available commands');
+  }
+  
+  // Create the base object schema
+  const baseSchema = z.object(commandProperties);
+  
+  // Enhance the schema with additional validation
+  return baseSchema
+    .superRefine((data, ctx) => {
+      // Get the commands that have values (not undefined)
+      const providedCommands = Object.entries(data)
+        .filter(([_, value]) => value !== undefined)
+        .map(([key, _]) => key);
       
-    // Create a new schema object with the type field
-    // We can't use extend() or merge() safely as they're not guaranteed to work
-    // on all schema types, so we create a new object schema manually
-    const baseShape = schemaObj.shape || {};
-    
-    // Create the extended schema with type field
-    const extendedSchema = z.object({
-      type: z.literal(key).describe(`Command type: ${key}`),
-      ...baseShape
-    });
-    
-    unionSchemas.push(extendedSchema);
-  }
-  
-  // If there are no schemas, provide a placeholder schema to satisfy the discriminated union
-  if (unionSchemas.length === 0) {
-    unionSchemas.push(z.object({
-      type: z.literal('none').describe('No command'),
-    }));
-  }
-  
-  // Create a tuple type with at least one element to satisfy the discriminated union
-  const unionSchemasTuple = unionSchemas.length > 0 
-    ? [unionSchemas[0], ...unionSchemas.slice(1)] as [z.ZodObject<any, any, any>, ...z.ZodObject<any, any, any>[]]
-    : [z.object({ type: z.literal('none') })] as [z.ZodObject<any, any, any>];
-  
-  // Create a discriminated union based on the 'type' field
-  return z.discriminatedUnion("type", unionSchemasTuple);
+      // No commands provided - invalid
+      if (providedCommands.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'You must provide exactly one command',
+          path: []
+        });
+        return;
+      }
+      
+      // Multiple commands provided - invalid
+      if (providedCommands.length > 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `You provided multiple commands (${providedCommands.join(', ')}), but must provide exactly one`,
+          path: []
+        });
+        return;
+      }
+      
+      // Command not in schema - invalid
+      const validCommandNames = Object.keys(commandProperties);
+      const commandName = providedCommands[0];
+      
+      if (commandName !== undefined && !validCommandNames.includes(commandName)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid command: '${commandName}'. Valid commands are: ${validCommandNames.join(', ')}`,
+          path: [commandName]
+        });
+      }
+    })
+    .describe('Provide exactly ONE command by setting only one of these properties with the required parameters for that command.');
 }
 
 /**
- * Extract action data from a discriminated union result
+ * Extract action data from our combined object schema result
  * 
- * @param data The parsed result from the discriminated union schema
- * @returns Tuple of [action type, action data without type field]
+ * @param data The parsed result from the combined schema
+ * @returns Tuple of [action type, extracted action data]
  */
 export function extractActionFromDiscriminatedUnion<T extends Record<string, Schema<unknown>>>(
-  data: { type: keyof T } & Record<string, unknown>
+  data: Record<string, unknown>
 ): [keyof T, Record<string, unknown>] {
-  // Make a copy of the data to avoid mutating the input
-  const { type, ...rest } = { ...data };
+  // Find the first non-undefined property (which should be the only one provided)
+  for (const [key, value] of Object.entries(data)) {
+    // Skip undefined properties
+    if (value === undefined) continue;
+    
+    // We found the command property with value
+    const commandKey = key as keyof T;
+    // Return the command type and its data
+    return [commandKey, value as Record<string, unknown>];
+  }
   
-  // Handle symbol keys by converting to string
-  const typeKey = typeof type === 'symbol' ? String(type) : type;
-  
-  return [typeKey as keyof T, rest];
+  // If no command found, throw an error
+  throw new Error('No command was provided in the action data');
 }
 
 /**
