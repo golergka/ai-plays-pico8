@@ -133,6 +133,13 @@ bun run test
 bun run test:self
 ```
 
+### Test File Structure
+
+1. **Co-locate tests with source files**: Test files should be placed in the same directory as the source files they test
+2. **Naming convention**: Use the `.test.ts` suffix for all test files
+3. **Example**: For a source file `src/schema/utils.ts`, the test file should be `src/schema/utils.test.ts`
+4. **NO separate test directory**: Do NOT place tests in a separate `test/` directory
+
 ### Automated Test Interpretation
 
 1. Typecheck failures must be fixed before proceeding

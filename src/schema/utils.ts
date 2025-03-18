@@ -79,6 +79,52 @@ export function createFunctionSchema(
   }
 }
 
+/**
+ * Combines schemas into a discriminated union with a 'type' field
+ * This function takes a map of schemas and returns a combined schema
+ * that includes a 'type' discriminator field.
+ * 
+ * @param schemas Record of schemas where the key is the action type
+ * @returns Zod schema with discriminated union of all provided schemas
+ */
+export function combineSchemas<T extends Record<string, Schema<unknown>>>(
+  schemas: T
+): z.ZodDiscriminatedUnion<"type", z.ZodObject<any, any, any>[]> {
+  // Create a union array of schemas with type field
+  const unionSchemas: z.ZodObject<any, any, any>[] = [];
+  
+  for (const [key, schema] of Object.entries(schemas)) {
+    // For each schema, create a new schema with a 'type' field
+    const extendedSchema = z.object({
+      type: z.literal(key).describe(`Command type: ${key}`),
+    }).merge(schema.extend({}) as any);
+    
+    unionSchemas.push(extendedSchema);
+  }
+  
+  // If there are no schemas, provide a placeholder schema to satisfy the discriminated union
+  if (unionSchemas.length === 0) {
+    unionSchemas.push(z.object({
+      type: z.literal('none').describe('No command'),
+    }));
+  }
+  
+  // Create a discriminated union based on the 'type' field
+  return z.discriminatedUnion("type", unionSchemas);
+}
+
+/**
+ * Extract action data from a discriminated union result
+ * 
+ * @param data The parsed result from the discriminated union schema
+ * @returns Tuple of [action type, action data without type field]
+ */
+export function extractActionFromDiscriminatedUnion<T extends Record<string, Schema<unknown>>>(
+  data: { type: keyof T } & Record<string, unknown>
+): [keyof T, Record<string, unknown>] {
+  const { type, ...rest } = data;
+  return [type, rest];
+}
 
 /**
  * Export Zod for schema definitions
