@@ -2,7 +2,6 @@ import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
 import { generateText, tool } from 'ai'
 import { openai } from '@ai-sdk/openai'
-import { formatToolCallsAsText } from '../utils/ai-helpers'
 import { z } from 'zod'
 import 'dotenv/config'
 
@@ -84,28 +83,31 @@ export class LLMPlayer implements GamePlayer {
         }
       })
       
-      // Create a combined action schema that contains a command field
-      // and individual parameter fields for each action
-      const commandEnum = z.enum(Object.keys(actionSchemas) as [string, ...string[]]);
+      // Create a discriminated union schema of all action schemas
+      // For each schema, add a type field with the action name
+      const actionTypes = Object.keys(actionSchemas) as [string, ...string[]];
       
-      // Create a specific parameter schema with one field for each action
-      const parameterSchemas: Record<string, z.ZodType<unknown>> = {};
-      Object.keys(actionSchemas).forEach(key => {
-        parameterSchemas[key] = actionSchemas[key];
-      });
+      // Create a discriminated union of all schemas
+      const unionSchemas = actionTypes.map(actionType => {
+        // Get the original schema
+        const originalSchema = actionSchemas[actionType];
+        
+        // Create a new schema that extends the original with a type field
+        return z.object({
+          type: z.literal(actionType),
+          // The rest of the properties come from the original schema
+          // We'll cast the schema to handle any type as needed
+          ...originalSchema.shape as Record<string, z.ZodTypeAny>,
+        });
+      }) as [z.ZodObject<any>, ...z.ZodObject<any>[]];
       
-      // Let's completely simplify - use a known working pattern
-      const combinedActionSchema = z.object({
-        command: commandEnum.describe('The action command to execute'),
-        // Create a simple primitive parameter
-        text: z.string().describe('Additional information for the command')
-      })
+      // Combine them into a discriminated union
+      const actionUnionSchema = z.discriminatedUnion('type', unionSchemas);
       
       // Create the action tool using the combined schema
-      // We need an execute function to satisfy TypeScript
       const actionTool = tool({
         description: 'Tool for selecting a game action to perform.',
-        parameters: combinedActionSchema,
+        parameters: actionUnionSchema,
         execute: async () => "Action selected"
       })
       
@@ -117,61 +119,32 @@ export class LLMPlayer implements GamePlayer {
           reflect: reflectTool,
           action: actionTool
         },
-        toolChoice: 'auto', // Let the AI choose which tool to use
         maxSteps: 5,
         system: this.options.systemPrompt,
         prompt: gameOutput
       })
       
-      // Log the tool calls for debugging
-      console.log("Tool calls:\n" + formatToolCallsAsText(toolCalls))
-      
-      // If we have no tool calls or only reflect, we'll need to infer an action
-      // from the reflections
-      const reflectCalls = toolCalls.filter(call => call.toolName === 'reflect')
+      // Get the last tool call that is an action (not a reflection)
       const actionCall = toolCalls.find(call => call.toolName === 'action')
       
       if (!actionCall) {
-        // For debugging/development - we'll create a default action from reflection
-        if (reflectCalls.length > 0) {
-          const lastReflect = reflectCalls[reflectCalls.length - 1]
-          const reflectText = lastReflect.args.thoughts || ''
-          
-          // Try to infer an action from the reflection
-          // This is very simple inference and should be improved
-          let command = 'look'
-          if (reflectText.toLowerCase().includes('take')) {
-            command = 'take'
-          } else if (reflectText.toLowerCase().includes('go north')) {
-            command = 'north'
-          } else if (reflectText.toLowerCase().includes('go east')) {
-            command = 'east'
-          }
-          
-          console.log(`Inferring action '${command}' from reflection`)
-          return [command as keyof T, { text: reflectText } as SchemaType<T[keyof T]>]
-        }
-        
         throw new Error('No valid action was selected by the LLM')
       }
       
-      // Extract the command and parameters
-      const { command, text } = actionCall.args
+      // Extract the command type and the rest of the parameters
+      const { type, ...parameters } = actionCall.args
       
       // Validate the parameters against the corresponding schema
-      const selectedSchema = actionSchemas[command as keyof T]
+      const selectedSchema = actionSchemas[type as keyof T]
       if (!selectedSchema) {
-        throw new Error(`Unknown action command: ${command}`)
+        throw new Error(`Unknown action command: ${type}`)
       }
       
-      // For a simple implementation, use the text as the parameter
-      // The real implementation should parse the text into a more structured format
-      const params = { text }
-      const validatedParams = selectedSchema.parse(params)
+      const validatedParams = selectedSchema.parse(parameters)
       
-      this.emitEvent('action', `Selected action: ${command}`, { command, data: validatedParams })
+      this.emitEvent('action', `Selected action: ${type}`, { command: type, data: validatedParams })
       
-      return [command as keyof T, validatedParams as SchemaType<T[keyof T]>]
+      return [type as keyof T, validatedParams as SchemaType<T[keyof T]>]
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.emitEvent('error', `Error selecting action: ${errorMessage}`)
