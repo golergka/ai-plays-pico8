@@ -305,7 +305,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 
-### [T-024] Fix Game State Handling Issues [TESTING]
+### [T-024] Fix Game State Handling Issues [DONE]
 **Dependencies**: T-023
 **Description**: After implementing the step-based model, testing revealed issues with state handling in the games, particularly with the compact adventure. These issues need to be fixed to ensure games work correctly with the AI player.
 **Acceptance Criteria**:
@@ -322,17 +322,16 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/test-game-state.ts
 
 **Manual Testing Instructions**:
-1. Run the test script to verify all fixes:
+1. Test item handling and fuzzy matching:
    ```
-   bun run test-game-state.ts
+   bun run play:human compact-adventure
    ```
-   - Check that taking an item already in inventory shows proper message
-   - Verify that fuzzy item matching works for both take and use actions
-   - Confirm that lit torch works correctly in the dark room
-   - Ensure game result metadata contains correct visited rooms and inventory
+   - Try taking the same item twice - should show "already have" message
+   - Test taking items using different capitalization or full names
+   - Try using items with variations of their names
+   - Confirm the lit torch works correctly in the dark room
 
 2. Test with the AI player to verify step limit handling:
    ```
