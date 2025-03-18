@@ -2,6 +2,7 @@ import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
 import { generateText, tool } from 'ai'
 import { openai } from '@ai-sdk/openai'
+import { formatToolCallsAsText } from '../utils/ai-helpers'
 import { z } from 'zod'
 import 'dotenv/config'
 
@@ -123,12 +124,34 @@ export class LLMPlayer implements GamePlayer {
       })
       
       // Log the tool calls for debugging
-      console.log("Tool calls:", JSON.stringify(toolCalls, null, 2))
+      console.log("Tool calls:\n" + formatToolCallsAsText(toolCalls))
       
-      // Get the last tool call that is an action (not a reflection)
+      // If we have no tool calls or only reflect, we'll need to infer an action
+      // from the reflections
+      const reflectCalls = toolCalls.filter(call => call.toolName === 'reflect')
       const actionCall = toolCalls.find(call => call.toolName === 'action')
       
       if (!actionCall) {
+        // For debugging/development - we'll create a default action from reflection
+        if (reflectCalls.length > 0) {
+          const lastReflect = reflectCalls[reflectCalls.length - 1]
+          const reflectText = lastReflect.args.thoughts || ''
+          
+          // Try to infer an action from the reflection
+          // This is very simple inference and should be improved
+          let command = 'look'
+          if (reflectText.toLowerCase().includes('take')) {
+            command = 'take'
+          } else if (reflectText.toLowerCase().includes('go north')) {
+            command = 'north'
+          } else if (reflectText.toLowerCase().includes('go east')) {
+            command = 'east'
+          }
+          
+          console.log(`Inferring action '${command}' from reflection`)
+          return [command as keyof T, { text: reflectText } as SchemaType<T[keyof T]>]
+        }
+        
         throw new Error('No valid action was selected by the LLM')
       }
       
