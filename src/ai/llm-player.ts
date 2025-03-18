@@ -88,7 +88,7 @@ export class LLMPlayer implements GamePlayer {
       const commandEnum = z.enum(Object.keys(actionSchemas) as [string, ...string[]]);
       const combinedActionSchema = z.object({
         command: commandEnum.describe('The action command to execute'),
-        parameters: z.record(z.string(), z.unknown()).describe('Parameters for the selected command')
+        parameters: z.object({}).passthrough().describe('Parameters for the selected command')
       })
       
       // Create the action tool using the combined schema
