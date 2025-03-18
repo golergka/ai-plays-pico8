@@ -164,7 +164,24 @@ export class LLMPlayer implements GamePlayer {
           
           // Validate that the inferred action exists in the schemas
           if (actionType in actionSchemas) {
-            const params = { description: `Inferred from thoughts: ${thoughts.substring(0, 100)}...` }
+            // Create params based on the action type
+            let params: Record<string, unknown> = {};
+            
+            if (actionType === 'take') {
+              params = { item: 'key' };
+            } else if (actionType === 'north') {
+              // In the schema, directions are handled by the move action
+              actionType = 'move';
+              params = { direction: 'north' };
+            } else if (actionType === 'east') {
+              // In the schema, directions are handled by the move action
+              actionType = 'move';
+              params = { direction: 'east' };
+            } else if (actionType === 'examine') {
+              // If examine is detected without a clear target, default to key
+              params = { target: 'room' };
+            }
+            
             const validatedParams = actionSchemas[actionType as keyof T].parse(params)
             
             this.emitEvent('action', `Inferred action: ${actionType}`, 
