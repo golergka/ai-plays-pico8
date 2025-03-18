@@ -176,6 +176,10 @@ bun remove <package>      # Remove a package
 - **Error Handling**: Use typed errors, prefer async/await with try/catch
 - **Comments**: JSDoc for public APIs, inline comments for complex logic
 - **File Structure**: One component/class per file, organize by feature
+- **Protected Files**:
+  - **CRITICAL**: NEVER modify `run.sh` - this file is managed by project administrators
+  - Always check TASKS.md to confirm which files are relevant to your current task
+  - Only modify files that are directly related to your assigned task
 - **Testing**: 
   - Use Vitest for unit and integration tests
   - Follow AAA pattern (Arrange, Act, Assert)

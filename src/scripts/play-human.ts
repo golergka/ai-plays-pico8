@@ -2,7 +2,7 @@
  * Script to play a game with human input
  */
 import { HumanPlayer } from '../cli/human-player'
-import { TextAdventure } from '../games/text-adventure'
+import { TextAdventure, CompactTextAdventure } from '../games/text-adventure'
 import { TerminalUI } from '../cli/terminal-ui'
 
 async function main() {
@@ -11,6 +11,16 @@ async function main() {
 
   // Create a terminal UI for displaying messages
   const ui = new TerminalUI()
+
+  // Display usage instructions
+  ui.displayHeader('Human Player Mode')
+  ui.display(`Usage: bun run play:human [game-type]`)
+  ui.display(`  game-type: Game to play (default: text-adventure)`)
+  ui.display(`            Options: text-adventure, compact-adventure`)
+  ui.display(``)
+  ui.display(`Current settings:`)
+  ui.display(`  Game: ${gameType}`)
+  ui.display(``)
 
   // Initialize the appropriate game
   const game = await initializeGame(gameType)
@@ -49,6 +59,10 @@ async function main() {
 async function initializeGame(gameType: string) {
   if (gameType === 'text-adventure') {
     const game = new TextAdventure()
+    await game.initialize()
+    return game
+  } else if (gameType === 'compact-adventure') {
+    const game = new CompactTextAdventure()
     await game.initialize()
     return game
   }

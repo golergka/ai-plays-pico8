@@ -3,7 +3,7 @@
  */
 import { LLMPlayer } from '../ai/llm-player'
 import type { LLMPlayerEvent } from '../ai/llm-player'
-import { TextAdventure } from '../games/text-adventure'
+import { TextAdventure, CompactTextAdventure } from '../games/text-adventure'
 import { TerminalUI } from '../cli/terminal-ui'
 import chalk from 'chalk'
 
@@ -28,6 +28,7 @@ async function main() {
   ui.displayHeader('LLM Player Demo')
   ui.display(`Usage: bun run play:ai [game-type] [model] [timeout-ms] [max-retries]`)
   ui.display(`  game-type   : Game to play (default: text-adventure)`)
+  ui.display(`              : Options: text-adventure, compact-adventure`)
   ui.display(`  model       : Model to use (default: gpt-4)`)
   ui.display(`  timeout-ms  : Timeout in ms (default: 30000)`)
   ui.display(`  max-retries : Max retries for invalid responses (default: 3)`)
@@ -117,6 +118,10 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
 async function initializeGame(gameType: string) {
   if (gameType === 'text-adventure') {
     const game = new TextAdventure()
+    await game.initialize()
+    return game
+  } else if (gameType === 'compact-adventure') {
+    const game = new CompactTextAdventure()
     await game.initialize()
     return game
   }

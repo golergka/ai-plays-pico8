@@ -1,23 +1,18 @@
 import type { Game, GamePlayer, GameResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
 import { TextAdventureActionSchemas, toTextAdventureAction } from './schema'
-import { CompactTextAdventure } from './compact-adventure'
-
-// Re-export types and CompactTextAdventure
-export type { Item, Room, TextAdventureAction, TextAdventureState }
-export { CompactTextAdventure }
 
 /**
- * Simple text adventure game implementation
+ * Compact text adventure game implementation that can be completed in 10-15 actions
  */
-export class TextAdventure implements Game {
+export class CompactTextAdventure implements Game {
   private rooms: Map<string, Room> = new Map()
   private items: Map<string, Item> = new Map()
   private state: TextAdventureState
   
   constructor() {
     this.state = {
-      currentRoom: 'start',
+      currentRoom: 'entrance',
       inventory: [],
       visited: new Set<string>(),
       gameOver: false,
@@ -100,75 +95,68 @@ export class TextAdventure implements Game {
    * Setup the game rooms
    */
   private setupRooms(): void {
-    // Define rooms
+    // Define rooms for a compact adventure
     const rooms: Room[] = [
       {
-        id: 'start',
-        name: 'Starting Room',
-        description: 'You find yourself in a small, dimly lit room. There is a door to the north and a window to the east.',
+        id: 'entrance',
+        name: 'Cave Entrance',
+        description: 'You stand at the entrance of a mysterious cave. A cool breeze flows from inside. There\'s a path leading east into the darkness.',
         exits: {
-          north: 'hallway',
-          east: 'balcony'
+          east: 'mainChamber'
+        },
+        items: ['torch']
+      },
+      {
+        id: 'mainChamber',
+        name: 'Main Chamber',
+        description: 'A spacious chamber with ancient writing on the walls. There are passages to the west, north, and east.',
+        exits: {
+          west: 'entrance',
+          north: 'treasureRoom',
+          east: 'puzzleRoom'
+        },
+        interactions: {
+          'wall writing': {
+            description: 'Faded glyphs on the stone wall.',
+            result: {
+              message: 'You make out the words: "Only with light can the treasure be found."'
+            }
+          }
+        }
+      },
+      {
+        id: 'treasureRoom',
+        name: 'Dark Room',
+        description: 'This room is pitch black. You can\'t see anything without a light source. There\'s a passage to the south.',
+        exits: {
+          south: 'mainChamber'
+        },
+        items: ['treasure'],
+        interactions: {
+          darkness: {
+            description: 'The room is too dark to see anything.',
+            result: {
+              message: 'You need a light source to explore this room properly.'
+            }
+          }
+        }
+      },
+      {
+        id: 'puzzleRoom',
+        name: 'Puzzle Room',
+        description: 'A small room with a stone pedestal in the center. There\'s a keyhole in the pedestal. A passage leads west.',
+        exits: {
+          west: 'mainChamber'
         },
         items: ['key'],
         interactions: {
-          window: {
-            description: 'A dusty window shows a view of a garden below.',
+          pedestal: {
+            description: 'A stone pedestal with a small keyhole.',
             result: {
-              message: 'You look through the window and see a beautiful garden below.'
+              message: 'The keyhole seems to be waiting for a matching key.'
             }
           }
         }
-      },
-      {
-        id: 'hallway',
-        name: 'Hallway',
-        description: 'A long hallway stretches before you. There are doors to the south and west.',
-        exits: {
-          south: 'start',
-          west: 'library'
-        }
-      },
-      {
-        id: 'library',
-        name: 'Library',
-        description: 'A dusty library filled with old books. There\'s a door to the east and a locked door to the north.',
-        exits: {
-          east: 'hallway'
-        },
-        interactions: {
-          'north door': {
-            description: 'A sturdy wooden door with a keyhole.',
-            result: {
-              message: 'The door is locked. You need a key to open it.'
-            }
-          },
-          books: {
-            description: 'Shelves filled with dusty old tomes.',
-            result: {
-              addItems: ['note'],
-              message: 'While browsing the books, you find a small folded note hidden between the pages of an old volume.'
-            }
-          }
-        }
-      },
-      {
-        id: 'balcony',
-        name: 'Balcony',
-        description: 'A small balcony overlooking a garden. There is a door back to the west.',
-        exits: {
-          west: 'start'
-        },
-        items: ['flower']
-      },
-      {
-        id: 'secret_room',
-        name: 'Secret Room',
-        description: 'A hidden room with a treasure chest in the center. This must be what you were looking for!',
-        exits: {
-          south: 'library'
-        },
-        items: ['treasure']
       }
     ]
     
@@ -182,32 +170,26 @@ export class TextAdventure implements Game {
    * Setup the game items
    */
   private setupItems(): void {
-    // Define items
+    // Define items for a compact adventure
     const items: Item[] = [
       {
+        id: 'torch',
+        name: 'Unlit Torch',
+        description: 'A wooden torch that could be lit with a fire source.',
+        takeable: true,
+        usableWith: ['darkness']
+      },
+      {
         id: 'key',
-        name: 'Brass Key',
-        description: 'An old brass key with ornate designs.',
+        name: 'Small Key',
+        description: 'A small bronze key with unusual teeth.',
         takeable: true,
-        usableWith: ['north door']
-      },
-      {
-        id: 'note',
-        name: 'Folded Note',
-        description: 'A handwritten note that reads: "The garden holds the secret."',
-        takeable: true
-      },
-      {
-        id: 'flower',
-        name: 'Strange Flower',
-        description: 'A flower with glowing blue petals. It seems to pulse with energy.',
-        takeable: true,
-        usableWith: ['books']
+        usableWith: ['pedestal']
       },
       {
         id: 'treasure',
-        name: 'Ancient Treasure',
-        description: 'A golden treasure box filled with precious gems and ancient artifacts.',
+        name: 'Golden Idol',
+        description: 'A gleaming golden idol of immense value.',
         takeable: true
       }
     ]
@@ -223,6 +205,13 @@ export class TextAdventure implements Game {
    */
   private generateGameOutput(room: Room): string {
     let output = `== ${room.name} ==\n\n`
+    
+    // Handle special case for dark room without lit torch
+    if (room.id === 'treasureRoom' && !this.state.inventory.includes('lit_torch')) {
+      output += 'It\'s pitch black. You can\'t see anything without a light source.\n\n'
+      output += 'Exits: south\n\n'
+      return output
+    }
     
     // Add room description
     output += `${room.description}\n\n`
@@ -247,6 +236,9 @@ export class TextAdventure implements Game {
     } else {
       output += 'There are no obvious exits.\n\n'
     }
+    
+    // Add inventory reminder for new players
+    output += 'Type "inventory" to see what you\'re carrying or "help" for commands.\n'
     
     return output
   }
@@ -293,14 +285,6 @@ export class TextAdventure implements Game {
     const nextRoomId = currentRoom.exits[direction]
     
     if (nextRoomId) {
-      // Special case for library -> secret_room
-      if (currentRoom.id === 'library' && direction === 'north') {
-        // Check if player has key in inventory
-        if (!this.state.inventory.includes('key')) {
-          return // Can't move, door is locked
-        }
-      }
-      
       // Move to the next room
       this.state.currentRoom = nextRoomId
       
@@ -350,6 +334,13 @@ export class TextAdventure implements Game {
    * Handle taking an item
    */
   private handleTake(itemId: string, currentRoom: Room): void {
+    // Special case for darkness
+    if (currentRoom.id === 'treasureRoom' && !this.state.inventory.includes('lit_torch')) {
+      if (itemId === 'treasure') {
+        return // Can't see to take anything
+      }
+    }
+    
     if (!currentRoom.items) {
       return
     }
@@ -384,16 +375,40 @@ export class TextAdventure implements Game {
       return
     }
     
-    // Special interactions
-    if (itemId === 'key' && targetId === 'north door' && currentRoom.id === 'library') {
-      // Add north exit to library
-      currentRoom.exits['north'] = 'secret_room'
-      
-      // Remove key from inventory (used up)
-      const keyIndex = this.state.inventory.indexOf('key')
-      if (keyIndex !== -1) {
-        this.state.inventory.splice(keyIndex, 1)
+    // Special case: using torch (converts to lit_torch)
+    if (itemId === 'torch' && !targetId) {
+      // Light the torch
+      const torchIndex = this.state.inventory.indexOf('torch')
+      if (torchIndex !== -1) {
+        this.state.inventory.splice(torchIndex, 1)
+        this.state.inventory.push('lit_torch')
+        
+        // Create the lit torch item if it doesn't exist
+        if (!this.items.has('lit_torch')) {
+          this.items.set('lit_torch', {
+            id: 'lit_torch',
+            name: 'Lit Torch',
+            description: 'A flaming torch providing light and warmth.',
+            takeable: true,
+            usableWith: ['darkness']
+          })
+        }
       }
+      return
+    }
+    
+    // Using lit torch in the dark room
+    if (itemId === 'lit_torch' && currentRoom.id === 'treasureRoom') {
+      // Room is now illuminated, no need to change state
+      return
+    }
+    
+    // Using key with pedestal
+    if (itemId === 'key' && targetId === 'pedestal' && currentRoom.id === 'puzzleRoom') {
+      // Using the key triggers game completion
+      this.state.gameOver = true
+      this.state.win = true
+      return
     }
   }
   
@@ -407,8 +422,8 @@ export class TextAdventure implements Game {
       this.state.win = true
     }
     
-    // Lose condition: too many turns (simple example)
-    if (this.state.turns >= 50) {
+    // Lose condition: too many turns
+    if (this.state.turns >= 20) {
       this.state.gameOver = true
       this.state.win = false
     }

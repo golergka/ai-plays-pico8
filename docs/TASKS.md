@@ -175,21 +175,47 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.test.ts
 
-### [T-016] Create Short Demo Game [TODO]
+### [T-016] Create Short Demo Game [TESTING]
 **Dependencies**: T-005
 **Description**: Create a shorter, faster text adventure demo game that can be completed in 10-15 actions. This will serve as a quick introduction to the system for new users, while keeping the current more extensive text adventure as a second option.
 **Acceptance Criteria**:
-- Create a new compact text adventure game implementation
-- Design a game that can be completed in 10-15 actions
-- Include basic game mechanics (movement, items, using items)
-- Ensure the game has clear win/lose conditions
-- Update the play-ai.ts and play-human.ts scripts to support selecting this new game
-- Update documentation to mention both game options
+- Create a new compact text adventure game implementation ✅
+- Design a game that can be completed in 10-15 actions ✅
+- Include basic game mechanics (movement, items, using items) ✅
+- Ensure the game has clear win/lose conditions ✅
+- Update the play-ai.ts and play-human.ts scripts to support selecting this new game ✅
+- Update documentation to mention both game options ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-human.ts
+
+**Manual Testing Instructions**:
+1. Test the compact adventure with human player:
+   ```
+   bun run src/scripts/play-human.ts compact-adventure
+   ```
+   - The game should start in a cave entrance
+   - Verify you can move between rooms, take items, and use them
+   - Try to complete the game by either:
+     - Finding and taking the treasure in the dark room (need to light torch first)
+     - Using the key on the pedestal in the puzzle room
+   - Verify the game can be completed in 10-15 actions
+   - Confirm win/lose conditions work properly
+
+2. Test the compact adventure with AI player:
+   ```
+   bun run src/scripts/play-ai.ts compact-adventure
+   ```
+   - Verify the AI can navigate and interact with the game
+   - Monitor if the AI can reason about using the torch to see in the dark room
+   - Check if the AI can discover both win conditions
+
+3. Verify both game types are selectable:
+   - Try running both game types with explicit arguments
+   - Confirm that the original adventure still works properly
+   - Test with both human and AI players
 
 ### [T-014] Create LLM Player Demo Script [TESTING]
 **Dependencies**: T-003, T-005

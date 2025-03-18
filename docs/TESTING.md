@@ -189,6 +189,18 @@ For each task requiring manual testing:
 4. Identify potential failure modes to watch for
 5. Provide cleanup steps if necessary
 
+### Protected Testing Scripts
+
+The following rules apply when providing testing instructions to humans:
+
+1. **NEVER** modify `run.sh` - this file is managed by project administrators
+2. **NEVER** instruct users to modify `run.sh` as part of testing
+3. Instead, provide explicit commands using `bun run` to execute specific tests:
+   - For playing games: `bun run src/scripts/play-human.ts [game-type]`
+   - For AI demos: `bun run src/scripts/play-ai.ts [game-type] [model] [timeout] [retries]`
+4. Always include any needed command-line arguments in the test instructions
+5. Document all test commands in TASKS.md for the specific task
+
 ## Testing Workflow
 
 1. **Find Task-Specific Tests**: Look in TASKS.md for the specific task's testing instructions
