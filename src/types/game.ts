@@ -31,13 +31,16 @@ export interface GameResult {
  */
 export interface GamePlayer {
   /**
-   * Get an action from the player based on game output and schema
+   * Get an action from the player based on game output and action schemas
    * 
    * @param gameOutput Text description of current game state
-   * @param actionSchema Schema defining valid actions
-   * @returns Promise resolving with a valid action matching the schema
+   * @param actionSchemas Map of action names to schemas defining valid actions
+   * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  getAction<T>(gameOutput: string, actionSchema: Schema<T>): Promise<T>
+  getAction<T extends Record<string, Schema<any>>>(
+    gameOutput: string, 
+    actionSchemas: T
+  ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]>
   
   /**
    * Clean up resources when game ends

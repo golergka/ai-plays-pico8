@@ -79,6 +79,7 @@ export function createFunctionSchema(
   }
 }
 
+
 /**
  * Export Zod for schema definitions
  */
@@ -93,3 +94,10 @@ export type Schema<T> = z.ZodType<T>
  * Type of an instance of a schema
  */
 export type SchemaType<T extends z.ZodType<any>> = z.infer<T>
+
+/**
+ * Type helper to extract the action name and payload from a schema map
+ */
+export type ActionFromSchemas<T extends Record<string, Schema<any>>> = {
+  [K in keyof T]: [K, SchemaType<T[K]>]
+}[keyof T]

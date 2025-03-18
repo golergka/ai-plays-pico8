@@ -1,6 +1,6 @@
 import type { Game, GamePlayer, GameResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
-import { TextAdventureActionSchema } from './schema'
+import { TextAdventureActionSchemas, toTextAdventureAction } from './schema'
 
 // Re-export types
 export type { Item, Room, TextAdventureAction, TextAdventureState }
@@ -54,10 +54,16 @@ export class TextAdventure implements Game {
       // Generate game output
       const gameOutput = this.generateGameOutput(currentRoom)
       
-      // Get action from player using our schema
-      const action = await player.getAction<TextAdventureAction>(
+      // Get action from player using our schema map
+      const [actionType, actionData] = await player.getAction(
         gameOutput, 
-        TextAdventureActionSchema
+        TextAdventureActionSchemas
+      )
+      
+      // Convert to the legacy action format
+      const action = toTextAdventureAction(
+        actionType as keyof typeof TextAdventureActionSchemas,
+        actionData
       )
       
       // Process the action

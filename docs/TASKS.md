@@ -229,15 +229,15 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-011] [URGENT] Fix Action Schema System [TODO]
+### [T-011] [URGENT] Fix Action Schema System [TESTING]
 **Dependencies**: T-002, T-007
 **Description**: The current action schema system needs to be reworked. It should be a map of action names to action schemas, rather than a single schema. This will allow for better type safety and more flexible action handling.
 **Acceptance Criteria**:
-- Refactor schema system to use a map of action names to schemas
-- Update type definitions to ensure type safety across the system
-- Ensure schema system generates correct JSON schema for function calling
-- Update existing game implementations to use the new schema system
-- Add proper typings to infer action types from schema definitions
+- Refactor schema system to use a map of action names to schemas ✅
+- Update type definitions to ensure type safety across the system ✅
+- Ensure schema system generates correct JSON schema for function calling ✅
+- Update existing game implementations to use the new schema system ✅
+- Add proper typings to infer action types from schema definitions ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
