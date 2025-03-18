@@ -1,6 +1,6 @@
-# AI Plays text game
+# AI GameDev Monorepo
 
-A TypeScript-based library/application that enables AI to play text games.
+A TypeScript-based monorepo for AI game development and testing tools.
 
 **Important**
 
@@ -8,7 +8,9 @@ If you're Claude, only update this document as an artifact for humans. Rules for
 
 ## Project Overview
 
-This project aims to create a framework for AI agents to play text games with easy, menu-based input and output.
+This monorepo contains packages for AI game development and testing:
+
+- `@ai-gamedev/playtest`: Framework for AI agents to play text games with easy, menu-based input and output.
 
 ## Setup & Installation
 
@@ -16,18 +18,32 @@ This project aims to create a framework for AI agents to play text games with ea
 
 - [Bun](https://bun.sh/) runtime
 
+### Installation
+
+```bash
+# Install dependencies for all packages
+bun install
+```
+
 ## Usage
 
 ```bash
-# Run the application
+# Run the playtest application
+cd packages/playtest
 bun run start
+
+# Or from the root directory
+bun --cwd packages/playtest run start
 ```
 
 ## Development
 
 ```bash
-# Run type checking
+# Run type checking for all packages
 bun run typecheck
+
+# Run tests for all packages
+bun run test
 ```
 
 ## Project Status

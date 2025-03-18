@@ -5,7 +5,7 @@ export default defineConfig({
     // Only show output on failures by default
     silent: true,
     // Include all files with .test.ts or .spec.ts in their name
-    include: ['packages/**/*.{test,spec}.ts'],
+    include: ['**/*.{test,spec}.ts'],
     // Exclude node_modules and other non-test files
     exclude: ['**/node_modules/**', '**/dist/**'],
     // Format output for better readability

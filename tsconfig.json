@@ -1,23 +1,19 @@
 {
   "compilerOptions": {
-    // Enable latest features
+    // Base options
     "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
-
-    // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-
-    // Best practices
+    
+    // Type checking
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
-
-    // Strict type checking
     "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
@@ -26,21 +22,14 @@
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
-
-    // Additional strictness
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
-
-    // Enable stricter flags
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noPropertyAccessFromIndexSignature": true,
-
-    // Already covered by noImplicitAny in strict: true
-    
-    // Force more explicit code
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "exclude": ["node_modules"]
 }
