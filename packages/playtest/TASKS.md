@@ -1,17 +1,18 @@
 # Tasks
 
-## Current Task ID Counter: T-024
+## Current Task ID Counter: T-025
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-025 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-026 as the next available ID.
 
 ## Current Priorities
 1. [T-019] Add Game Playtime Limit [TESTING]
 2. [T-020] Adjust Game Logic for Completion [TODO]
 3. [T-024] Fix Game State Handling Issues [TODO] 
-4. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
-5. [T-001] Setup Project Structure [IN PROGRESS]
-6. [T-002] Implement Core Schema System [TODO]
-7. [T-004] Build Game Launcher [TODO]
+4. [T-025] Implement Game State Display in AI Player [TODO]
+5. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+6. [T-001] Setup Project Structure [IN PROGRESS]
+7. [T-002] Implement Core Schema System [TODO]
+8. [T-004] Build Game Launcher [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -288,8 +289,8 @@ These instructions must not be summarized or removed from this document.
    - Verify that the game defaults to 10 steps as specified in the code
 
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/scripts/play-ai.ts
 
 ### [T-020] Adjust Specific Game Logic for Completion [TODO]
 **Dependencies**: T-016
@@ -302,8 +303,8 @@ These instructions must not be summarized or removed from this document.
 - Test with both human and AI players to verify completability
 - Document any special interaction patterns in comments
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/games/text-adventure/schema.ts
 
 ### [T-024] Fix Game State Handling Issues [DONE]
 **Dependencies**: T-023
@@ -318,10 +319,10 @@ These instructions must not be summarized or removed from this document.
 - Ensure proper error handling when game state operations fail ✅
 
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/types/game.ts
 
 **Manual Testing Instructions**:
 1. Test item handling and fuzzy matching:
@@ -341,6 +342,37 @@ These instructions must not be summarized or removed from this document.
    - Check that the metadata in the game result includes visited rooms and inventory
    - Confirm that the game state is correctly tracked across actions
 
+### [T-025] Implement Game State Display in AI Player [TODO]
+**Dependencies**: T-024
+**Description**: When the AI is playing a game, the current game state is not visible to the user in the terminal output. This task is to update the AI player to display the full game state after each step, similar to how it's shown to the LLM, so that users can see what information the AI is receiving.
+**Acceptance Criteria**:
+- Display the full game state after each AI action in the terminal
+- Show the exact input that's being sent to the LLM, including game description and available actions
+- Update the terminal UI to properly format and display this information
+- Add a clear section header to differentiate game state from LLM thinking/responses
+- Ensure this doesn't interfere with existing event display (thinking, response, action, error)
+- Make the display optional with a flag (default to on)
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/cli/terminal-ui.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/llm-player.ts
+
+**Manual Testing Instructions**:
+1. Run the AI player with the compact adventure:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 5
+   ```
+   - Verify that after each AI action, the game state is displayed in the terminal
+   - Check that the display shows the exact same information that's being sent to the LLM
+   - Confirm that all game state sections are shown: description, inventory, available actions, etc.
+
+2. Verify display formatting:
+   ```
+   bun run play:ai text-adventure
+   ```
+   - Check that the game state display is properly formatted and readable
+   - Verify that it's clear which section shows the game state vs. LLM thinking or actions
+
 ### [T-021] Clean Up Platform-Level OpenAI Wrapper and LLM Player [TODO]
 **Dependencies**: T-018
 **Description**: Now that the OpenAI wrapper and LLM player are working correctly, clean up this platform-level code, improve error handling, and add better documentation. This task focuses on the core AI platform components, not specific game implementations.
@@ -352,7 +384,7 @@ These instructions must not be summarized or removed from this document.
 - Ensure all code paths are properly typed and exception-safe
 - Update tests to cover the improved implementation
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/api/openai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/api/index.ts
 
