@@ -236,8 +236,7 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   try {
     parsedResponse = OpenAIResponseSchema.parse(rawResponse)
   } catch (error) {
-    console.error("Failed to parse OpenAI response:", error)
-    console.error("Raw response:", JSON.stringify(rawResponse, null, 2))
+    // Error will be thrown with a clear message
     throw new Error(`Invalid response from OpenAI API: ${error instanceof Error ? error.message : String(error)}`)
   }
   
@@ -296,14 +295,14 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
             const validArgs = schema.parse(parsedArgs)
             result.toolCall = validArgs
           } catch (error) {
-            console.error(`Failed to validate tool arguments with schema:`, error)
+            // Error will be thrown with details
             throw new Error(`Invalid tool arguments: ${error instanceof Error ? error.message : String(error)}`)
           }
         } else {
           throw new Error(`Unknown tool called: ${toolName}`)
         }
       } catch (error) {
-        console.error("Failed to parse tool arguments:", error)
+        // Error will be thrown with details
         throw new Error(`Invalid tool call arguments: ${error instanceof Error ? error.message : String(error)}`)
       }
     } else {
@@ -311,7 +310,7 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
       try {
         result.toolCall = JSON.parse(toolCall.function.arguments) as any
       } catch (error) {
-        console.error("Failed to parse tool arguments:", error)
+        // Error will be thrown with details
         throw new Error(`Invalid tool call arguments: ${error instanceof Error ? error.message : String(error)}`)
       }
     }

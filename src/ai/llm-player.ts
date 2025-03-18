@@ -115,8 +115,6 @@ export class LLMPlayer implements GamePlayer {
       
       // Call OpenAI with structured parameters and schemas
       try {
-        console.log("DEBUG: Calling OpenAI with tools:", JSON.stringify(tools.map(t => t.name), null, 2))
-        
         const result = await callOpenAI({
           model: this.options.model,
           messages: this.chatHistory,
@@ -126,8 +124,6 @@ export class LLMPlayer implements GamePlayer {
             choice: 'auto' // Let the AI choose which action to take
           }
         })
-        
-        console.log("DEBUG: OpenAI API result:", JSON.stringify(result, null, 2))
         
         // Tool call is now directly available with correct typing
         if (result.toolCall && result.toolName) {
@@ -165,13 +161,7 @@ export class LLMPlayer implements GamePlayer {
         
         throw new Error('LLM returned empty response without selecting an action')
       } catch (e: unknown) {
-        // Log detailed error information
-        console.error("DEBUG: Error in getAction:", e)
-        console.error("DEBUG: Error details:", JSON.stringify({
-          errorName: e instanceof Error ? e.name : 'Unknown',
-          errorMessage: e instanceof Error ? e.message : String(e),
-          errorStack: e instanceof Error ? e.stack : 'No stack trace'
-        }, null, 2))
+        // Just throw the error to be handled by the caller
         
         // Try again with the next retry if available
         throw e
