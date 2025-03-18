@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "types": ["bun-types"],
+    "paths": {
+      "@ai-gamedev/playtest": ["../playtest"],
+      "@ai-gamedev/text-adventure": ["."],
+      "@ai-gamedev/compact-adventure": ["../compact-adventure"],
+      "@ai-gamedev/play": ["../play"]
+    }
+  },
+  "include": ["src/**/*", "index.ts"]
+}

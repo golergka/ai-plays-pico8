@@ -10,7 +10,10 @@ If you're Claude, only update this document as an artifact for humans. Rules for
 
 This monorepo contains packages for AI game development and testing:
 
-- `@ai-gamedev/playtest`: Framework for AI agents to play text games with easy, menu-based input and output.
+- `@ai-gamedev/playtest`: Framework for AI agents to play text games with easy, menu-based input and output
+- `@ai-gamedev/text-adventure`: Implementation of a text adventure game
+- `@ai-gamedev/compact-adventure`: Compact version of the text adventure game
+- `@ai-gamedev/play`: CLI tools for playing games with human or AI players
 
 ## Setup & Installation
 
@@ -28,12 +31,14 @@ bun install
 ## Usage
 
 ```bash
-# Run the playtest application
-cd packages/playtest
-bun run start
+# Play a text adventure with human input
+bun run play human text-adventure
 
-# Or from the root directory
-bun --cwd packages/playtest run start
+# Play a compact adventure with AI
+bun run play ai compact-adventure gpt-4 3 15
+
+# Show help
+bun run play help
 ```
 
 ## Development

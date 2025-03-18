@@ -14,9 +14,10 @@
     "test:watch": "bun run --cwd packages/playtest test:watch",
     "test:ui": "bun run --cwd packages/playtest test:ui",
     "test:coverage": "bun run --cwd packages/playtest test:coverage",
-    "play:human": "bun run --cwd packages/playtest play:human",
-    "play:ai": "bun run --cwd packages/playtest play:ai",
-    "start": "bun run --cwd packages/playtest start"
+    "play": "bun run packages/play/cli.ts",
+    "play:human": "bun run packages/play/cli.ts human",
+    "play:ai": "bun run packages/play/cli.ts ai",
+    "start": "bun run packages/play/cli.ts"
   },
   "packageManager": "bun@1.2.0"
 }

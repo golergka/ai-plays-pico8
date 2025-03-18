@@ -1,0 +1,1 @@
+export * from '@ai-gamedev/playtest/src/games/text-adventure/schema'
