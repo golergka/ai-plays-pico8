@@ -194,9 +194,16 @@ For each task requiring manual testing:
 1. **Find Task-Specific Tests**: Look in TASKS.md for the specific task's testing instructions
 2. **Run Automated Tests First**: Begin with all available automated tests for the specific component
 3. **Fix Issues**: Address any failures in automated tests
-4. **Document Manual Tests**: Create clear manual testing instructions
-5. **Human Verification**: Request human confirmation of successful testing
-6. **Status Update**: Only mark tasks as DONE after human verification
+4. **Determine Testing Boundary**:
+   - **For purely code-level changes that can be fully validated with automated tests**:
+     - Mark the task as DONE after all automated tests pass
+     - Examples: pure refactoring, interface extraction, adding unit tests, fixing type errors
+   - **For changes requiring manual verification**:
+     - Continue with steps 5-7 below
+     - Examples: UI changes, process management, external system integration
+5. **Document Manual Tests**: Create clear manual testing instructions (ONLY for tasks requiring manual testing)
+6. **Human Verification**: Request human confirmation of successful testing (ONLY for tasks requiring manual testing)
+7. **Status Update**: Only mark tasks as DONE after human verification (for tasks requiring manual testing)
 
 ## Bug Verification Process
 

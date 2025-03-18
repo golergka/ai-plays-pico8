@@ -20,25 +20,35 @@ Follow these steps when asked with autonomusly work on the project:
      - Look into docs/TESTING.md if you need to do anything with tests
    - Any example/demo code you've written
    - NEVER skip running tests even if they're in separate files you've created
-7. IMPORTANT: For ALL changes that cannot be fully validated through automated checks:
-   - This includes ANY changes affecting:
-     - Process management (launching, terminating, monitoring processes)
-     - User interaction (input commands, key mappings)
-     - Visual elements (screen capture, UI)
-     - External system interactions (file I/O, APIs)
-     - Configuration changes (.env files)
-   - Mark task as IN PROGRESS in TASKS.md
-   - Make ALL necessary configuration changes to ensure testing is streamlined
-   - After implementing and committing the changes, you MUST:
-     - Explicitly tell the human that manual testing is required
-     - Provide PRECISE testing instructions including:
-       - Exact commands to run
-       - Specific behaviors to observe/validate
-       - Expected outcomes that would indicate success
-       - Potential failure modes to watch for
-   - Do not mark a task as DONE until human confirms successful testing
-8. For tasks with clear programmatic validation, update TASKS.md to reflect progress
-9. Commit changes following the git workflow below
+7. Determine how to validate your changes:
+   - A. For changes that can be FULLY validated through automated tests (see examples below):
+     - Update TASKS.md to reflect progress (mark as DONE if all criteria are met)
+     - AUTOMATED TESTING IS SUFFICIENT FOR:
+       - Code refactoring with no behavior changes
+       - Interface extraction/implementation
+       - Creating/improving unit tests
+       - Type system improvements and fixes
+       - Pure utility functions
+       - Internal implementation changes with test coverage
+       
+   - B. For changes that CANNOT be fully validated through automated checks:
+     - This includes ANY changes affecting:
+       - Process management (launching, terminating, monitoring processes)
+       - User interaction (input commands, key mappings)
+       - Visual elements (screen capture, UI)
+       - External system interactions (file I/O, APIs)
+       - Configuration changes (.env files)
+     - Mark task as IN PROGRESS in TASKS.md
+     - Make ALL necessary configuration changes to ensure testing is streamlined
+     - After implementing and committing the changes, you MUST:
+       - Explicitly tell the human that manual testing is required
+       - Provide PRECISE testing instructions including:
+         - Exact commands to run
+         - Specific behaviors to observe/validate
+         - Expected outcomes that would indicate success
+         - Potential failure modes to watch for
+     - Do not mark a task as DONE until human confirms successful testing
+8. Commit changes following the git workflow below
 
 ## WORKFLOW: New Task
 
@@ -56,7 +66,9 @@ When human prompts you with a specific task, follow these steps:
      - Look into docs/TESTING.md if you need to do anything with tests
    - Any example/demo code you've written
    - NEVER skip running tests even if they're in separate files you've created
-7. Complete the remaining steps as in the Independent Work workflow
+7. Determine how to validate your changes (as detailed in step 7 of the Independent Work workflow):
+   - For changes that can be FULLY validated with automated tests: update TASKS.md directly
+   - For changes that require manual testing: request human verification before marking as DONE
 8. After committing the changes, respond to the user with your current progress with task as described by him and your estimate of remaining work
 
 ## WORKFLOW: Feature Reality Check
