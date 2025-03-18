@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { 
   combineSchemas, 
-  extractActionFromDiscriminatedUnion,
-  SchemaType
+  extractActionFromDiscriminatedUnion
 } from './utils'
+import type { SchemaType } from './utils'
 
 describe('Schema utils', () => {
   describe('combineSchemas', () => {
@@ -166,20 +166,21 @@ describe('Schema utils', () => {
       const parsedData = combinedSchema.parse(moveAction)
       
       // Extract action
-      const [actionType, actionData] = extractActionFromDiscriminatedUnion<ActionSchemas>(parsedData)
+      const actionData = parsedData as { type: keyof ActionSchemas } & Record<string, unknown>;
+      const [actionType, extractedData] = extractActionFromDiscriminatedUnion<ActionSchemas>(actionData)
       
       // Validate result
       expect(actionType).toBe('move')
-      expect(actionData).toEqual({ direction: 'north' })
+      expect(extractedData).toEqual({ direction: 'north' })
       
       // Validate against original schema
-      const validatedActionData = schemas[actionType].parse(actionData)
+      const validatedActionData = schemas[actionType].parse(extractedData)
       expect(validatedActionData).toEqual({ direction: 'north' })
       
       // Get proper type
       type MoveSchema = SchemaType<typeof schemas['move']>
-      const typedData = validatedActionData as MoveSchema
-      expect(typedData.direction).toBe('north')
+      const typedActionData = validatedActionData as MoveSchema
+      expect(typedActionData['direction']).toBe('north')
     })
   })
 })

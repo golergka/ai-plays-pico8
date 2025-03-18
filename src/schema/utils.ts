@@ -89,15 +89,28 @@ export function createFunctionSchema(
  */
 export function combineSchemas<T extends Record<string, Schema<unknown>>>(
   schemas: T
-): z.ZodDiscriminatedUnion<"type", z.ZodObject<any, any, any>[]> {
+): z.ZodDiscriminatedUnion<"type", [z.ZodObject<any, any, any>, ...z.ZodObject<any, any, any>[]]> {
   // Create a union array of schemas with type field
   const unionSchemas: z.ZodObject<any, any, any>[] = [];
   
+  // Process each schema
   for (const [key, schema] of Object.entries(schemas)) {
     // For each schema, create a new schema with a 'type' field
+    // Handle both object schemas and non-object schemas
+    const schemaObj = schema instanceof z.ZodObject 
+      ? schema as z.ZodObject<any, any, any>
+      : z.object({});
+      
+    // Create a new schema object with the type field
+    // We can't use extend() or merge() safely as they're not guaranteed to work
+    // on all schema types, so we create a new object schema manually
+    const baseShape = schemaObj.shape || {};
+    
+    // Create the extended schema with type field
     const extendedSchema = z.object({
       type: z.literal(key).describe(`Command type: ${key}`),
-    }).merge(schema.extend({}) as any);
+      ...baseShape
+    });
     
     unionSchemas.push(extendedSchema);
   }
@@ -109,8 +122,13 @@ export function combineSchemas<T extends Record<string, Schema<unknown>>>(
     }));
   }
   
+  // Create a tuple type with at least one element to satisfy the discriminated union
+  const unionSchemasTuple = unionSchemas.length > 0 
+    ? [unionSchemas[0], ...unionSchemas.slice(1)] as [z.ZodObject<any, any, any>, ...z.ZodObject<any, any, any>[]]
+    : [z.object({ type: z.literal('none') })] as [z.ZodObject<any, any, any>];
+  
   // Create a discriminated union based on the 'type' field
-  return z.discriminatedUnion("type", unionSchemas);
+  return z.discriminatedUnion("type", unionSchemasTuple);
 }
 
 /**
@@ -122,8 +140,13 @@ export function combineSchemas<T extends Record<string, Schema<unknown>>>(
 export function extractActionFromDiscriminatedUnion<T extends Record<string, Schema<unknown>>>(
   data: { type: keyof T } & Record<string, unknown>
 ): [keyof T, Record<string, unknown>] {
-  const { type, ...rest } = data;
-  return [type, rest];
+  // Make a copy of the data to avoid mutating the input
+  const { type, ...rest } = { ...data };
+  
+  // Handle symbol keys by converting to string
+  const typeKey = typeof type === 'symbol' ? String(type) : type;
+  
+  return [typeKey as keyof T, rest];
 }
 
 /**

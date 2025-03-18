@@ -1,5 +1,6 @@
 import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
+import { combineSchemas, extractActionFromDiscriminatedUnion } from '../schema/utils'
 import { generateText, tool } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
@@ -83,24 +84,13 @@ export class LLMPlayer implements GamePlayer {
         }
       })
       
-      // Create an action schema that's compatible with OpenAI's API
-      // We'll use a simpler approach with a small set of explicit fields
-      const actionType = z.enum(Object.keys(actionSchemas) as [string, ...string[]]);
+      // Create a discriminated union schema from all action schemas
+      const combinedSchema = combineSchemas(actionSchemas);
       
-      // Create schema with minimal fields that will satisfy OpenAI's validation
-      const actionSchema = z.object({
-        // The type field will be the action name
-        type: actionType.describe(
-          'The action to take. Choose from: ' + Object.keys(actionSchemas).join(', ')
-        ),
-        // This field will be a simple text description for the action
-        description: z.string().describe('A description of what you are doing and why'),
-      });
-      
-      // Create the action tool using our schema
+      // Create the action tool using the combined discriminated union schema
       const actionTool = tool({
         description: 'Tool for selecting a game action to perform.',
-        parameters: actionSchema,
+        parameters: combinedSchema,
         execute: async () => "Action selected"
       })
       
@@ -127,10 +117,14 @@ export class LLMPlayer implements GamePlayer {
       
       if (!actionCall) {
         // As a fallback, try to extract an action from the reflection
-        if (reflectCalls.length > 0) {
+        if (reflectCalls && reflectCalls.length > 0) {
           console.log("No action selected, trying to extract from reflection...")
           
           const lastReflect = reflectCalls[reflectCalls.length - 1]
+          if (!lastReflect || !lastReflect.args) {
+            throw new Error('Invalid reflection data from LLM')
+          }
+          
           const thoughts = lastReflect.args.thoughts || ''
           
           // Extract a simple action based on common patterns in the thoughts
@@ -182,10 +176,17 @@ export class LLMPlayer implements GamePlayer {
               params = { target: 'room' };
             }
             
-            const validatedParams = actionSchemas[actionType as keyof T].parse(params)
+            // Safely access the schema - convert symbol to string if needed
+            const actionTypeKey = typeof actionType === 'symbol' ? String(actionType) : actionType;
+            const schema = actionSchemas[actionTypeKey as keyof T];
+            if (!schema) {
+              throw new Error(`Unknown action command: ${String(actionTypeKey)}`);
+            }
             
-            this.emitEvent('action', `Inferred action: ${actionType}`, 
-                          { command: actionType, data: validatedParams })
+            const validatedParams = schema.parse(params)
+            
+            this.emitEvent('action', `Inferred action: ${String(actionTypeKey)}`, 
+                          { command: String(actionTypeKey), data: validatedParams })
             
             return [actionType as keyof T, validatedParams as SchemaType<T[keyof T]>]
           }
@@ -194,24 +195,27 @@ export class LLMPlayer implements GamePlayer {
         throw new Error('No valid action was selected by the LLM')
       }
       
-      // Extract the command type and parameters
-      const { type, description } = actionCall.args
+      // Extract the command type and data from the discriminated union
+      const parsedAction = combinedSchema.parse(actionCall.args);
+      // Cast to the expected type for extractActionFromDiscriminatedUnion
+      const typedAction = parsedAction as { type: keyof T } & Record<string, unknown>;
+      const [actionType, actionData] = extractActionFromDiscriminatedUnion<T>(typedAction);
       
       // Validate the parameters against the corresponding schema
-      const selectedSchema = actionSchemas[type as keyof T]
+      // Convert symbol to string if needed
+      const actionTypeKey = typeof actionType === 'symbol' ? String(actionType) : actionType;
+      
+      const selectedSchema = actionSchemas[actionTypeKey as keyof T]
       if (!selectedSchema) {
-        throw new Error(`Unknown action command: ${type}`)
+        throw new Error(`Unknown action command: ${String(actionTypeKey)}`)
       }
       
-      // Create a simple object from the description
-      // In a real implementation, you'd parse this more carefully
-      // For now, we just use the description as a parameter
-      const params = { description }
-      const validatedParams = selectedSchema.parse(params)
+      // Now validate with the original schema
+      const validatedParams = selectedSchema.parse(actionData)
       
-      this.emitEvent('action', `Selected action: ${type}`, { command: type, data: validatedParams })
+      this.emitEvent('action', `Selected action: ${String(actionTypeKey)}`, { command: String(actionTypeKey), data: validatedParams })
       
-      return [type as keyof T, validatedParams as SchemaType<T[keyof T]>]
+      return [actionType, validatedParams as SchemaType<T[keyof T]>]
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.emitEvent('error', `Error selecting action: ${errorMessage}`)
