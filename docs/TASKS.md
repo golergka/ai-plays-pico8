@@ -171,6 +171,10 @@ These instructions must not be summarized or removed from this document.
 - Ensure no timeout errors appear during normal script execution
 - Maintain the proper timeout behavior if the LLM truly doesn't respond
 - Update tests to verify the fix works correctly
+**Additional Bug Information**:
+- After AI completes the game (either win or loss condition), multiple timeout errors (about 20) appear before the game finally exits
+- Error pattern: "Timeout of 30000ms exceeded waiting for LLM response" appears repeatedly after game completion
+- Appears to be related to improper cleanup or continued LLM calls after game state is marked as finished
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.test.ts
