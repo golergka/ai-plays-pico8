@@ -1,6 +1,6 @@
 import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
-import { combineSchemas } from '../schema/utils'
+import { combineSchemas, extractAction } from '../schema/utils'
 import { generateText, tool } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
@@ -112,8 +112,7 @@ export class LLMPlayer implements GamePlayer {
           reflect: reflectTool,
           action: actionTool
         },
-        // First let the AI use the reflect tool (if it wants)
-        toolChoice: 'auto',
+        toolChoice: 'required',
         maxSteps: 5,
         system: this.options.systemPrompt + '\nYou MUST select an action with the action tool after reflecting. ALWAYS pick an action.',
         prompt: gameOutput
@@ -191,24 +190,22 @@ export class LLMPlayer implements GamePlayer {
     actionCall: { toolName: string, args: Record<string, any> },
     actionSchemas: T
   ): [keyof T, SchemaType<T[keyof T]>] {
-    // Extract the type and other fields from the action args
-    const { type, ...args } = actionCall.args
+    // Process the arguments through our combined schema
+    const combinedSchema = combineSchemas(actionSchemas)
+    const validatedData = combinedSchema.parse(actionCall.args)
     
-    // Validate the type is a valid action type
-    if (!Object.keys(actionSchemas).includes(type)) {
-      throw new Error(`Invalid action type: ${type}`)
-    }
+    // Extract the action type and parameters
+    const [actionType, actionParams] = extractAction<T>(validatedData)
     
     // Get the schema for this action type
-    const actionType = type as keyof T
     const schema = actionSchemas[actionType]
     
     if (!schema) {
       throw new Error(`Schema not found for action type: ${String(actionType)}`)
     }
     
-    // Validate the parameters against the schema
-    const validatedParams = schema.parse(args)
+    // Validate the parameters against the original schema
+    const validatedParams = schema.parse(actionParams)
     
     this.emitEvent('action', `Selected action: ${String(actionType)}`, 
       { command: String(actionType), data: validatedParams })

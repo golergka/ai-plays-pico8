@@ -80,84 +80,84 @@ export function createFunctionSchema(
 }
 
 /**
- * Combines schemas into a single object schema compatible with OpenAI's function calling API.
- * The returned schema enforces that exactly one valid command is provided.
+ * Combines action schemas into a single object schema compatible with OpenAI's function calling API.
+ * The returned schema enforces that exactly one valid action is provided.
  * 
  * @param schemas Record of schemas where the key is the action type
- * @returns Zod object schema compatible with OpenAI's function calling API
+ * @returns Zod schema compatible with OpenAI's function calling API
  */
 export function combineSchemas<T extends Record<string, Schema<unknown>>>(
   schemas: T
 ): z.ZodType<any, any, any> {
-  // Create an object schema where each property is a command
-  const commandProperties: Record<string, z.ZodTypeAny> = {};
+  // Create an object schema where each property is an action
+  const actionProperties: Record<string, z.ZodTypeAny> = {};
   
-  // For each command schema, create an optional property in our object
-  for (const [commandName, schema] of Object.entries(schemas)) {
-    // Only one command should be provided at a time
-    commandProperties[commandName] = schema.optional().describe(
-      `Execute a '${commandName}' command with its required parameters. Only provide one command at a time.`
+  // For each action schema, create an optional property in our object
+  for (const [actionType, schema] of Object.entries(schemas)) {
+    // Only one action should be provided at a time
+    actionProperties[actionType] = schema.optional().describe(
+      `Execute a '${actionType}' action with its required parameters. Only provide one action at a time.`
     );
   }
   
   // If no schemas provided, add a placeholder
-  if (Object.keys(commandProperties).length === 0) {
-    commandProperties['none'] = z.object({}).optional().describe('No available commands');
+  if (Object.keys(actionProperties).length === 0) {
+    actionProperties['none'] = z.object({}).optional().describe('No available actions');
   }
   
   // Create the base object schema
-  const baseSchema = z.object(commandProperties);
+  const baseSchema = z.object(actionProperties);
   
   // Enhance the schema with additional validation
   return baseSchema
     .superRefine((data, ctx) => {
-      // Get the commands that have values (not undefined)
-      const providedCommands = Object.entries(data)
+      // Get the actions that have values (not undefined)
+      const providedActions = Object.entries(data)
         .filter(([_, value]) => value !== undefined)
         .map(([key, _]) => key);
       
-      // No commands provided - invalid
-      if (providedCommands.length === 0) {
+      // No actions provided - invalid
+      if (providedActions.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'You must provide exactly one command',
+          message: 'You must provide exactly one action',
           path: []
         });
         return;
       }
       
-      // Multiple commands provided - invalid
-      if (providedCommands.length > 1) {
+      // Multiple actions provided - invalid
+      if (providedActions.length > 1) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `You provided multiple commands (${providedCommands.join(', ')}), but must provide exactly one`,
+          message: `You provided multiple actions (${providedActions.join(', ')}), but must provide exactly one`,
           path: []
         });
         return;
       }
       
-      // Command not in schema - invalid
-      const validCommandNames = Object.keys(commandProperties);
-      const commandName = providedCommands[0];
+      // Action not in schema - invalid
+      const validActionTypes = Object.keys(actionProperties);
+      const actionType = providedActions[0];
       
-      if (commandName !== undefined && !validCommandNames.includes(commandName)) {
+      if (actionType !== undefined && !validActionTypes.includes(actionType)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Invalid command: '${commandName}'. Valid commands are: ${validCommandNames.join(', ')}`,
-          path: [commandName]
+          message: `Invalid action type: '${actionType}'. Valid actions are: ${validActionTypes.join(', ')}`,
+          path: [actionType]
         });
       }
     })
-    .describe('Provide exactly ONE command by setting only one of these properties with the required parameters for that command.');
+    .describe('Provide exactly ONE action by setting only one of these properties with the required parameters for that action.');
 }
 
 /**
- * Extract action data from our combined object schema result
+ * Extract action from the combined object schema result
  * 
  * @param data The parsed result from the combined schema
- * @returns Tuple of [action type, extracted action data]
+ * @returns Tuple of [action type, action parameters]
  */
-export function extractActionFromDiscriminatedUnion<T extends Record<string, Schema<unknown>>>(
+export function extractAction<T extends Record<string, Schema<unknown>>>(
   data: Record<string, unknown>
 ): [keyof T, Record<string, unknown>] {
   // Find the first non-undefined property (which should be the only one provided)
@@ -165,15 +165,20 @@ export function extractActionFromDiscriminatedUnion<T extends Record<string, Sch
     // Skip undefined properties
     if (value === undefined) continue;
     
-    // We found the command property with value
-    const commandKey = key as keyof T;
-    // Return the command type and its data
-    return [commandKey, value as Record<string, unknown>];
+    // We found the action property with value
+    const actionType = key as keyof T;
+    // Return the action type and its parameters
+    return [actionType, value as Record<string, unknown>];
   }
   
-  // If no command found, throw an error
-  throw new Error('No command was provided in the action data');
+  // If no action found, throw an error
+  throw new Error('No action was provided in the data');
 }
+
+/**
+ * @deprecated Use extractAction instead
+ */
+export const extractActionFromDiscriminatedUnion = extractAction;
 
 /**
  * Export Zod for schema definitions
