@@ -4,7 +4,8 @@ import type { Schema } from '../schema/utils'
 // import { combineSchemas, extractAction } from '../schema/utils'
 // import { generateText } from 'ai'
 // import { openai } from '@ai-sdk/openai'
-import { callOpenAI, extractToolCalls } from './api'
+import { callOpenAI, type Message, type Tool } from './api'
+import type { JsonSchema7Type } from 'zod-to-json-schema'
 import 'dotenv/config'
 
 /**
@@ -122,7 +123,7 @@ export class LLMPlayer implements GamePlayer {
       console.log("DEBUG: Direct schema:", JSON.stringify(directSchema, null, 2))
       
       // Create a simpler schema for testing
-      const simpleSchema = {
+      const simpleSchema: JsonSchema7Type = {
         type: "object",
         properties: {
           action: {
@@ -132,57 +133,61 @@ export class LLMPlayer implements GamePlayer {
           }
         },
         required: ["action"]
-      }
+      } as const
       
       console.log("DEBUG: Simple schema:", JSON.stringify(simpleSchema, null, 2))
       
-      // Call the OpenAI API using our abstracted function
+      // Call the OpenAI API using our abstracted function with typed parameters
       try {
-        const requestBody = {
+        // Create messages with proper typing
+        const messages: Message[] = [
+          {
+            role: "system",
+            content: "You are playing a game. Select an action to perform."
+          },
+          {
+            role: "user",
+            content: gameOutput + '\n\nChoose the "look" action to examine your surroundings.'
+          }
+        ];
+        
+        // Create tools with proper typing
+        const tools: Tool[] = [
+          {
+            type: "function",
+            function: {
+              name: "action",
+              description: "Tool for selecting a game action to perform.",
+              parameters: simpleSchema
+            }
+          }
+        ];
+        
+        // Call OpenAI with structured parameters
+        const result = await callOpenAI({
           model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: "You are playing a game. Select an action to perform."
-            },
-            {
-              role: "user",
-              content: gameOutput + '\n\nChoose the "look" action to examine your surroundings.'
-            }
-          ],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "action",
-                description: "Tool for selecting a game action to perform.",
-                parameters: simpleSchema
-              }
-            }
-          ],
-          tool_choice: {
+          messages,
+          tools,
+          toolChoice: {
             type: "function",
             function: {
               name: "action"
             }
           }
-        };
+        });
         
-        const responseData = await callOpenAI(requestBody);
-        console.log("DEBUG: OpenAI API direct response:", JSON.stringify(responseData, null, 2));
+        console.log("DEBUG: OpenAI API result:", JSON.stringify(result, null, 2));
         
-        // Extract tool calls using our helper function
-        const toolCalls = extractToolCalls(responseData);
-        
-        if (toolCalls.length > 0) {
-          const toolCall = toolCalls[0];
-          // TypeScript now enforces that we check for undefined
-          if (toolCall) {
-            console.log("DEBUG: Tool call function:", JSON.stringify(toolCall.function, null, 2));
+        // Function calls are now directly available in the result
+        if (result.functionCalls.length > 0) {
+          const functionCall = result.functionCalls[0];
+          // Make sure the function call exists before using it
+          if (functionCall) {
+            console.log("DEBUG: Function call:", JSON.stringify(functionCall, null, 2));
             
-            // Arguments are already parsed by our schema
-            const args = toolCall.function.arguments;
-            console.log("DEBUG: Parsed arguments:", JSON.stringify(args, null, 2));
+            // Arguments are already parsed and available
+            const args = functionCall.arguments;
+            console.log("DEBUG: Function arguments:", JSON.stringify(args, null, 2));
           }
         }
         
