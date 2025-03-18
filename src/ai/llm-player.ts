@@ -112,11 +112,8 @@ export class LLMPlayer implements GamePlayer {
           reflect: reflectTool,
           action: actionTool
         },
-        // Force the AI to use the action tool as the final step
-        toolChoice: {
-          type: "function",
-          function: { name: "action" }
-        },
+        // Let the AI choose the tools
+        toolChoice: 'auto',
         maxSteps: 5,
         system: this.options.systemPrompt + '\nYou MUST select an action with the action tool after reflecting. ALWAYS pick an action.',
         prompt: gameOutput
@@ -125,7 +122,49 @@ export class LLMPlayer implements GamePlayer {
       // Get the last tool call that is an action (not a reflection)
       const actionCall = toolCalls.find(call => call.toolName === 'action')
       
+      // Check if we have reflection tool calls we can use as a fallback
+      const reflectCalls = toolCalls.filter(call => call.toolName === 'reflect')
+      
       if (!actionCall) {
+        // As a fallback, try to extract an action from the reflection
+        if (reflectCalls.length > 0) {
+          console.log("No action selected, trying to extract from reflection...")
+          
+          const lastReflect = reflectCalls[reflectCalls.length - 1]
+          const thoughts = lastReflect.args.thoughts || ''
+          
+          // Extract a simple action based on common patterns in the thoughts
+          let actionType = 'look' // Default action
+          
+          // Simple pattern matching to infer action
+          if (thoughts.toLowerCase().includes('take key') || 
+              thoughts.toLowerCase().includes('pick up key') ||
+              thoughts.toLowerCase().includes('grab key')) {
+            actionType = 'take'
+          } else if (thoughts.toLowerCase().includes('go north') ||
+                     thoughts.toLowerCase().includes('north door') ||
+                     thoughts.toLowerCase().includes('move north')) {
+            actionType = 'north'
+          } else if (thoughts.toLowerCase().includes('go east') ||
+                     thoughts.toLowerCase().includes('east window') ||
+                     thoughts.toLowerCase().includes('move east')) {
+            actionType = 'east'
+          }
+          
+          console.log(`Inferred action '${actionType}' from thoughts: ${thoughts.substring(0, 50)}...`)
+          
+          // Validate that the inferred action exists in the schemas
+          if (actionType in actionSchemas) {
+            const params = { description: `Inferred from thoughts: ${thoughts.substring(0, 100)}...` }
+            const validatedParams = actionSchemas[actionType as keyof T].parse(params)
+            
+            this.emitEvent('action', `Inferred action: ${actionType}`, 
+                          { command: actionType, data: validatedParams })
+            
+            return [actionType as keyof T, validatedParams as SchemaType<T[keyof T]>]
+          }
+        }
+        
         throw new Error('No valid action was selected by the LLM')
       }
       
