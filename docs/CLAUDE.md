@@ -14,7 +14,8 @@ Follow these steps when asked with autonomusly work on the project:
 4. ALWAYS run ALL of the following checks in this order:
    - Typecheck: `bun run typecheck`
    - Lint: `bun run lint` (when available)
-   - Tests: `bun run test` (when available)
+   - Tests: `bun run test` (when available) 
+     - Look into docs/TESTING.md if you need to do anything with tests
    - Any example/demo code you've written
    - NEVER skip running tests even if they're in separate files you've created
 5. IMPORTANT: For ALL changes that cannot be fully validated through automated checks:
@@ -50,6 +51,7 @@ When human prompts you with a specific task, follow these steps:
    - Typecheck: `bun run typecheck`
    - Lint: `bun run lint` (when available)
    - Tests: `bun run test` (when available)
+     - Look into docs/TESTING.md if you need to do anything with tests
    - Any example/demo code you've written
    - NEVER skip running tests even if they're in separate files you've created
 7. Complete the remaining steps as in the Independent Work workflow

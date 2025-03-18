@@ -78,6 +78,40 @@ Always ensure proper environment configuration before testing:
 3. **No Exceptions**: Never mark a task as DONE without confirming successful testing with a human
 4. **Verification First**: Always run automated tests before presenting manual test procedures
 
+## Test Coverage Priorities
+
+Not all code requires the same level of test coverage. Follow these guidelines:
+
+1. **Core System Components (Highest Priority)**
+   - Schema system, core utilities, and public APIs
+   - Aim for 90%+ test coverage
+   - Write comprehensive unit tests covering edge cases
+   - Tests should verify both successful and error conditions
+
+2. **Service and Integration Components (High Priority)**
+   - AI interfaces, game launchers, and process management
+   - Aim for 70-80% test coverage
+   - Focus on testing key integration points and workflows
+   - Include tests for error handling and recovery
+
+3. **Internal Utilities (Medium Priority)**
+   - Helper functions and internal utilities
+   - Aim for 60-70% test coverage
+   - Focus on testing core functionality and common use cases
+   - Cover most significant edge cases
+
+4. **Example/Template Code (Low Priority)**
+   - Example games, templates, and demos
+   - Limited test coverage is acceptable
+   - Test only critical functionality needed to demonstrate the system
+   - DO NOT create extensive tests for example implementations
+   - Focus effort on testing core systems instead
+
+5. **Documentation and Configuration Code (Minimal Testing)**
+   - Type definitions, constants, and configuration structures
+   - Minimal testing required
+   - Focus on validation rather than behavioral testing
+
 ## Automated Testing
 
 ### When to Use Automated Tests
