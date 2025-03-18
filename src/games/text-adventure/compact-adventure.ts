@@ -1,4 +1,4 @@
-import type { Game, GamePlayer, GameResult } from '../../types'
+import type { Game, GameState, StepResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
 import { TextAdventureActionSchemas, toTextAdventureAction } from './schema'
 import type { ActionType } from './schema'
@@ -38,53 +38,81 @@ export class CompactTextAdventure implements Game {
   }
   
   /**
-   * Run the game with the provided player (AI or human)
+   * Get the initial state of the game
    */
-  async run(player: GamePlayer): Promise<GameResult> {
-    // Main game loop
-    while (!this.state.gameOver) {
-      // Get the current room
-      const currentRoom = this.rooms.get(this.state.currentRoom)
-      
-      if (!currentRoom) {
-        throw new Error(`Room not found: ${this.state.currentRoom}`)
-      }
-      
-      // Generate game output
-      const gameOutput = this.generateGameOutput(currentRoom)
-      
-      // Get action from player using our schema map
-      const [actionType, actionData] = await player.getAction(
-        gameOutput, 
-        TextAdventureActionSchemas
-      )
-      
-      // Convert to the legacy action format
-      const action = toTextAdventureAction(
-        actionType as ActionType,
-        actionData
-      )
-      
-      // Process the action
-      this.processAction(action)
-      
-      // Increment turn counter
-      this.state.turns++
-      
-      // Check for win/lose conditions
-      this.checkGameEnd()
+  async start(): Promise<GameState> {
+    const currentRoom = this.rooms.get(this.state.currentRoom)
+    
+    if (!currentRoom) {
+      throw new Error(`Room not found: ${this.state.currentRoom}`)
     }
     
-    // Return game result
     return {
-      success: this.state.win,
-      actionCount: this.state.turns,
-      metadata: {
-        visitedRooms: Array.from(this.state.visited),
-        inventoryItems: [...this.state.inventory]
+      output: this.generateGameOutput(currentRoom),
+      actions: TextAdventureActionSchemas
+    }
+  }
+  
+  /**
+   * Process a single game step with the given action
+   */
+  async step(action: [string, unknown]): Promise<StepResult> {
+    // Get the current room
+    const currentRoom = this.rooms.get(this.state.currentRoom)
+    
+    if (!currentRoom) {
+      throw new Error(`Room not found: ${this.state.currentRoom}`)
+    }
+    
+    // Extract action type and data
+    const [actionType, actionData] = action
+    
+    // Convert to the legacy action format
+    const textAction = toTextAdventureAction(
+      actionType as ActionType,
+      actionData
+    )
+    
+    // Process the action
+    this.processAction(textAction)
+    
+    // Increment turn counter
+    this.state.turns++
+    
+    // Check for win/lose conditions
+    this.checkGameEnd()
+    
+    // If game is over, return result
+    if (this.state.gameOver) {
+      return {
+        type: 'result',
+        result: {
+          success: this.state.win,
+          actionCount: this.state.turns,
+          metadata: {
+            visitedRooms: Array.from(this.state.visited),
+            inventoryItems: [...this.state.inventory]
+          }
+        }
+      }
+    }
+    
+    // Otherwise, return the new state
+    const newRoom = this.rooms.get(this.state.currentRoom)
+    
+    if (!newRoom) {
+      throw new Error(`Room not found: ${this.state.currentRoom}`)
+    }
+    
+    return {
+      type: 'state',
+      state: {
+        output: this.generateGameOutput(newRoom),
+        actions: TextAdventureActionSchemas
       }
     }
   }
+  
   
   /**
    * Clean up resources when game ends

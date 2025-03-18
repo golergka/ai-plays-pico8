@@ -59,6 +59,28 @@ export interface GamePlayer {
 }
 
 /**
+ * Represents the current state of a game during execution
+ */
+export interface GameState {
+  /**
+   * Current game output text to display
+   */
+  output: string
+  
+  /**
+   * Map of possible actions at this step
+   */
+  actions: ActionSchemas
+}
+
+/**
+ * Union type for step results - either ongoing game state or final result
+ */
+export type StepResult = 
+  | { type: 'state'; state: GameState }
+  | { type: 'result'; result: GameResult }
+
+/**
  * Core interface for all games
  */
 export interface Game {
@@ -68,12 +90,20 @@ export interface Game {
   initialize(): Promise<void>
   
   /**
-   * Run the game with the provided player
+   * Get the initial state of the game
+   * This is called before any actions are taken
    * 
-   * @param player The player that will provide actions
-   * @returns Promise resolving when game ends
+   * @returns Promise resolving with the initial game state
    */
-  run(player: GamePlayer): Promise<GameResult>
+  start(): Promise<GameState>
+  
+  /**
+   * Process a single game step with the given action
+   * 
+   * @param action The player's action [actionName, actionData]
+   * @returns Promise resolving with either a new game state or final result
+   */
+  step(action: [string, unknown]): Promise<StepResult>
   
   /**
    * Clean up resources when game ends

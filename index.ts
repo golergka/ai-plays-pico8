@@ -4,6 +4,7 @@
 import { HumanPlayer } from './src/cli/human-player'
 import { TextAdventure } from './src/games/text-adventure'
 import { TerminalUI } from './src/cli/terminal-ui'
+import type { GameResult } from './src/types'
 
 async function main() {
   const args = process.argv.slice(2)
@@ -42,7 +43,32 @@ async function main() {
     if (mode === 'human') {
       const player = new HumanPlayer({ terminalUI: ui })
       ui.displayHeader(`Starting ${gameType} in human mode...`)
-      result = await game.run(player)
+      
+      // Get initial state
+      const initialState = await game.start()
+      let gameState = initialState
+      
+      // Main game loop
+      while (true) {
+        // Get action from player
+        const [actionType, actionData] = await player.getAction(
+          gameState.output,
+          gameState.actions
+        )
+        
+        // Process step
+        const stepResult = await game.step([actionType as string, actionData])
+        
+        // If game is over, return result
+        if (stepResult.type === 'result') {
+          result = stepResult.result
+          break
+        }
+        
+        // Otherwise, update game state
+        gameState = stepResult.state
+      }
+      
       await player.cleanup()
     } else if (mode === 'ai') {
       ui.displayError('AI mode is not yet implemented')

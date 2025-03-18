@@ -6,6 +6,7 @@ import type { LLMPlayerEvent } from '../ai/llm-player'
 import { TextAdventure, CompactTextAdventure } from '../games/text-adventure'
 import { TerminalUI } from '../cli/terminal-ui'
 import chalk from 'chalk'
+import type { GameResult } from '../types'
 
 async function main() {
   const args = process.argv.slice(2)
@@ -45,30 +46,93 @@ async function main() {
     // Create LLM player with event handler
     const player = new LLMPlayer({
       maxRetries,
-      maxSteps,
+      model,
       onEvent: handleLLMEvent(ui)
     })
 
     // Start the game
     ui.displayHeader(`Starting ${gameType} with ${model}...`)
-    const result = await game.run(player)
-    await player.cleanup()
-
-    // Display game result
-    ui.displayHeader('Game Finished')
-    ui.display(`Result: ${result.success ? chalk.green('Victory!') : chalk.red('Defeat')}`)
-    if (result.score !== undefined) {
-      ui.display(`Score: ${result.score}`)
+    
+    // Get initial state
+    const initialState = await game.start()
+    let gameState = initialState
+    let stepCount = 0
+    let result: GameResult | null = null
+    
+    // Main game loop
+    try {
+      while (stepCount < maxSteps) {
+        // Get action from player
+        const [actionType, actionData] = await player.getAction(
+          gameState.output,
+          gameState.actions
+        )
+        
+        // Process step
+        const stepResult = await game.step([actionType as string, actionData])
+        stepCount++
+        
+        // If game is over, return result
+        if (stepResult.type === 'result') {
+          result = stepResult.result
+          break
+        }
+        
+        // Otherwise, update game state
+        gameState = stepResult.state
+      }
+      
+      // Handle max steps reached
+      if (stepCount >= maxSteps) {
+        // Create a forced termination result
+        result = {
+          success: false,
+          actionCount: stepCount,
+          metadata: {
+            terminationReason: 'Max steps reached'
+          }
+        }
+        throw new Error(`Maximum number of steps (${maxSteps}) reached`)
+      }
+    } catch (error) {
+      ui.displayHeader('Error')
+      ui.display(chalk.red(`Game terminated: ${error instanceof Error ? error.message : String(error)}`))
+      
+      // If we don't have a result yet, create one for the error case
+      if (!result) {
+        result = {
+          success: false,
+          actionCount: stepCount,
+          metadata: {
+            terminationReason: 'Error',
+            error: error instanceof Error ? error.message : String(error)
+          }
+        }
+      }
+    } finally {
+      await player.cleanup()
     }
-    ui.display(`Actions taken: ${result.actionCount}`)
 
-    // Display metadata
-    if (result.metadata) {
-      ui.displayHeader('Game Statistics')
-      const visitedRooms = result.metadata['visitedRooms'] as string[]
-      const inventoryItems = result.metadata['inventoryItems'] as string[]
-      ui.display(`Visited rooms: ${visitedRooms.join(', ')}`)
-      ui.display(`Final inventory: ${inventoryItems.join(', ') || 'empty'}`)
+    // Display game result if we have one
+    if (result) {
+      ui.displayHeader('Game Finished')
+      ui.display(`Result: ${result.success ? chalk.green('Victory!') : chalk.red('Defeat')}`)
+      if (result.score !== undefined) {
+        ui.display(`Score: ${result.score}`)
+      }
+      ui.display(`Actions taken: ${result.actionCount}`)
+  
+      // Display metadata
+      if (result.metadata) {
+        ui.displayHeader('Game Statistics')
+        const visitedRooms = result.metadata['visitedRooms'] as string[] || []
+        const inventoryItems = result.metadata['inventoryItems'] as string[] || []
+        ui.display(`Visited rooms: ${visitedRooms.join(', ') || 'none'}`)
+        ui.display(`Final inventory: ${inventoryItems.join(', ') || 'empty'}`)
+      }
+    } else {
+      ui.displayHeader('Game Terminated')
+      ui.display(chalk.red('The game was terminated without a result.'))
     }
   } finally {
     // Clean up game resources
