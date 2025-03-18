@@ -1,5 +1,6 @@
 import type { GamePlayer } from '../types'
 import type { Schema } from '../schema/utils'
+import type { ITerminalUI } from './i-terminal-ui'
 import { TerminalUI } from './terminal-ui'
 import { toJsonSchema } from '../schema/utils'
 
@@ -10,7 +11,7 @@ export interface HumanPlayerOptions {
   /**
    * Custom terminal UI instance (creates a new one if not provided)
    */
-  terminalUI?: TerminalUI
+  terminalUI?: ITerminalUI
   
   /**
    * Whether to show detailed help for actions
@@ -22,7 +23,7 @@ export interface HumanPlayerOptions {
  * Human player implementation that allows playing games from the terminal
  */
 export class HumanPlayer implements GamePlayer {
-  private terminalUI: TerminalUI
+  private terminalUI: ITerminalUI
   private showHelp: boolean
   
   /**

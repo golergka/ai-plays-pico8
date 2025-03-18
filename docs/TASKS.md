@@ -257,20 +257,20 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/types.ts
 
-### [T-013] Create Terminal UI Interface and Test Human Player [TODO]
+### [T-013] Create Terminal UI Interface and Test Human Player [TESTING]
 **Dependencies**: T-010
 **Description**: Extract an interface from the TerminalUI class and create unit tests for the HumanPlayer functionality with a mock UI implementation. This will improve testability and ensure the human player interface works correctly with any UI implementation.
 **Acceptance Criteria**:
-- Extract an ITerminalUI interface from the current TerminalUI class
-- Update TerminalUI to implement the new interface
-- Create a MockTerminalUI class that implements the interface for testing
-- Write unit tests for HumanPlayer that use the mock UI to simulate a play session
-- Tests should cover all major functionality: command parsing, help display, action execution
-- Include tests for both valid and invalid inputs
-- Simulate a complete game session with predetermined inputs and verify correct actions
+- Extract an ITerminalUI interface from the current TerminalUI class ✅
+- Update TerminalUI to implement the new interface ✅
+- Create a MockTerminalUI class that implements the interface for testing ✅
+- Write unit tests for HumanPlayer that use the mock UI to simulate a play session ✅
+- Tests should cover all major functionality: command parsing, help display, action execution ✅
+- Include tests for both valid and invalid inputs ✅
+- Simulate a complete game session with predetermined inputs and verify correct actions ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/i-terminal-ui.ts (new)
-- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/mock-terminal-ui.ts (new)
-- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.test.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/i-terminal-ui.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/mock-terminal-ui.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.test.ts

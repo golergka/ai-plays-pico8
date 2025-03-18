@@ -1,4 +1,5 @@
 import readline from 'node:readline'
+import type { ITerminalUI } from './i-terminal-ui'
 
 /**
  * Options for terminal UI
@@ -17,8 +18,9 @@ export interface TerminalUIOptions {
 
 /**
  * Terminal user interface for interacting with the player
+ * Implements the ITerminalUI interface
  */
-export class TerminalUI {
+export class TerminalUI implements ITerminalUI {
   private rl: readline.Interface
   
   /**
