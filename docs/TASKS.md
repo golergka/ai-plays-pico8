@@ -5,13 +5,13 @@
 This counter tracks the highest task ID used so far. When creating a new task, use T-017 as the next available ID.
 
 ## Current Priorities
-1. [T-015] Fix LLM Player Timeout Issues
-2. [T-016] Create Short Demo Game
-3. [T-001] Setup Project Structure
-4. [T-002] Implement Core Schema System
-5. [T-003] Create AI Player Interface
-6. [T-014] Create LLM Player Demo Script
-7. [T-004] Build Game Launcher
+1. [T-015] Implement LLM Player with proper AI package [IN PROGRESS]
+2. [T-016] Create Short Demo Game [TESTING]
+3. [T-001] Setup Project Structure [IN PROGRESS]
+4. [T-002] Implement Core Schema System [TODO]
+5. [T-003] Create AI Player Interface [TESTING]
+6. [T-014] Create LLM Player Demo Script [TESTING]
+7. [T-004] Build Game Launcher [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -162,16 +162,16 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-015] Implement LLM Player with proper AI package [BLOCKED]
+### [T-015] Implement LLM Player with proper AI package [IN PROGRESS]
 **Dependencies**: T-014
 **Description**: The current LLM Player implementation is incomplete and uses a mock LLM for development. We need a proper implementation using a real AI package. The mock implementation had timeout errors that appear during the LLM player demo script execution, which need to be addressed in the real implementation.
 **Acceptance Criteria**:
-- Properly integrate a real AI package (like Vercel's `ai`)
-- Implement the getAction method to use the AI package's chat API
-- Ensure conversation history is maintained correctly
-- Provide proper error handling and retry mechanisms
-- Ensure cleanup properly releases all resources
-- Add proper documentation in JSDoc comments
+- Properly integrate a real AI package (like Vercel's `ai`) ✅
+- Implement the getAction method to use the AI package's chat API ✅
+- Ensure conversation history is maintained correctly ✅
+- Provide proper error handling and retry mechanisms ✅
+- Ensure cleanup properly releases all resources ✅
+- Add proper documentation in JSDoc comments ✅
 **Additional Information**:
 - Will need to coordinate with project owner on the AI package strategy and selection
 - Need to determine if we'll use hosted models or local models
