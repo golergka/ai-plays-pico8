@@ -1,6 +1,7 @@
 import type { Game, GamePlayer, GameResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
 import { TextAdventureActionSchemas, toTextAdventureAction } from './schema'
+import type { ActionType } from './schema'
 import { CompactTextAdventure } from './compact-adventure'
 
 // Re-export types and CompactTextAdventure
@@ -65,7 +66,7 @@ export class TextAdventure implements Game {
       
       // Convert to the legacy action format
       const action = toTextAdventureAction(
-        actionType as keyof typeof TextAdventureActionSchemas,
+        actionType as ActionType,
         actionData
       )
       

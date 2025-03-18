@@ -1,6 +1,7 @@
 import type { Game, GamePlayer, GameResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
 import { TextAdventureActionSchemas, toTextAdventureAction } from './schema'
+import type { ActionType } from './schema'
 
 /**
  * Compact text adventure game implementation that can be completed in 10-15 actions
@@ -60,7 +61,7 @@ export class CompactTextAdventure implements Game {
       
       // Convert to the legacy action format
       const action = toTextAdventureAction(
-        actionType as keyof typeof TextAdventureActionSchemas,
+        actionType as ActionType,
         actionData
       )
       

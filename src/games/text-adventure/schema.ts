@@ -3,6 +3,11 @@ import { createFunctionSchema } from '../../schema'
 import type { TextAdventureAction } from './types'
 
 /**
+ * Export this type for use in other modules
+ */
+export type ActionType = 'move' | 'look' | 'examine' | 'take' | 'useItem' | 'useItemOn' | 'inventory' | 'help'
+
+/**
  * Zod schemas for text adventure actions
  */
 export const TextAdventureActionSchemas = {
@@ -23,11 +28,17 @@ export const TextAdventureActionSchemas = {
       .describe('Item to take'),
   }),
   
-  use: z.object({
+  // Split "use" action into two variants: with and without target
+  useItem: z.object({
+    item: z.string()
+      .describe('Item to use without a target'),
+  }),
+  
+  useItemOn: z.object({
     item: z.string()
       .describe('Item to use'),
-    target: z.string().optional()
-      .describe('Target to use the item on (optional)'),
+    target: z.string()
+      .describe('Target to use the item on'),
   }),
   
   inventory: z.object({}),
@@ -63,10 +74,16 @@ export const TextAdventureFunctionSchemas = {
     TextAdventureActionSchemas.take
   ),
   
-  use: createFunctionSchema(
-    'use',
-    'Use an item from your inventory, optionally with a target',
-    TextAdventureActionSchemas.use
+  useItem: createFunctionSchema(
+    'useItem',
+    'Use an item from your inventory without any target',
+    TextAdventureActionSchemas.useItem
+  ),
+  
+  useItemOn: createFunctionSchema(
+    'useItemOn',
+    'Use an item from your inventory on a specific target',
+    TextAdventureActionSchemas.useItemOn
   ),
   
   inventory: createFunctionSchema(
@@ -87,7 +104,7 @@ export const TextAdventureFunctionSchemas = {
  * This helper is used to convert the result of GamePlayer.getAction() to the legacy TextAdventureAction format
  */
 export function toTextAdventureAction(
-  actionType: keyof typeof TextAdventureActionSchemas,
+  actionType: ActionType,
   actionData: any
 ): TextAdventureAction {
   switch (actionType) {
@@ -99,7 +116,9 @@ export function toTextAdventureAction(
       return { type: 'examine', target: actionData.target }
     case 'take':
       return { type: 'take', item: actionData.item }
-    case 'use':
+    case 'useItem':
+      return { type: 'use', item: actionData.item, target: undefined }
+    case 'useItemOn':
       return { type: 'use', item: actionData.item, target: actionData.target }
     case 'inventory':
       return { type: 'inventory' }

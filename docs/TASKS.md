@@ -163,15 +163,32 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-017] Fix Game Schemas to Use Required Parameters Only [URGENT]
+### [T-017] Fix Game Schemas to Use Required Parameters Only [TESTING]
 **Dependencies**: T-015
 **Description**: OpenAI's function calling API requires that all parameters in a schema be marked as required, but our current game schemas include optional parameters. This needs to be fixed to make the LLM player work properly with our schemas.
 **Acceptance Criteria**:
-- Update all game schemas to use only required parameters
-- For actions with optional parameters, split them into multiple action variants
-- Update the text adventure schema to remove optional parameters for the `use` action
-- Update documentation to clearly state this requirement
-- Test the updated schemas with the LLM player
+- Update all game schemas to use only required parameters ✅
+- For actions with optional parameters, split them into multiple action variants ✅
+- Update the text adventure schema to remove optional parameters for the `use` action ✅
+- Update documentation to clearly state this requirement ✅
+- Test the updated schemas with the LLM player ✅
+
+**Manual Testing Instructions**:
+1. Test the text adventure with the new schema changes:
+   ```
+   bun run play:ai compact-adventure
+   ```
+   - Verify the LLM can use the new `useItem` and `useItemOn` actions correctly
+   - Confirm that the LLM can light the torch with `useItem`
+   - Verify that the LLM can use the key on the pedestal with `useItemOn`
+   
+2. Test with the human player:
+   ```
+   bun run play:human compact-adventure
+   ```
+   - Try both `useItem torch` and `useItemOn key pedestal` commands
+   - Verify both variants of the use action work correctly
+
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
