@@ -9,16 +9,18 @@ When editing workflows, keep them manageable enough for a single agent session â
 Follow these steps when asked with autonomusly work on the project:
 
 1. Check TASKS.md first to understand current priorities
-2. Select a task to work on. Print the task description and your estimate of work to standard output.
-3. Do the required implementation work. If neccessary, provide brief comments of your activity.
-4. ALWAYS run ALL of the following checks in this order:
+2. DO NOT scan the project or other files unrelated to TASKS.md. Use only TASKS.md for noe.
+3. Select a task to work on. Print the task description and your estimate of work to standard output.
+4. Now you can look up other relevant files.
+5. Do the required implementation work. If neccessary, provide brief comments of your activity.
+6. ALWAYS run ALL of the following checks in this order:
    - Typecheck: `bun run typecheck`
    - Lint: `bun run lint` (when available)
    - Tests: `bun run test` (when available) 
      - Look into docs/TESTING.md if you need to do anything with tests
    - Any example/demo code you've written
    - NEVER skip running tests even if they're in separate files you've created
-5. IMPORTANT: For ALL changes that cannot be fully validated through automated checks:
+7. IMPORTANT: For ALL changes that cannot be fully validated through automated checks:
    - This includes ANY changes affecting:
      - Process management (launching, terminating, monitoring processes)
      - User interaction (input commands, key mappings)
@@ -35,8 +37,8 @@ Follow these steps when asked with autonomusly work on the project:
        - Expected outcomes that would indicate success
        - Potential failure modes to watch for
    - Do not mark a task as DONE until human confirms successful testing
-6. For tasks with clear programmatic validation, update TASKS.md to reflect progress
-7. Commit changes following the git workflow below
+8. For tasks with clear programmatic validation, update TASKS.md to reflect progress
+9. Commit changes following the git workflow below
 
 ## WORKFLOW: New Task
 
