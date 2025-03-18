@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { z } from 'zod'
+import { toJsonSchema } from '../../schema/utils'
 import type { JsonSchema7Type } from 'zod-to-json-schema'
 
 // ======== Input Types ========
@@ -24,20 +25,12 @@ const MessageSchema = z.object({
 export type Message = z.infer<typeof MessageSchema>
 
 /**
- * Function definition for OpenAI API
+ * Tool definition with Zod schema
  */
-export interface FunctionDefinition {
+export interface ToolDefinition<T extends z.ZodType> {
   name: string
   description: string
-  parameters: JsonSchema7Type
-}
-
-/**
- * Tool definition for OpenAI API
- */
-export interface Tool {
-  type: 'function'
-  function: FunctionDefinition
+  schema: T
 }
 
 /**
@@ -51,10 +44,11 @@ export type ToolChoice =
 /**
  * Input parameters for OpenAI API call
  */
-export interface OpenAICallParams {
+export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
   model: string
   messages: Message[]
-  tools?: Tool[]
+  tools?: ToolDefinition<z.ZodType>[]
+  toolSchemas?: T
   toolChoice?: ToolChoice
   temperature?: number
   maxTokens?: number
@@ -63,24 +57,14 @@ export interface OpenAICallParams {
 // ======== Output Types ========
 
 /**
- * Schema for OpenAI tool call
+ * Base schema for OpenAI tool calls
  */
-const ToolCallSchema = z.object({
+const BaseToolCallSchema = z.object({
   id: z.string(),
   type: z.literal('function'),
   function: z.object({
     name: z.string(),
-    arguments: z.string().transform((args, ctx) => {
-      try {
-        return JSON.parse(args)
-      } catch (e) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Invalid JSON in function arguments'
-        })
-        return {}
-      }
-    })
+    arguments: z.string()
   })
 })
 
@@ -93,7 +77,7 @@ const OpenAIResponseSchema = z.object({
     message: z.object({
       role: z.string(),
       content: z.string().nullable(),
-      tool_calls: z.array(ToolCallSchema).optional()
+      tool_calls: z.array(BaseToolCallSchema).optional()
     })
   })),
   usage: z.object({
@@ -109,22 +93,17 @@ const OpenAIResponseSchema = z.object({
 type RawOpenAIResponse = z.infer<typeof OpenAIResponseSchema>
 
 /**
- * Function call result from OpenAI
- */
-export interface FunctionCall {
-  name: string
-  arguments: Record<string, any>
-}
-
-/**
  * Simplified OpenAI response for easier consumption
  */
-export interface OpenAIResult {
+export interface OpenAIResult<T = unknown> {
   // Text content of the response, if any
   content: string | null
   
-  // Function calls, if any
-  functionCalls: FunctionCall[]
+  // Tool call, if any (at most one allowed)
+  toolCall: T | null
+  
+  // Tool name that was called
+  toolName: string | null
   
   // Usage statistics
   usage?: {
@@ -135,12 +114,64 @@ export interface OpenAIResult {
 }
 
 /**
+ * Create a tool object for OpenAI API from a ToolDefinition
+ * 
+ * @param toolDef The tool definition with Zod schema
+ * @returns Tool object formatted for OpenAI API
+ */
+function createOpenAITool(toolDef: ToolDefinition<z.ZodType>): { type: 'function'; function: { name: string; description: string; parameters: JsonSchema7Type } } {
+  return {
+    type: 'function',
+    function: {
+      name: toolDef.name,
+      description: toolDef.description,
+      parameters: toJsonSchema(toolDef.schema)
+    }
+  }
+}
+
+/**
+ * Create a discriminated union schema from tool definitions
+ * 
+ * @param toolSchemas Record of tool schemas by name
+ * @returns Zod schema that can parse any of the tools
+ */
+function createToolCallSchema<T extends Record<string, z.ZodType>>(
+  toolSchemas: T
+): z.ZodType<{ name: keyof T } & { arguments: z.infer<T[keyof T]> }> {
+  // Create an array of schemas, one for each tool
+  const schemaArray = Object.entries(toolSchemas).map(([name, schema]) => {
+    return z.object({
+      name: z.literal(name),
+      arguments: schema
+    })
+  })
+  
+  // Union them together
+  // Handle the case when there are 0 or 1 schemas
+  if (schemaArray.length === 0) {
+    // Make a dummy schema that will never actually match but satisfies the type
+    return z.object({
+      name: z.literal('__never__'),
+      arguments: z.object({})
+    }) as any
+  } else if (schemaArray.length === 1) {
+    return schemaArray[0] as any
+  }
+  
+  // Cast to unknown first to avoid TS error with the array spread
+  return z.union(schemaArray as unknown as [z.ZodType, z.ZodType, ...z.ZodType[]])
+}
+
+/**
  * Call the OpenAI API with structured parameters
  * 
  * @param params Structured parameters for the API call
- * @returns A simplified response object with extracted function calls
+ * @returns A simplified response object with extracted and typed tool call
  */
-export async function callOpenAI(params: OpenAICallParams): Promise<OpenAIResult> {
+export async function callOpenAI<T extends Record<string, z.ZodType>>(
+  params: OpenAICallParams<T>
+): Promise<OpenAIResult<z.infer<T[keyof T]>>> {
   // Convert params to the format expected by the API
   const body: Record<string, any> = {
     model: params.model,
@@ -153,12 +184,22 @@ export async function callOpenAI(params: OpenAICallParams): Promise<OpenAIResult
     body['max_tokens'] = params.maxTokens
   }
   
-  // Add tools and tool_choice if specified
+  // Add tools if specified
+  let toolCallSchema: z.ZodType | null = null
+  
   if (params.tools && params.tools.length > 0) {
-    body['tools'] = params.tools
+    // Convert tools to OpenAI format
+    body['tools'] = params.tools.map(createOpenAITool)
+    
+    // Add tool_choice if specified
     if (params.toolChoice) {
       body['tool_choice'] = params.toolChoice
     }
+  }
+  
+  // Create tool parsing schema if tool schemas provided
+  if (params.toolSchemas) {
+    toolCallSchema = createToolCallSchema(params.toolSchemas)
   }
   
   // Call the API
@@ -179,7 +220,7 @@ export async function callOpenAI(params: OpenAICallParams): Promise<OpenAIResult
   
   const rawResponse = await response.json()
   
-  // Parse and validate the response with Zod
+  // Parse and validate the response structure with Zod
   let parsedResponse: RawOpenAIResponse
   
   try {
@@ -190,13 +231,14 @@ export async function callOpenAI(params: OpenAICallParams): Promise<OpenAIResult
     throw new Error(`Invalid response from OpenAI API: ${error instanceof Error ? error.message : String(error)}`)
   }
   
-  // Extract the content and function calls from the response
+  // Extract the content and tool calls from the response
   const message = parsedResponse.choices[0]?.message
   
   // Create the simplified result object
-  const result: OpenAIResult = {
+  const result: OpenAIResult<z.infer<T[keyof T]>> = {
     content: message?.content ?? null,
-    functionCalls: []
+    toolCall: null,
+    toolName: null
   }
   
   // Add usage if available
@@ -208,12 +250,61 @@ export async function callOpenAI(params: OpenAICallParams): Promise<OpenAIResult
     }
   }
   
-  // Extract function calls if present
-  if (message?.tool_calls) {
-    result.functionCalls = message.tool_calls.map(toolCall => ({
-      name: toolCall.function.name,
-      arguments: toolCall.function.arguments
-    }))
+  // Extract tool call if present
+  if (message?.tool_calls && message.tool_calls.length > 0) {
+    if (message.tool_calls.length > 1) {
+      console.warn(`OpenAI returned ${message.tool_calls.length} tool calls, but we only support one. Using the first.`)
+    }
+    
+    const toolCall = message.tool_calls[0]
+    
+    // Safety check - this should never happen due to the array check above
+    if (!toolCall) {
+      console.warn("Tool call was undefined when it shouldn't be")
+      return result
+    }
+    
+    result.toolName = toolCall.function.name
+    
+    // Parse arguments if schema is available
+    if (toolCallSchema && params.toolSchemas) {
+      try {
+        const parsedArgs = JSON.parse(toolCall.function.arguments)
+        
+        // Check if the tool exists in our schemas
+        const toolName = toolCall.function.name
+        if (Object.keys(params.toolSchemas).includes(toolName)) {
+          const schema = params.toolSchemas[toolName]
+          
+          // Safety check - this should never happen due to the includes check above
+          if (!schema) {
+            throw new Error(`Schema for tool ${toolName} is undefined`)
+          }
+          
+          // Parse the args with the specific schema
+          try {
+            const validArgs = schema.parse(parsedArgs)
+            result.toolCall = validArgs
+          } catch (error) {
+            console.error(`Failed to validate tool arguments with schema:`, error)
+            throw new Error(`Invalid tool arguments: ${error instanceof Error ? error.message : String(error)}`)
+          }
+        } else {
+          throw new Error(`Unknown tool called: ${toolName}`)
+        }
+      } catch (error) {
+        console.error("Failed to parse tool arguments:", error)
+        throw new Error(`Invalid tool call arguments: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    } else {
+      // No schema available, just parse the JSON
+      try {
+        result.toolCall = JSON.parse(toolCall.function.arguments) as any
+      } catch (error) {
+        console.error("Failed to parse tool arguments:", error)
+        throw new Error(`Invalid tool call arguments: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
   }
   
   return result

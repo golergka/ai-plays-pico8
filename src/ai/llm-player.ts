@@ -1,11 +1,7 @@
 import type { GamePlayer, ActionSchemas } from '../types'
 import type { Schema } from '../schema/utils'
-// Comment out unused imports for debugging
-// import { combineSchemas, extractAction } from '../schema/utils'
-// import { generateText } from 'ai'
-// import { openai } from '@ai-sdk/openai'
-import { callOpenAI, type Message, type Tool } from './api'
-import type { JsonSchema7Type } from 'zod-to-json-schema'
+import { z } from 'zod'
+import { callOpenAI, type Message, type ToolDefinition } from './api'
 import 'dotenv/config'
 
 /**
@@ -35,6 +31,11 @@ export interface LLMPlayerOptions {
    * System prompt for the LLM
    */
   systemPrompt?: string
+  
+  /**
+   * Model to use
+   */
+  model?: string
 
   /**
    * Event handler for LLM player events
@@ -52,19 +53,27 @@ export interface LLMPlayerOptions {
  * All game-specific handling should be done at the schema level by the caller.
  */
 export class LLMPlayer implements GamePlayer {
-  private chatHistory: string[] = []
+  private chatHistory: Message[] = []
   private options: Required<LLMPlayerOptions>
   private onEvent: LLMPlayerEventHandler
-  // private model = openai('gpt-4o', { structuredOutputs: true })
   
   constructor(options: LLMPlayerOptions) {
     this.options = {
       maxRetries: options.maxRetries || 3,
       systemPrompt: options.systemPrompt || 'You are playing a game. Analyze the game state and take the most appropriate action.',
+      model: options.model || 'gpt-4o',
       onEvent: options.onEvent || (() => {})
     }
     
     this.onEvent = this.options.onEvent
+    
+    // Initialize chat history with system message
+    this.chatHistory = [
+      {
+        role: 'system',
+        content: this.options.systemPrompt
+      }
+    ]
   }
   
   /**
@@ -82,124 +91,86 @@ export class LLMPlayer implements GamePlayer {
     // Don't use the provided actionSchemas at all
     
     try {
-      console.log("DEBUG: Creating direct schema object for OpenAI function calling")
+      // Add game output to chat history
+      this.chatHistory.push({
+        role: 'user',
+        content: gameOutput
+      })
       
-      // Create a simple schema with command properties
-      const directSchema = {
-        type: "object",
-        properties: {
-          move: {
-            type: "object",
-            properties: {
-              direction: {
-                type: "string",
-                enum: ["north", "south", "east", "west"],
-                description: "Direction to move"
-              }
-            },
-            required: ["direction"],
-            description: "Move in a direction"
-          },
-          look: {
-            type: "object",
-            properties: {},
-            description: "Look around the current area"
-          },
-          take: {
-            type: "object",
-            properties: {
-              item: {
-                type: "string",
-                description: "Item to take"
-              }
-            },
-            required: ["item"],
-            description: "Take an item"
-          }
-        },
-        required: ["move", "look", "take"]
+      this.emitEvent('thinking', 'Analyzing game state...')
+      
+      // Create a simple schema for testing
+      // Later we will use the actual actionSchemas param
+      const actionSchema = z.object({
+        action: z.enum(['look', 'take', 'move'])
+      })
+      
+      // Simple tool schema for testing
+      const toolSchemas = {
+        'action': actionSchema
       }
       
-      console.log("DEBUG: Direct schema:", JSON.stringify(directSchema, null, 2))
+      // Define tool with schema
+      const tools: ToolDefinition<typeof actionSchema>[] = [
+        {
+          name: 'action',
+          description: 'Tool for selecting a game action to perform.',
+          schema: actionSchema
+        }
+      ]
       
-      // Create a simpler schema for testing
-      const simpleSchema: JsonSchema7Type = {
-        type: "object",
-        properties: {
-          action: {
-            type: "string",
-            enum: ["look"],
-            description: "Action to perform"
-          }
-        },
-        required: ["action"]
-      } as const
-      
-      console.log("DEBUG: Simple schema:", JSON.stringify(simpleSchema, null, 2))
-      
-      // Call the OpenAI API using our abstracted function with typed parameters
+      // Call OpenAI with structured parameters and schemas
       try {
-        // Create messages with proper typing
-        const messages: Message[] = [
-          {
-            role: "system",
-            content: "You are playing a game. Select an action to perform."
-          },
-          {
-            role: "user",
-            content: gameOutput + '\n\nChoose the "look" action to examine your surroundings.'
-          }
-        ];
-        
-        // Create tools with proper typing
-        const tools: Tool[] = [
-          {
-            type: "function",
-            function: {
-              name: "action",
-              description: "Tool for selecting a game action to perform.",
-              parameters: simpleSchema
-            }
-          }
-        ];
-        
-        // Call OpenAI with structured parameters
         const result = await callOpenAI({
-          model: "gpt-4o",
-          messages,
+          model: this.options.model,
+          messages: this.chatHistory,
           tools,
+          toolSchemas,
           toolChoice: {
-            type: "function",
+            type: 'function',
             function: {
-              name: "action"
+              name: 'action'
             }
           }
-        });
+        })
         
-        console.log("DEBUG: OpenAI API result:", JSON.stringify(result, null, 2));
+        console.log("DEBUG: OpenAI API result:", JSON.stringify(result, null, 2))
         
-        // Function calls are now directly available in the result
-        if (result.functionCalls.length > 0) {
-          const functionCall = result.functionCalls[0];
-          // Make sure the function call exists before using it
-          if (functionCall) {
-            console.log("DEBUG: Function call:", JSON.stringify(functionCall, null, 2));
-            
-            // Arguments are already parsed and available
-            const args = functionCall.arguments;
-            console.log("DEBUG: Function arguments:", JSON.stringify(args, null, 2));
-          }
+        // Tool call is now directly available with correct typing
+        if (result.toolCall && result.toolName) {
+          console.log("DEBUG: Tool call:", JSON.stringify(result.toolCall, null, 2))
+          
+          // Add assistant response to chat history
+          this.chatHistory.push({
+            role: 'assistant',
+            content: null,
+            // In a real implementation, we would add the tool_calls here
+          })
+          
+          // In a real implementation, we would properly handle the result
+          // instead of exiting
+          process.exit(0)
+        }
+        
+        // No tool call, just text response
+        if (result.content) {
+          this.emitEvent('response', result.content)
+          this.chatHistory.push({
+            role: 'assistant',
+            content: result.content
+          })
         }
         
         // Exit after printing the response
-        process.exit(0);
+        process.exit(0)
       } catch (e) {
-        console.log("DEBUG: Direct API call error:", e);
+        console.log("DEBUG: Direct API call error:", e)
+        // In a real implementation, we would try a different approach
+        // or return an error
+        process.exit(1)
       }
       
       // We should never reach here because process.exit(0) is called
-      console.log("DEBUG: Execution continued past OpenAI API call")
-      
       // Return a dummy action to satisfy the type system
       const firstActionType = Object.keys(actionSchemas)[0] as keyof T
       return [
@@ -213,12 +184,10 @@ export class LLMPlayer implements GamePlayer {
     }
   }
   
-  // For debugging only - this method is not used in the current implementation
-  
   /**
    * Get the chat history
    */
-  getChatHistory(): string[] {
+  getChatHistory(): Message[] {
     return [...this.chatHistory]
   }
   
