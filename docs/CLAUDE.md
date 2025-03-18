@@ -11,7 +11,12 @@ Follow these steps when asked with autonomusly work on the project:
 1. Check TASKS.md first to understand current priorities
 2. Select a task to work on. Print the task description and your estimate of work to standard output.
 3. Do the required implementation work. If neccessary, provide brief comments of your activity.
-4. Run all required checks (typecheck, lint, tests if applicable). If you go through fix/test iterations, comment on each iteration.
+4. ALWAYS run ALL of the following checks in this order:
+   - Typecheck: `bun run typecheck`
+   - Lint: `bun run lint` (when available)
+   - Tests: `bun run test` (when available)
+   - Any example/demo code you've written
+   - NEVER skip running tests even if they're in separate files you've created
 5. IMPORTANT: For ALL changes that cannot be fully validated through automated checks:
    - This includes ANY changes affecting:
      - Process management (launching, terminating, monitoring processes)
@@ -40,8 +45,15 @@ When human prompts you with a specific task, follow these steps:
 2. Update other tasks in TASKS.md in relation to this one.
 3. If neccessary, create new sub-tasks for the task.
 4. Select whether to work on the task or one of its sub-tasks
-5. Go to step 3 (do the required implementation work) in the Independent Work workflow
-6. After committing the changes, respond to the user with your current progress with task as described by him and your estimate of remaining work
+5. Do the required implementation work
+6. ALWAYS run ALL of the following checks in this order:
+   - Typecheck: `bun run typecheck`
+   - Lint: `bun run lint` (when available)
+   - Tests: `bun run test` (when available)
+   - Any example/demo code you've written
+   - NEVER skip running tests even if they're in separate files you've created
+7. Complete the remaining steps as in the Independent Work workflow
+8. After committing the changes, respond to the user with your current progress with task as described by him and your estimate of remaining work
 
 ## WORKFLOW: Feature Reality Check
 
