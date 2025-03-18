@@ -176,6 +176,13 @@ bun remove <package>      # Remove a package
 - **Error Handling**: Use typed errors, prefer async/await with try/catch
 - **Comments**: JSDoc for public APIs, inline comments for complex logic
 - **File Structure**: One component/class per file, organize by feature
+- **Platform vs Game Code**:
+  - **CRITICAL**: Maintain clear separation between platform code and game-specific code
+  - Platform code includes core interfaces, utilities, AI components, launchers, etc.
+  - Game-specific code includes game implementations, schemas, and game-specific logic
+  - Platform-level changes must be game-agnostic and not modify specific game implementations
+  - Changes to platform interfaces may require game implementations to adapt, but platform code should never directly modify game code
+  - When making changes, first determine whether the task is platform-level or game-specific, and respect this boundary
 - **Protected Files**:
   - **CRITICAL**: NEVER modify `run.sh` - this file is managed by project administrators
   - Always check TASKS.md to confirm which files are relevant to your current task
