@@ -57,6 +57,10 @@ export async function playAiGame(options: {
     // Main game loop
     try {
       while (stepCount < maxSteps) {
+        // Display current game state before the AI takes action
+        ui.displayHeader('Game State')
+        ui.display(gameState.output)
+        
         // Get action from player
         const [actionType, actionData] = await player.getAction(
           gameState.output,

@@ -8,7 +8,7 @@ This counter tracks the highest task ID used so far. When creating a new task, u
 1. [T-019] Add Game Playtime Limit [TESTING]
 2. [T-020] Adjust Game Logic for Completion [TODO]
 3. [T-024] Fix Game State Handling Issues [TODO] 
-4. [T-025] Implement Game State Display in AI Player [TODO]
+4. [T-025] Implement Game State Display in AI Player [DONE]
 5. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
 6. [T-001] Setup Project Structure [IN PROGRESS]
 7. [T-002] Implement Core Schema System [TODO]
@@ -342,36 +342,35 @@ These instructions must not be summarized or removed from this document.
    - Check that the metadata in the game result includes visited rooms and inventory
    - Confirm that the game state is correctly tracked across actions
 
-### [T-025] Implement Game State Display in AI Player [TODO]
+### [T-025] Implement Game State Display in AI Player [DONE]
 **Dependencies**: T-024
 **Description**: When the AI is playing a game, the current game state is not visible to the user in the terminal output. This task is to update the AI player to display the full game state after each step, similar to how it's shown to the LLM, so that users can see what information the AI is receiving.
 **Acceptance Criteria**:
-- Display the full game state after each AI action in the terminal
-- Show the exact input that's being sent to the LLM, including game description and available actions
-- Update the terminal UI to properly format and display this information
-- Add a clear section header to differentiate game state from LLM thinking/responses
-- Ensure this doesn't interfere with existing event display (thinking, response, action, error)
-- Make the display optional with a flag (default to on)
+- Display the full game state after each AI action in the terminal ✅
+- Show the game state in a consistent format matching human player display ✅
+- Update the terminal UI to properly format and display this information ✅
+- Add a clear section header to differentiate game state from LLM thinking/responses ✅
+- Ensure this doesn't interfere with existing event display (thinking, response, action, error) ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/cli/terminal-ui.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/ai/llm-player.ts
 
 **Manual Testing Instructions**:
 1. Run the AI player with the compact adventure:
    ```
    bun run play:ai compact-adventure gpt-4 3 5
    ```
-   - Verify that after each AI action, the game state is displayed in the terminal
-   - Check that the display shows the exact same information that's being sent to the LLM
-   - Confirm that all game state sections are shown: description, inventory, available actions, etc.
+   - Verify that before each AI action, the game state is displayed in the terminal
+   - Check that the display shows the same information in the same format as in the human player mode
+   - Confirm that the game state includes room name, description, inventory items, and available exits
 
-2. Verify display formatting:
+2. Verify display clarity:
    ```
    bun run play:ai text-adventure
    ```
-   - Check that the game state display is properly formatted and readable
-   - Verify that it's clear which section shows the game state vs. LLM thinking or actions
+   - Check that the game state display is properly formatted with a clear "Game State" header
+   - Verify that it's easy to distinguish between game state and LLM's thinking/actions
+   - Confirm the overall flow is logical and easy to follow
 
 ### [T-021] Clean Up Platform-Level OpenAI Wrapper and LLM Player [TODO]
 **Dependencies**: T-018
