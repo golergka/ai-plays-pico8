@@ -1,20 +1,22 @@
-# CLAUDE.md - AI Plays PICO-8 Project Guidelines
+# TEMPLATE: Package-specific Guidelines
+
+**IMPORTANT: This is a TEMPLATE file. Copy and adapt this template for your specific package needs.**
 
 **NOTE: When making changes to this template that would benefit all packages, please propagate these changes to all package-specific CLAUDE.md files.**
 
-This is root of LLM-targeted documentation. Every time you're activated, follow one of the provided workflows, depending on user's query. Each workflow should usually provide an atomic piece of work, commited to git. 
+This is the root of LLM-targeted documentation for [PACKAGE_NAME]. Every time you're activated, follow one of the provided workflows, depending on user's query. Each workflow should usually provide an atomic piece of work, committed to git.
 
 When editing workflows, keep them manageable enough for a single agent session — it should not blow up context or require long independent work periods. Also, if you see some operation that LLM should perform as part of this work, but which does not require full context of current conversation, it might be a good idea to ask the LLM to separate it into a separate task which can be worked on in the future.
 
 ## WORKFLOW: Independent Work
 
-Follow these steps when asked with autonomusly work on the project:
+Follow these steps when asked to autonomously work on the project:
 
 1. Check TASKS.md first to understand current priorities
-2. DO NOT scan the project or other files unrelated to TASKS.md. Use only TASKS.md for noe.
+2. DO NOT scan the project or other files unrelated to TASKS.md. Use only TASKS.md for now.
 3. Select a task to work on. Print the task description and your estimate of work to standard output.
 4. Now you can look up other relevant files.
-5. Do the required implementation work. If neccessary, provide brief comments of your activity.
+5. Do the required implementation work. If necessary, provide brief comments of your activity.
 6. ALWAYS run ALL of the following checks in this order:
    - Typecheck: `bun run typecheck`
    - Lint: `bun run lint` (when available)
@@ -58,7 +60,7 @@ When human prompts you with a specific task, follow these steps:
 
 1. Check TASKS.md to add a new or update existing task
 2. Update other tasks in TASKS.md in relation to this one.
-3. If neccessary, create new sub-tasks for the task.
+3. If necessary, create new sub-tasks for the task.
 4. Select whether to work on the task or one of its sub-tasks
 5. Do the required implementation work
 6. ALWAYS run ALL of the following checks in this order:
@@ -138,7 +140,7 @@ When asked to reconsider your approach or analyze a misunderstanding:
 6. **Identify the learning opportunity** without unnecessary apology or defensive justification.
 
 7. **Create specific follow-up tasks** when appropriate:
-   - "Clean up unused code from task T-XXX"
+   - "Clean up unused code from task [PREFIX]-XXX"
    - "Refactor implementation of feature X to match actual requirements"
    - "Update documentation to clarify meaning of criterion Y"
 

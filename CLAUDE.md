@@ -19,3 +19,15 @@ For package-specific work, please refer to the respective package's docs/CLAUDE.
 - For `@ai-gamedev/playtest`: See `packages/playtest/docs/CLAUDE.md`
 
 When working on a specific package, follow the workflows defined in that package's CLAUDE.md file.
+
+## Documentation Templates
+
+Standardized documentation templates for all packages are available in `/docs/templates/`. When creating documentation for a new package, copy these templates and adapt them to the specific package:
+
+- CLAUDE.md - Workflow instructions for AI assistance
+- TASKS.md - Task tracking with package-specific prefix
+- TESTING.md - Testing guidelines
+- MAINTENANCE.md - Documentation maintenance guidelines
+- ARCHITECTURE.md - System architecture documentation
+
+**IMPORTANT**: When making changes to documentation that would benefit all packages, please propagate these changes to all package-specific documentation files and update the templates accordingly.
