@@ -4,6 +4,7 @@ import type { Schema } from '../schema/utils'
 // import { combineSchemas, extractAction } from '../schema/utils'
 // import { generateText } from 'ai'
 // import { openai } from '@ai-sdk/openai'
+import { callOpenAI } from './api'
 import 'dotenv/config'
 
 /**
@@ -135,47 +136,39 @@ export class LLMPlayer implements GamePlayer {
       
       console.log("DEBUG: Simple schema:", JSON.stringify(simpleSchema, null, 2))
       
-      // Call the OpenAI API directly with our schema to debug issues
+      // Call the OpenAI API using our abstracted function
       try {
-        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env['OPENAI_API_KEY']}`,
-            "OpenAI-Organization": process.env['OPENAI_ORG_ID'] || ""
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: "You are playing a game. Select an action to perform."
-              },
-              {
-                role: "user",
-                content: gameOutput + '\n\nChoose the "look" action to examine your surroundings.'
-              }
-            ],
-            tools: [
-              {
-                type: "function",
-                function: {
-                  name: "action",
-                  description: "Tool for selecting a game action to perform.",
-                  parameters: simpleSchema
-                }
-              }
-            ],
-            tool_choice: {
+        const requestBody = {
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are playing a game. Select an action to perform."
+            },
+            {
+              role: "user",
+              content: gameOutput + '\n\nChoose the "look" action to examine your surroundings.'
+            }
+          ],
+          tools: [
+            {
               type: "function",
               function: {
-                name: "action"
+                name: "action",
+                description: "Tool for selecting a game action to perform.",
+                parameters: simpleSchema
               }
             }
-          })
-        });
+          ],
+          tool_choice: {
+            type: "function",
+            function: {
+              name: "action"
+            }
+          }
+        };
         
-        const responseData = await openaiResponse.json() as any;
+        const responseData = await callOpenAI(requestBody);
         console.log("DEBUG: OpenAI API direct response:", JSON.stringify(responseData, null, 2));
         
         // Check if there's a tool call in the response
