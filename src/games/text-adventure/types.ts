@@ -48,10 +48,10 @@ export interface TextAdventureState {
  * Possible actions in the text adventure
  */
 export type TextAdventureAction = 
-  | { type: 'move', direction: string }
+  | { type: 'move', direction: 'north' | 'south' | 'east' | 'west' }
   | { type: 'look' }
   | { type: 'examine', target: string }
   | { type: 'take', item: string }
-  | { type: 'use', item: string, target?: string }
+  | { type: 'use', item: string, target?: string | undefined }
   | { type: 'inventory' }
   | { type: 'help' }

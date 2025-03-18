@@ -1,6 +1,9 @@
 import type { Game, GameResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
 
+// Re-export types
+export type { Item, Room, TextAdventureAction, TextAdventureState }
+
 /**
  * Simple text adventure game implementation
  */

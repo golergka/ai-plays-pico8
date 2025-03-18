@@ -175,18 +175,20 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/utils/
 - /Users/maxyankov/Projects/ai-plays-pico8/src/config/
 
-### [T-007] Add Zod Schema Library [TODO]
+### [T-007] Add Zod Schema Library [IN PROGRESS]
 **Dependencies**: T-006
 **Description**: Add Zod (or similar) schema validation library and set up core schema types.
 **Acceptance Criteria**:
-- Install Zod package
-- Create basic schema utility functions
-- Set up schema type definitions
-- Add example schema implementation
+- Install Zod package ✅
+- Create basic schema utility functions ✅
+- Set up schema type definitions ✅
+- Add example schema implementation ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/package.json
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/examples.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/test.ts
 
 ### [T-008] Define Core Game Interface [DONE]
 **Dependencies**: T-006
@@ -212,15 +214,17 @@ These instructions must not be summarized or removed from this document.
 
 ### [T-010] Implement Human Player Interface [TODO]
 **Dependencies**: T-005
-**Description**: Create a human player interface for playing games in the terminal, allowing users to test games directly without AI assistance.
+**Description**: Create a generic human player interface for playing games in the terminal, allowing users to test any game directly without AI assistance. The interface should be game-agnostic and not require any game-specific code or subclassing.
 **Acceptance Criteria**:
 - Command-line interface for human input
 - Display game output in terminal
-- Support for all text adventure game actions
-- Proper help text and command autocomplete
-- Session history and ability to save/load game state
-- Seamless integration with existing game interfaces
+- Generic input handling system that can be adapted to different game schemas
+- Proper help text and command suggestions
+- Interface that respects the Game interface contract
+- Game-agnostic design that doesn't require game-specific implementations
+- Ability to run any game with the human player interface
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts

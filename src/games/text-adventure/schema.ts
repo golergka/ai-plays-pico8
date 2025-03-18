@@ -1,81 +1,65 @@
+import { z } from 'zod'
+import { createFunctionSchema, safeParseSchema, toJsonSchema } from '../../schema'
 import type { TextAdventureAction } from './types'
 
 /**
- * This is a placeholder for the actual schema implementation.
- * In the future, this will use the schema system (T-002) to define
- * and validate the text adventure actions.
+ * Zod schema for text adventure actions
  */
-export const TextAdventureActionSchema = {
-  type: 'object',
-  title: 'Text Adventure Action',
-  description: 'An action to perform in the text adventure game',
-  oneOf: [
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['move'] },
-        direction: { type: 'string', description: 'Direction to move (north, south, east, west)' }
-      },
-      required: ['type', 'direction']
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['look'] }
-      },
-      required: ['type']
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['examine'] },
-        target: { type: 'string', description: 'Object or item to examine' }
-      },
-      required: ['type', 'target']
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['take'] },
-        item: { type: 'string', description: 'Item to take' }
-      },
-      required: ['type', 'item']
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['use'] },
-        item: { type: 'string', description: 'Item to use' },
-        target: { 
-          type: 'string', 
-          description: 'Target to use the item on (optional)',
-          nullable: true
-        }
-      },
-      required: ['type', 'item']
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['inventory'] }
-      },
-      required: ['type']
-    },
-    {
-      type: 'object',
-      properties: {
-        type: { type: 'string', enum: ['help'] }
-      },
-      required: ['type']
-    }
-  ]
-}
+export const TextAdventureActionSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('move'),
+    direction: z.enum(['north', 'south', 'east', 'west'])
+      .describe('Direction to move (north, south, east, west)'),
+  }),
+  z.object({
+    type: z.literal('look'),
+  }),
+  z.object({
+    type: z.literal('examine'),
+    target: z.string()
+      .describe('Object or item to examine'),
+  }),
+  z.object({
+    type: z.literal('take'),
+    item: z.string()
+      .describe('Item to take'),
+  }),
+  z.object({
+    type: z.literal('use'),
+    item: z.string()
+      .describe('Item to use'),
+    target: z.string().optional()
+      .describe('Target to use the item on (optional)'),
+  }),
+  z.object({
+    type: z.literal('inventory'),
+  }),
+  z.object({
+    type: z.literal('help'),
+  }),
+])
 
 /**
- * Just a placeholder function to validate actions until schema system is implemented
+ * Function schema for LLM function calling
  */
-export function validateTextAdventureAction(_action: unknown): TextAdventureAction | null {
-  // Placeholder for actual validation
-  // Later this will use the schema system to validate and parse the action
-  return _action as TextAdventureAction
+export const textAdventureFunctionSchema = createFunctionSchema(
+  'performGameAction',
+  'Perform an action in the text adventure game',
+  TextAdventureActionSchema
+)
+
+/**
+ * JSON Schema for the text adventure actions
+ */
+export const textAdventureJsonSchema = toJsonSchema(
+  TextAdventureActionSchema,
+  'TextAdventureAction',
+  'An action to perform in the text adventure game'
+)
+
+/**
+ * Validate a text adventure action
+ */
+export function validateTextAdventureAction(action: unknown): TextAdventureAction | null {
+  return safeParseSchema(TextAdventureActionSchema, action)
 }

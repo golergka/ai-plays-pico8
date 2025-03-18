@@ -123,8 +123,11 @@ bun run typecheck
 # Linting (add eslint in future)
 # bun run lint
 
-# Testing (add jest/vitest in future) 
-# bun run test
+# Testing with Vitest
+bun run test         # Run all tests
+bun run test:watch   # Run tests in watch mode
+bun run test:ui      # Run tests with UI
+bun run test:coverage # Run tests with coverage
 
 # Package management (IMPORTANT: Use Bun, not npm)
 bun install <package>     # Install a package
@@ -145,7 +148,14 @@ bun remove <package>      # Remove a package
 - **Error Handling**: Use typed errors, prefer async/await with try/catch
 - **Comments**: JSDoc for public APIs, inline comments for complex logic
 - **File Structure**: One component/class per file, organize by feature
-- **Testing**: Write unit tests for core functionality when implemented
+- **Testing**: 
+  - Use Vitest for unit and integration tests
+  - Follow AAA pattern (Arrange, Act, Assert)
+  - Write separate test files with `.test.ts` or `.spec.ts` extension
+  - Group related tests with describe blocks
+  - Use descriptive test names that explain expected behavior
+  - Mock external dependencies
+  - Test both success and failure paths
 
 ## Git Workflow
 - Run `bun run typecheck` before committing changes.
