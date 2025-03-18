@@ -142,17 +142,19 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/launcher/
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
 
-### [T-005] Implement Sample Text Adventure [TODO]
+### [T-005] Implement Sample Text Adventure [IN PROGRESS]
 **Dependencies**: T-004
 **Description**: Create a simple text adventure game as a first template to demonstrate the system.
 **Acceptance Criteria**:
-- Basic text adventure implementation
-- Multiple rooms/locations
-- Items and inventory system
-- Simple puzzles for AI to solve
-- Clear win/lose conditions
+- Basic text adventure implementation ✅
+- Multiple rooms/locations ✅
+- Items and inventory system ✅
+- Simple puzzles for AI to solve ✅
+- Clear win/lose conditions ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/types.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 
 ## Low-level tasks
 
@@ -186,13 +188,13 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
 
-### [T-008] Define Core Game Interface [TODO]
+### [T-008] Define Core Game Interface [DONE]
 **Dependencies**: T-006
 **Description**: Define the core Game interface that all game templates will implement.
 **Acceptance Criteria**:
-- Create Game interface with required methods
-- Document proper implementation requirements
-- Add type definitions for game state and results
+- Create Game interface with required methods ✅
+- Document proper implementation requirements ✅
+- Add type definitions for game state and results ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/index.ts
