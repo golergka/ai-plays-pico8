@@ -194,7 +194,7 @@ These instructions must not be summarized or removed from this document.
 **Manual Testing Instructions**:
 1. Test the compact adventure with human player:
    ```
-   bun run src/scripts/play-human.ts compact-adventure
+   bun run play:human compact-adventure
    ```
    - The game should start in a cave entrance
    - Verify you can move between rooms, take items, and use them
@@ -206,15 +206,16 @@ These instructions must not be summarized or removed from this document.
 
 2. Test the compact adventure with AI player:
    ```
-   bun run src/scripts/play-ai.ts compact-adventure
+   bun run play:ai compact-adventure
    ```
    - Verify the AI can navigate and interact with the game
    - Monitor if the AI can reason about using the torch to see in the dark room
    - Check if the AI can discover both win conditions
 
 3. Verify both game types are selectable:
-   - Try running both game types with explicit arguments
-   - Confirm that the original adventure still works properly
+   - Test the original adventure: `bun run play:human text-adventure`
+   - Test the compact adventure: `bun run play:human compact-adventure` 
+   - Confirm that both adventures work properly
    - Test with both human and AI players
 
 ### [T-014] Create LLM Player Demo Script [TESTING]

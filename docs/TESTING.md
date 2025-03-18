@@ -195,9 +195,9 @@ The following rules apply when providing testing instructions to humans:
 
 1. **NEVER** modify `run.sh` - this file is managed by project administrators
 2. **NEVER** instruct users to modify `run.sh` as part of testing
-3. Instead, provide explicit commands using `bun run` to execute specific tests:
-   - For playing games: `bun run src/scripts/play-human.ts [game-type]`
-   - For AI demos: `bun run src/scripts/play-ai.ts [game-type] [model] [timeout] [retries]`
+3. Always use the npm scripts defined in package.json for testing:
+   - For playing games: `bun run play:human [game-type]`
+   - For AI demos: `bun run play:ai [game-type] [model] [timeout] [retries]`
 4. Always include any needed command-line arguments in the test instructions
 5. Document all test commands in TASKS.md for the specific task
 
