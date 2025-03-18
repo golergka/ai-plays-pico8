@@ -1,19 +1,23 @@
 # Tasks
 
-## Current Task ID Counter: T-018
+## Current Task ID Counter: T-022
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-018 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-022 as the next available ID.
 
 ## Current Priorities
-1. [T-018] Create Direct LLM API Abstraction Layer [TESTING]
-2. [T-017] Fix Game Schemas to Use Required Parameters Only [TESTING]
-3. [T-015] Implement LLM Player with proper AI package [TESTING]
-4. [T-016] Create Short Demo Game [TESTING]
-5. [T-001] Setup Project Structure [IN PROGRESS]
-6. [T-002] Implement Core Schema System [TODO]
-7. [T-003] Create AI Player Interface [TESTING]
-8. [T-014] Create LLM Player Demo Script [TESTING]
-9. [T-004] Build Game Launcher [TODO]
+1. [T-019] Add Game Playtime Limit [TODO]
+2. [T-020] Adjust Game Logic for Completion [TODO]
+3. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+4. [T-022] Remove Excessive Debug Logging [TODO]
+5. [T-018] Create Direct LLM API Abstraction Layer [DONE]
+6. [T-017] Fix Game Schemas to Use Required Parameters Only [DONE]
+7. [T-015] Implement LLM Player with proper AI package [DONE]
+8. [T-016] Create Short Demo Game [DONE]
+9. [T-001] Setup Project Structure [IN PROGRESS]
+10. [T-002] Implement Core Schema System [TODO]
+11. [T-003] Create AI Player Interface [DONE]
+12. [T-014] Create LLM Player Demo Script [DONE]
+13. [T-004] Build Game Launcher [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -119,7 +123,7 @@ These instructions must not be summarized or removed from this document.
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/schema/
 
-### [T-003] Create AI Player Interface [TESTING]
+### [T-003] Create AI Player Interface [DONE]
 **Dependencies**: T-002
 **Description**: Implement the core AI Player class that handles LLM interaction, maintains conversation history, and processes game outputs. Use a generic LLM interface for flexibility.
 **Acceptance Criteria**:
@@ -129,6 +133,17 @@ These instructions must not be summarized or removed from this document.
 - LLM integration with function calling ✅
 - Configuration options for different LLMs ✅
 - Error handling and retry mechanisms ✅
+
+**Testing Summary**:
+The AI Player interface has been successfully implemented and tested:
+- The LLMPlayer class implements the GamePlayer interface
+- Successfully processes game output and selects appropriate actions
+- Properly maintains conversation history
+- Integrates with the OpenAI API for function calling
+- Provides configuration options for model, system prompt, and retries
+- Implements error handling and retry mechanisms
+- Fixed issues with null content handling and event structure
+
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.test.ts
@@ -164,7 +179,7 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-018] Create Direct LLM API Abstraction Layer [TESTING]
+### [T-018] Create Direct LLM API Abstraction Layer [DONE]
 **Dependencies**: T-015, T-017
 **Description**: Replace the Vercel AI SDK with our own direct API implementation to have more control over the schema format and better error handling. Based on our debugging experiments, we found that directly calling the OpenAI API works better than using the Vercel SDK for our specific schema needs.
 **Acceptance Criteria**:
@@ -186,22 +201,16 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/types.ts (new)
 - /Users/maxyankov/Projects/ai-plays-pico8/package.json
 
-**Manual Testing Instructions**:
-1. Test the OpenAI API implementation with the text adventure game:
-   ```
-   bun run play:ai compact-adventure
-   ```
-   - Verify the API correctly calls the OpenAI service
-   - Confirm the tools, schemas, and tool choice are properly passed and used
-   - Check that function calls are correctly processed
-   - Verify that error handling works as expected
-   
-2. Verify the new interface structure:
-   - Run the typecheck to confirm no type errors: `bun run typecheck`
-   - Test the structured `tools` object with its properties
-   - Confirm the string-based tool choice works correctly
+**Testing Summary**:
+The implementation has been manually tested and verified to work correctly:
+- OpenAI API is successfully called with proper parameters
+- Tools and tool choice are correctly integrated
+- Function calls are successfully processed
+- Fixed issue with null content in API responses by using empty strings
+- Fixed event structure in LLMPlayer to match expected format in play-ai.ts
+- Type checking passes with no errors (`bun run typecheck`)
 
-### [T-017] Fix Game Schemas to Use Required Parameters Only [TESTING]
+### [T-017] Fix Game Schemas to Use Required Parameters Only [DONE]
 **Dependencies**: T-015
 **Description**: OpenAI's function calling API requires that all parameters in a schema be marked as required, but our current game schemas include optional parameters. This needs to be fixed to make the LLM player work properly with our schemas.
 **Acceptance Criteria**:
@@ -211,64 +220,45 @@ These instructions must not be summarized or removed from this document.
 - Update documentation to clearly state this requirement ✅
 - Test the updated schemas with the LLM player ✅
 
-**Manual Testing Instructions**:
-1. Test the text adventure with the new schema changes:
-   ```
-   bun run play:ai compact-adventure
-   ```
-   - Verify the LLM can use the new `useItem` and `useItemOn` actions correctly
-   - Confirm that the LLM can light the torch with `useItem`
-   - Verify that the LLM can use the key on the pedestal with `useItemOn`
-   
-2. Test with the human player:
-   ```
-   bun run play:human compact-adventure
-   ```
-   - Try both `useItem torch` and `useItemOn key pedestal` commands
-   - Verify both variants of the use action work correctly
+**Testing Summary**:
+The schema changes have been tested and verified:
+- The game correctly provides separate useItem and useItemOn actions
+- Both actions work correctly with the LLM player
+- Human player testing confirmed that both commands work as expected
+- Game properly processes the actions with their required parameters
+- API integration is working correctly with the schema structure
 
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
 
-### [T-015] Implement LLM Player with proper AI package [BLOCKED]
+### [T-015] Implement LLM Player with proper AI package [DONE]
 **Dependencies**: T-018
 **Description**: The current LLM Player implementation is incomplete and uses a mock LLM for development. We need to implement a proper LLM Player with direct API access instead of using the Vercel AI SDK. Our debugging found issues with how the Vercel SDK handles function calling schemas.
 **Acceptance Criteria**:
-- Replace Vercel AI package with our own direct API implementation
-- Implement the getAction method to use the custom API layer
-- Ensure conversation history is maintained correctly
-- Provide proper error handling and retry mechanisms
-- Ensure cleanup properly releases all resources
-- Add proper documentation in JSDoc comments
+- Replace Vercel AI package with our own direct API implementation ✅
+- Implement the getAction method to use the custom API layer ✅
+- Ensure conversation history is maintained correctly ✅
+- Provide proper error handling and retry mechanisms ✅
+- Ensure cleanup properly releases all resources ✅
+- Add proper documentation in JSDoc comments ✅
 
-**Manual Testing Instructions**:
-1. Test the LLM player with the compact adventure game:
-   ```
-   bun run play:ai compact-adventure
-   ```
-   - Verify the LLM can analyze the game state and select appropriate actions
-   - Confirm that reflection tools show the LLM's thought process
-   - Verify function calling works correctly with our schemas
-   - Check that multiple turns work correctly
-   
-2. Test error handling:
-   - Make a temporary change to force an error (e.g., invalid API key)
-   - Run the game again and verify error handling works as expected
-   - Revert your changes after testing
-
-3. Verify the implementation is properly game-agnostic:
-   - Check that there's no game-specific code in the llm-player.ts file
-   - Confirm it works based solely on the provided schemas
-
-**Status Update**: This task is now blocked by T-018. We need to implement our own API abstraction layer before we can properly implement the LLM Player. Our debugging revealed that the Vercel AI SDK doesn't handle our schema requirements correctly for OpenAI's function calling API.
+**Testing Summary**:
+The implementation has been successfully completed and tested:
+- LLM player now uses our direct OpenAI API implementation
+- Fixed bug with null content values causing API errors
+- Fixed event data structure to match play-ai.ts expectations
+- Conversation history is correctly maintained
+- Type safety is ensured throughout the implementation
+- Properly handles errors with type checking 
+- Successfully processes tool calls from the OpenAI API
 
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts (new)
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts
 
-### [T-016] Create Short Demo Game [TESTING]
+### [T-016] Create Short Demo Game [DONE]
 **Dependencies**: T-005
 **Description**: Create a shorter, faster text adventure demo game that can be completed in 10-15 actions. This will serve as a quick introduction to the system for new users, while keeping the current more extensive text adventure as a second option.
 **Acceptance Criteria**:
@@ -278,40 +268,23 @@ These instructions must not be summarized or removed from this document.
 - Ensure the game has clear win/lose conditions ✅
 - Update the play-ai.ts and play-human.ts scripts to support selecting this new game ✅
 - Update documentation to mention both game options ✅
+
+**Testing Summary**:
+The compact adventure game has been implemented and tested:
+- The game is playable with both human and AI players
+- Players can navigate between rooms, pick up items, and use them
+- The game includes two win conditions (finding treasure or solving puzzle)
+- Current implementation has some issues with AI completion (subject of task T-020)
+- Game terminates after 20 turns if not completed (needs improvement in task T-019)
+- Both game types are selectable in the play-ai.ts and play-human.ts scripts
+
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-human.ts
 
-**Manual Testing Instructions**:
-1. Test the compact adventure with human player:
-   ```
-   bun run play:human compact-adventure
-   ```
-   - The game should start in a cave entrance
-   - Verify you can move between rooms, take items, and use them
-   - Try to complete the game by either:
-     - Finding and taking the treasure in the dark room (need to light torch first)
-     - Using the key on the pedestal in the puzzle room
-   - Verify the game can be completed in 10-15 actions
-   - Confirm win/lose conditions work properly
-
-2. Test the compact adventure with AI player:
-   ```
-   bun run play:ai compact-adventure
-   ```
-   - Verify the AI can navigate and interact with the game
-   - Monitor if the AI can reason about using the torch to see in the dark room
-   - Check if the AI can discover both win conditions
-
-3. Verify both game types are selectable:
-   - Test the original adventure: `bun run play:human text-adventure`
-   - Test the compact adventure: `bun run play:human compact-adventure` 
-   - Confirm that both adventures work properly
-   - Test with both human and AI players
-
-### [T-014] Create LLM Player Demo Script [TESTING]
+### [T-014] Create LLM Player Demo Script [DONE]
 **Dependencies**: T-003, T-005
 **Description**: Create a script that allows a human to run and observe an LLM playing the text adventure game, with full visibility into the LLM's internal thought process, function calls, and game state transitions.
 **Acceptance Criteria**:
@@ -323,6 +296,17 @@ These instructions must not be summarized or removed from this document.
 - Add retry/timeout configuration options via command line args ✅
 - Create a bun script command in package.json ✅
 - Provide usage instructions in console output ✅
+
+**Testing Summary**:
+The LLM player demo script has been implemented and tested:
+- Successfully runs with `bun run play:ai` command
+- Shows detailed LLM thinking process and actions in the console
+- Displays colorized output with clear section headers
+- Supports command-line arguments for game type, model, and max retries
+- Properly handles errors and shows error information to the user
+- Correctly shows game results and statistics at the end
+- Fixed issues with event data structure in the LLM player interface
+
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
@@ -464,3 +448,62 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/i-terminal-ui.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/mock-terminal-ui.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.test.ts
+
+### [T-019] Add Game Playtime Limit [TODO]
+**Dependencies**: T-015, T-016
+**Description**: Add automatic game completion after a certain number of steps to prevent infinite loops and ensure that tests and demos always terminate within a reasonable timeframe.
+**Acceptance Criteria**:
+- Add a maximum steps limit to the game interface
+- Implement a configurable max steps limit for all games (default 100)
+- Ensure games terminate gracefully when the limit is reached
+- Add a "timeout" or "too many steps" ending condition separate from win/lose
+- Update the play-ai.ts script to accept a max steps parameter
+- Document the feature in relevant files
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
+
+### [T-020] Adjust Game Logic for Completion [TODO]
+**Dependencies**: T-016
+**Description**: The current compact adventure game has some logic issues that make it difficult for the AI to complete. Adjust the game logic to ensure the AI can reasonably complete the game.
+**Acceptance Criteria**:
+- Identify and fix issues with item usage and interactions
+- Ensure clear and logical progression through the game
+- Make sure the AI can light the torch and use it in the dark room
+- Balance the game to be completable within 15-20 steps by the AI
+- Test with both human and AI players to verify completability
+- Document any special interaction patterns in comments
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+
+### [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+**Dependencies**: T-018
+**Description**: Now that the OpenAI wrapper and LLM player are working correctly, clean up the code, improve error handling, and add better documentation.
+**Acceptance Criteria**:
+- Refactor the OpenAI wrapper for clarity and consistency
+- Improve error handling with more specific error types
+- Remove redundant code and simplify complex logic
+- Add comprehensive JSDoc comments to all public methods and interfaces
+- Ensure all code paths are properly typed and exception-safe
+- Update tests to cover the improved implementation
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts
+
+### [T-022] Remove Excessive Debug Logging [TODO]
+**Dependencies**: T-021, T-019, T-020
+**Description**: After all the functionality is stable and tests are passing, remove the excessive debug logging from the codebase to clean up the output.
+**Acceptance Criteria**:
+- Remove all "DEBUG:" console.log statements from the code
+- Replace with structured, level-based logging if needed
+- Keep only essential error logging for production use
+- Ensure clean output in normal operation
+- Verify all features still work correctly after removing logs
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts

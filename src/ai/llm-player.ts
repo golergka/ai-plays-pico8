@@ -87,9 +87,6 @@ export class LLMPlayer implements GamePlayer {
     gameOutput: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-    // DEBUGGING: Create a schema where each command is a property
-    // Don't use the provided actionSchemas at all
-    
     try {
       // Add game output to chat history
       this.chatHistory.push({
@@ -99,35 +96,34 @@ export class LLMPlayer implements GamePlayer {
       
       this.emitEvent('thinking', 'Analyzing game state...')
       
-      // Create a simple schema for testing
-      // Later we will use the actual actionSchemas param
-      const actionSchema = z.object({
-        action: z.enum(['look', 'take', 'move'])
-      })
+      // Convert each action schema into a separate tool definition
+      const tools: ToolDefinition<z.ZodType>[] = []
+      const toolSchemas: Record<string, z.ZodType> = {}
       
-      // Simple tool schema for testing
-      const toolSchemas = {
-        'action': actionSchema
+      // Process each action schema into a separate tool
+      for (const [actionName, schema] of Object.entries(actionSchemas)) {
+        // Schema is already a Zod schema (Schema<T> is just an alias for z.ZodType<T>)
+        const zodSchema = schema
+        tools.push({
+          name: actionName,
+          description: `Tool for performing the ${actionName} action`,
+          schema: zodSchema
+        })
+        
+        toolSchemas[actionName] = zodSchema
       }
-      
-      // Define tool with schema
-      const tools: ToolDefinition<typeof actionSchema>[] = [
-        {
-          name: 'action',
-          description: 'Tool for selecting a game action to perform.',
-          schema: actionSchema
-        }
-      ]
       
       // Call OpenAI with structured parameters and schemas
       try {
+        console.log("DEBUG: Calling OpenAI with tools:", JSON.stringify(tools.map(t => t.name), null, 2))
+        
         const result = await callOpenAI({
           model: this.options.model,
           messages: this.chatHistory,
           tools: {
             definitions: tools,
             schemas: toolSchemas,
-            choice: 'action'
+            choice: 'auto' // Let the AI choose which action to take
           }
         })
         
@@ -135,40 +131,53 @@ export class LLMPlayer implements GamePlayer {
         
         // Tool call is now directly available with correct typing
         if (result.toolCall && result.toolName) {
-          console.log("DEBUG: Tool call:", JSON.stringify(result.toolCall, null, 2))
+          const actionName = result.toolName as keyof T
+          const actionData = result.toolCall
+          
+          this.emitEvent('action', `Selected action: ${String(actionName)}`, { 
+            action: actionName,
+            args: actionData
+          })
           
           // Add assistant response to chat history
           this.chatHistory.push({
             role: 'assistant',
-            content: null,
-            // In a real implementation, we would add the tool_calls here
+            content: "", // Empty string instead of null to avoid API error
+            // We'd ideally include tool_calls here but our Message type doesn't support it yet
           })
           
-          // In a real implementation, we would properly handle the result
-          // instead of exiting
-          process.exit(0)
+          return [
+            actionName, 
+            actionData as T[keyof T] extends Schema<infer U> ? U : never
+          ]
         }
         
-        // No tool call, just text response
+        // No tool call, just text response - this is an error case since we expect a tool call
         if (result.content) {
           this.emitEvent('response', result.content)
           this.chatHistory.push({
             role: 'assistant',
             content: result.content
           })
+          
+          throw new Error(`LLM returned text response instead of selecting an action: ${result.content}`)
         }
         
-        // Exit after printing the response
-        process.exit(0)
-      } catch (e) {
-        console.log("DEBUG: Direct API call error:", e)
-        // In a real implementation, we would try a different approach
-        // or return an error
-        process.exit(1)
+        throw new Error('LLM returned empty response without selecting an action')
+      } catch (e: unknown) {
+        // Log detailed error information
+        console.error("DEBUG: Error in getAction:", e)
+        console.error("DEBUG: Error details:", JSON.stringify({
+          errorName: e instanceof Error ? e.name : 'Unknown',
+          errorMessage: e instanceof Error ? e.message : String(e),
+          errorStack: e instanceof Error ? e.stack : 'No stack trace'
+        }, null, 2))
+        
+        // Try again with the next retry if available
+        throw e
       }
       
-      // We should never reach here because process.exit(0) is called
-      // Return a dummy action to satisfy the type system
+      // We should never reach here but return a dummy action to satisfy the type system
       const firstActionType = Object.keys(actionSchemas)[0] as keyof T
       return [
         firstActionType, 
