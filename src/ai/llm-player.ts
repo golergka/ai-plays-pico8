@@ -1,5 +1,5 @@
-import type { GamePlayer } from '../types'
-import type { Schema, SchemaType } from '../schema/utils'
+import type { GamePlayer, ActionSchemas } from '../types'
+import type { Schema } from '../schema/utils'
 import { combineSchemas, extractAction } from '../schema/utils'
 import { generateText, tool } from 'ai'
 import { openai } from '@ai-sdk/openai'
@@ -72,10 +72,10 @@ export class LLMPlayer implements GamePlayer {
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  async getAction<T extends Record<string, Schema<unknown>>>(
+  async getAction<T extends ActionSchemas>(
     gameOutput: string,
     actionSchemas: T
-  ): Promise<[keyof T, SchemaType<T[keyof T]>]> {
+  ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
     this.chatHistory.push(gameOutput)
     
     this.emitEvent('thinking', 'Analyzing game state and choosing action...')
@@ -186,10 +186,10 @@ export class LLMPlayer implements GamePlayer {
    * @param actionSchemas Map of action schemas
    * @returns Tuple of action name and validated parameters
    */
-  private processActionCall<T extends Record<string, Schema<unknown>>>(
+  private processActionCall<T extends ActionSchemas>(
     actionCall: { toolName: string, args: Record<string, any> },
     actionSchemas: T
-  ): [keyof T, SchemaType<T[keyof T]>] {
+  ): [keyof T, T[keyof T] extends Schema<infer U> ? U : never] {
     // Process the arguments through our combined schema
     const combinedSchema = combineSchemas(actionSchemas)
     const validatedData = combinedSchema.parse(actionCall.args)
@@ -210,7 +210,7 @@ export class LLMPlayer implements GamePlayer {
     this.emitEvent('action', `Selected action: ${String(actionType)}`, 
       { command: String(actionType), data: validatedParams })
     
-    return [actionType, validatedParams as SchemaType<T[keyof T]>]
+    return [actionType, validatedParams as T[keyof T] extends Schema<infer U> ? U : never]
   }
   
   /**
