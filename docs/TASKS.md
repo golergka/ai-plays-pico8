@@ -1,24 +1,25 @@
 # Tasks
 
-## Current Task ID Counter: T-023
+## Current Task ID Counter: T-024
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-023 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-025 as the next available ID.
 
 ## Current Priorities
 1. [T-023] Refactor Game Architecture to Use Step-Based Model [DONE]
 2. [T-019] Add Game Playtime Limit [TESTING]
 3. [T-020] Adjust Game Logic for Completion [TODO]
-4. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
-5. [T-022] Remove Excessive Debug Logging [DONE]
-6. [T-018] Create Direct LLM API Abstraction Layer [DONE]
-7. [T-017] Fix Game Schemas to Use Required Parameters Only [DONE]
-8. [T-015] Implement LLM Player with proper AI package [DONE]
-9. [T-016] Create Short Demo Game [DONE]
-10. [T-001] Setup Project Structure [IN PROGRESS]
-11. [T-002] Implement Core Schema System [TODO]
-12. [T-003] Create AI Player Interface [DONE]
-13. [T-014] Create LLM Player Demo Script [DONE]
-14. [T-004] Build Game Launcher [TODO]
+4. [T-024] Fix Game State Handling Issues [TODO]
+5. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+6. [T-022] Remove Excessive Debug Logging [DONE]
+7. [T-018] Create Direct LLM API Abstraction Layer [DONE]
+8. [T-017] Fix Game Schemas to Use Required Parameters Only [DONE]
+9. [T-015] Implement LLM Player with proper AI package [DONE]
+10. [T-016] Create Short Demo Game [DONE]
+11. [T-001] Setup Project Structure [IN PROGRESS]
+12. [T-002] Implement Core Schema System [TODO]
+13. [T-003] Create AI Player Interface [DONE]
+14. [T-014] Create LLM Player Demo Script [DONE]
+15. [T-004] Build Game Launcher [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -501,6 +502,23 @@ The LLM player demo script has been implemented and tested:
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+
+### [T-024] Fix Game State Handling Issues [TODO]
+**Dependencies**: T-023
+**Description**: After implementing the step-based model, testing revealed issues with state handling in the games, particularly with the compact adventure. These issues need to be fixed to ensure games work correctly with the AI player.
+**Acceptance Criteria**:
+- Fix the issue where the AI tries to take the same item multiple times
+- Update the game state tracking to properly record visited rooms
+- Ensure metadata in forced termination results (step limit reached) includes proper visited rooms and inventory
+- Fix any game state persistence issues between steps
+- Make sure game state is correctly reflected in the AI's decision-making process
+- Test with both human and AI players to verify correct game state handling
+- Ensure proper error handling when game state operations fail
+
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 
 ### [T-023] Refactor Game Architecture to Use Step-Based Model [DONE]
 **Dependencies**: T-019, T-015
