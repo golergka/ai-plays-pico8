@@ -136,10 +136,10 @@ bun run typecheck
 # bun run lint
 
 # Testing with Vitest
-bun run test         # Run all tests
-bun run test:watch   # Run tests in watch mode
-bun run test:ui      # Run tests with UI
-bun run test:coverage # Run tests with coverage
+bun run test         # Run all tests once and show summary
+bun run test:watch   # Run tests in watch mode (development)
+bun run test:ui      # Run tests with UI (visual interface)
+bun run test:coverage # Run tests with coverage report
 
 # Package management (IMPORTANT: Use Bun, not npm)
 bun install <package>     # Install a package

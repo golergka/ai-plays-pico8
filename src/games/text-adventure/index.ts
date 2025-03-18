@@ -1,5 +1,6 @@
-import type { Game, GameResult } from '../../types'
+import type { Game, GamePlayer, GameResult } from '../../types'
 import type { Item, Room, TextAdventureAction, TextAdventureState } from './types'
+import { TextAdventureActionSchema } from './schema'
 
 // Re-export types
 export type { Item, Room, TextAdventureAction, TextAdventureState }
@@ -38,9 +39,9 @@ export class TextAdventure implements Game {
   }
   
   /**
-   * Run the game with the provided AI player
+   * Run the game with the provided player (AI or human)
    */
-  async run(aiPlayer: any): Promise<GameResult> {
+  async run(player: GamePlayer): Promise<GameResult> {
     // Main game loop
     while (!this.state.gameOver) {
       // Get the current room
@@ -53,9 +54,11 @@ export class TextAdventure implements Game {
       // Generate game output
       const gameOutput = this.generateGameOutput(currentRoom)
       
-      // Get action from AI player
-      // TODO: Replace any with proper schema type when schema system is implemented
-      const action = await aiPlayer.getAction(gameOutput, null as any)
+      // Get action from player using our schema
+      const action = await player.getAction<TextAdventureAction>(
+        gameOutput, 
+        TextAdventureActionSchema
+      )
       
       // Process the action
       this.processAction(action)

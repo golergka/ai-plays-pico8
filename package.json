@@ -8,20 +8,10 @@
   "scripts": {
     "preinstall": "node -e \"if(process.env.npm_execpath.includes('npm')) throw new Error('Please use Bun with this project: https://bun.sh')\"",
     "start": "bun run index.ts",
-    "test:keys": "bun run index.ts --key-test",
-    "vision:demo": "bun run index.ts --vision-demo",
-    "vision:demo:steps": "bun run index.ts --vision-demo --steps=5",
-    "vision:dev": "TSC_COMPILE_ON_ERROR=true TS_NODE_TRANSPILE_ONLY=true bun run index.ts --vision-demo",
-    "test": "bun run src/tests/index.ts",
-    "test:self": "bun run src/tests/index.ts --self",
-    "test:interactive": "bun run src/tests/index.ts",
-    "test:input": "bun run src/tests/index.ts interactive-key-test",
-    "test:input:self": "bun run src/tests/index.ts self-test-key-input --self",
-    "test:capture": "bun run src/tests/index.ts capture-basic capture-lifecycle --self",
-    "test:capture:window": "bun run src/tests/index.ts capture-window-specific --self",
-    "test:termination": "bun run src/tests/index.ts termination-standard termination-force --self",
-    "test:termination:standard": "bun run src/tests/index.ts termination-standard --self",
-    "test:termination:force": "bun run src/tests/index.ts termination-force --self",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -39,7 +29,8 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^20.11.19",
-    "@types/screenshot-desktop": "^1.12.3"
+    "@types/screenshot-desktop": "^1.12.3",
+    "vitest": "^3.0.9"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
