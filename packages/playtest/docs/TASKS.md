@@ -2,17 +2,19 @@
 
 ## Project Task Prefix: T
 
-## Current Task ID Counter: T-025
+## Current Task ID Counter: T-027
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-026 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-028 as the next available ID.
 
 ## Current Priorities
-1. [T-020] Adjust Game Logic for Completion [TODO]
-2. [T-024] Fix Game State Handling Issues [TODO] 
-3. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
-4. [T-001] Setup Project Structure [IN PROGRESS]
-5. [T-002] Implement Core Schema System [TODO]
-6. [T-004] Build Game Launcher [TODO]
+1. [T-026] Implement Save/Load Functionality in Text Adventure Games [TODO]
+2. [T-027] Add Save File Support to Game CLI [TODO]
+3. [T-020] Adjust Game Logic for Completion [TODO]
+4. [T-024] Fix Game State Handling Issues [TODO] 
+5. [T-021] Clean Up OpenAI Wrapper and LLM Player [TODO]
+6. [T-001] Setup Project Structure [IN PROGRESS]
+7. [T-002] Implement Core Schema System [TODO]
+8. [T-004] Build Game Launcher [TODO]
 
 ## Moved to Play Package
 The following tasks have been moved to the Play package:
@@ -305,6 +307,72 @@ These instructions must not be summarized or removed from this document.
 ### [T-025] Implement Game State Display in AI Player [MOVED]
 **Dependencies**: T-024
 **Description**: This task has been moved to the Play package as [PLAY-004].
+
+### [T-026] Implement Save/Load Functionality in Text Adventure Games [TODO]
+**Dependencies**: PLAY-005
+**Description**: Implement the save/load functionality in the text adventure game implementations to support the new Game interface methods. This task requires adapting both the basic text adventure and compact adventure games to properly serialize and deserialize their game states.
+**Acceptance Criteria**:
+- Implement saveState() method in TextAdventure class that serializes the complete game state
+- Implement loadState() method in TextAdventure class that deserializes and restores a game state
+- Implement the same functionality in CompactTextAdventure class
+- Ensure all game state is properly captured and restored (rooms, inventory, game progress, etc.)
+- Add optional initialState parameter to game constructor/initialize method
+- Implement proper error handling for invalid or incompatible save states
+- Test save/load functionality with various game states (beginning, middle, end)
+- Add version information to saved states for future compatibility
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/types.ts
+
+**Manual Testing Instructions**:
+1. Test saving and loading with the TextAdventure game:
+   - Start a new game and take several actions
+   - Save the game state to a file
+   - Load the game state from the file
+   - Verify that all game state is correctly restored (rooms, inventory, game progress)
+
+2. Test saving and loading with the CompactTextAdventure game:
+   - Repeat the same tests with the compact adventure game
+   - Verify specific game state like torch lighting, door states, etc.
+
+3. Test error handling:
+   - Attempt to load an invalid or corrupted save state
+   - Verify appropriate error messages are displayed
+   - Check that the game handles the error gracefully
+
+### [T-027] Add Save File Support to Game CLI [TODO]
+**Dependencies**: T-026, PLAY-007
+**Description**: Update the game CLI scripts to support saving and loading game states from files. This task bridges the implementation of save/load functionality in games with the new Claude Save-Based Player, ensuring the CLI provides a consistent interface for all player types.
+**Acceptance Criteria**:
+- Update game initialization code to support loading from a save file
+- Add command-line arguments for specifying save file paths
+- Implement automatic save file naming based on game type and date
+- Create a dedicated saves folder in the package with proper .gitignore setup
+- Support both absolute and relative paths for save files
+- Add save file management commands (list, delete, etc.)
+- Ensure clean error handling for save/load operations
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/scripts/play-human.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/scripts/play-ai.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/.gitignore
+
+**Manual Testing Instructions**:
+1. Test save/load via command line:
+   ```
+   bun run play:human text-adventure --save-file=my-save.json
+   ```
+   - Verify the game state is saved to the specified file
+   - Check that loading from the save file works correctly
+   - Confirm save files are created in the correct location
+
+2. Test auto-saving and default paths:
+   ```
+   bun run play:human text-adventure --auto-save
+   ```
+   - Verify that game states are automatically saved after each action
+   - Check that the auto-save files follow the expected naming convention
+   - Confirm that auto-saves can be loaded in a later session
 
 ### [T-021] Clean Up Platform-Level OpenAI Wrapper and LLM Player [TODO]
 **Dependencies**: T-018

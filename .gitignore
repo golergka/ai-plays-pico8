@@ -177,3 +177,8 @@ dist
 # Captured screenshots
 captures/
 run_output.log
+
+# Game saves
+saves/
+packages/playtest/saves/
+packages/play/saves/

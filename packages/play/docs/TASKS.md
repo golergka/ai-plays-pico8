@@ -2,15 +2,19 @@
 
 ## Project Task Prefix: PLAY
 
-## Current Task ID Counter: PLAY-004
+## Current Task ID Counter: PLAY-008
 
-This counter tracks the highest task ID used so far. When creating a new task, use PLAY-005 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use PLAY-009 as the next available ID.
 
 ## Current Priorities
 1. [PLAY-001] Setup Basic Play Package Structure [TODO]
 2. [PLAY-002] Implement Human Player Interface [TODO]
 3. [PLAY-003] Add Platform-Level Game Playtime Limit [TODO]
 4. [PLAY-004] Implement Game State Display in AI Player [TODO]
+5. [PLAY-005] Extend Game Interface with Save/Load Functionality [TODO]
+6. [PLAY-006] Rename HumanPlayer to HumanInteractivePlayer [TODO]
+7. [PLAY-007] Implement Claude Save-Based Player [TODO]
+8. [PLAY-008] Create Root-Level Game CLI [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -188,3 +192,123 @@ These instructions must not be summarized or removed from this document.
    - Check that the game state display is properly formatted with a clear "Game State" header
    - Verify that it's easy to distinguish between game state and LLM's thinking/actions
    - Confirm the overall flow is logical and easy to follow
+
+### [PLAY-005] Extend Game Interface with Save/Load Functionality [TODO]
+**Dependencies**: PLAY-001
+**Description**: Modify the core Game interface to support saving and loading game states, allowing for game state persistence and resumable gameplay. This task focuses on defining the platform-level abstractions needed for state serialization/deserialization across any game type.
+**Acceptance Criteria**:
+- Extend the Game interface with saveState() and loadState() methods
+- Design a game state serialization format that works across different game types
+- Ensure the state serialization includes all necessary data to resume a game
+- Provide utilities for serializing/deserializing game state to/from JSON
+- Implement proper error handling for save/load operations
+- Support loading from a given state when initializing a game
+- Document the save/load API and provide examples of usage
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/utils/state-serialization.ts
+
+**Manual Testing Instructions**:
+1. Verify interface definitions:
+   - Check that the Game interface has been updated with saveState() and loadState() methods
+   - Ensure proper type definitions for serialized game state
+   - Confirm documentation in code explains how to implement these methods
+
+### [PLAY-006] Rename HumanPlayer to HumanInteractivePlayer [TODO]
+**Dependencies**: PLAY-002
+**Description**: Rename the existing HumanPlayer class to HumanInteractivePlayer to better reflect its interactive nature and differentiate it from the new save-based player implementations. This task involves updating all relevant references to maintain consistency across the codebase.
+**Acceptance Criteria**:
+- Rename HumanPlayer class to HumanInteractivePlayer
+- Update all imports and references throughout the codebase
+- Ensure backwards compatibility through either class aliases or proper exports
+- Update documentation and comments to reflect the new naming
+- Verify all existing functionality continues to work without changes
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/human-player.ts (rename to human-interactive-player.ts)
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/scripts/play-human.ts
+- Any other files referencing HumanPlayer
+
+**Manual Testing Instructions**:
+1. Run the existing human player script:
+   ```
+   bun run play:human compact-adventure
+   ```
+   - Verify that the game starts and plays normally despite the class rename
+   - Confirm that the terminal UI shows the new "Human Interactive Player" name
+   - Check that all interactive commands work as before
+
+### [PLAY-007] Implement Claude Save-Based Player [TODO]
+**Dependencies**: PLAY-005, PLAY-006
+**Description**: Create a new player implementation called ClaudeSavePlayer that works with saved game states instead of interactive input. This player should load a game state from a save file, process a single action, save the updated state, display the result, and exit. This allows Claude to play games by modifying the save files directly rather than through interactive prompts.
+**Acceptance Criteria**:
+- Create a new ClaudeSavePlayer class implementing the GamePlayer interface
+- Implement loading and saving of game state to/from files
+- Support specifying a save file path for persistence
+- Add command-line interface with a single action parameter
+- Process exactly one action per invocation
+- Display the updated game state and result after processing the action
+- Create a dedicated save folder with proper .gitignore configuration
+- Support creating a new game when no save file exists
+- Provide graceful error handling and informative error messages
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/claude-save-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/scripts/play-claude.ts
+
+**Manual Testing Instructions**:
+1. Test creating a new game:
+   ```
+   bun run play:claude text-adventure --action="look"
+   ```
+   - Verify a new save file is created in the saves folder
+   - Check that the game output displays the initial state plus the 'look' action result
+   - Confirm that the save file contains the updated game state
+
+2. Test continuing a saved game:
+   ```
+   bun run play:claude text-adventure --action="move north"
+   ```
+   - Verify the game loads the previous state from the save file
+   - Check that the action is processed and the state is updated
+   - Confirm the save file is updated with the new state
+
+3. Test error handling:
+   ```
+   bun run play:claude text-adventure --action="invalid-action"
+   ```
+   - Verify that an appropriate error message is displayed
+   - Check that the save file is not corrupted by the invalid action
+   - Confirm that a subsequent valid action works correctly
+
+### [PLAY-008] Create Root-Level Game CLI [TODO]
+**Dependencies**: PLAY-007
+**Description**: Create a unified command-line interface at the root of the repository that allows accessing all player types (interactive, AI, Claude) with a consistent interface. This CLI should provide clear documentation on available commands and options, making it easier for users to play games with different player implementations.
+**Acceptance Criteria**:
+- Create a root-level CLI script that integrates all player types
+- Support game selection (text-adventure, compact-adventure, etc.)
+- Provide clear command-line help text explaining all options
+- Support launching games with human interactive player, AI player, or Claude save player
+- Add aliases for commonly used commands
+- Include version information and basic documentation in the help text
+- Implement consistent error handling and reporting
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/cli.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json (for script definitions)
+
+**Manual Testing Instructions**:
+1. Test help command:
+   ```
+   bun run game --help
+   ```
+   - Verify that comprehensive help text is displayed
+   - Check that all player types and game types are listed
+   - Confirm that command examples are shown
+
+2. Test launching different player types:
+   ```
+   bun run game human compact-adventure
+   bun run game ai compact-adventure
+   bun run game claude compact-adventure --action="look"
+   ```
+   - Verify that each command launches the correct player type
+   - Check that the game state is properly displayed in each case
+   - Confirm consistent behavior across all player implementations
