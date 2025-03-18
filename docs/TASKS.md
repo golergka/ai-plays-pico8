@@ -116,12 +116,12 @@ These instructions must not be summarized or removed from this document.
 
 ### [T-003] Create AI Player Interface [TODO]
 **Dependencies**: T-002
-**Description**: Implement the core AI Player class that handles LLM interaction, maintains conversation history, and processes game outputs.
+**Description**: Implement the core AI Player class that handles LLM interaction, maintains conversation history, and processes game outputs. Use Vercel AI SDK for LLM interfacing.
 **Acceptance Criteria**:
 - AIPlayer class implementation
 - Methods for processing game output
 - Conversation history management
-- LLM integration with function calling
+- LLM integration with function calling using Vercel AI SDK
 - Configuration options for different LLMs
 - Error handling and retry mechanisms
 **Relevant Files**:
