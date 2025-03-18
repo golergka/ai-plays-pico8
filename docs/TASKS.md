@@ -257,7 +257,7 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/types.ts
 
-### [T-013] Create Terminal UI Interface and Test Human Player [TESTING]
+### [T-013] Create Terminal UI Interface and Test Human Player [DONE]
 **Dependencies**: T-010
 **Description**: Extract an interface from the TerminalUI class and create unit tests for the HumanPlayer functionality with a mock UI implementation. This will improve testability and ensure the human player interface works correctly with any UI implementation.
 **Acceptance Criteria**:
