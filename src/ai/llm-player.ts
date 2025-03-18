@@ -116,11 +116,14 @@ export class LLMPlayer implements GamePlayer {
           reflect: reflectTool,
           action: actionTool
         },
-        toolChoice: 'required',
+        toolChoice: { type: 'tool', tool: 'action' }, // Force the action tool
         maxSteps: 5,
         system: this.options.systemPrompt,
         prompt: gameOutput
       })
+      
+      // Log the tool calls for debugging
+      console.log("Tool calls:", JSON.stringify(toolCalls, null, 2))
       
       // Get the last tool call that is an action (not a reflection)
       const actionCall = toolCalls.find(call => call.toolName === 'action')
