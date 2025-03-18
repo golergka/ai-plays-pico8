@@ -1,11 +1,14 @@
 # Tasks
 
-## Current Task ID Counter: T-002
+## Current Task ID Counter: T-009
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-002 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-010 as the next available ID.
 
 ## Current Priorities
 1. [T-001] Setup Project Structure
+2. [T-002] Implement Core Schema System
+3. [T-003] Create AI Player Interface
+4. [T-004] Build Game Launcher
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -84,13 +87,123 @@ These instructions must not be summarized or removed from this document.
 
 ## High-level tasks (epics)
 
-### [T-001] Setup Project Structure [TODO]
+### [T-001] Setup Project Structure [IN PROGRESS]
 **Dependencies**: None
-**Description**: Set up the basic project structure with all necessary configs.
+**Description**: Set up the basic project structure with all necessary configs based on the architecture document.
 **Acceptance Criteria**:
-- Directory structure defined
+- Directory structure defined and created
 - All necessary configs in place
 - Build pipeline working
 - README updated with setup instructions
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/docs/ARCHITECTURE.md
+- /Users/maxyankov/Projects/ai-plays-pico8/tsconfig.json
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json
+- /Users/maxyankov/Projects/ai-plays-pico8/README.md
+- /Users/maxyankov/Projects/ai-plays-pico8/src/
+
+### [T-002] Implement Core Schema System [TODO]
+**Dependencies**: T-001
+**Description**: Create a schema system using Zod or similar library to define and validate game actions, with ability to generate JSON schema for LLM function calling.
+**Acceptance Criteria**:
+- Schema system implemented with type safety
+- Ability to define complex action schemas
+- Conversion to JSON Schema for function calling
+- Validation/parsing of responses against schemas
+- Basic tests demonstrating functionality
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/
+
+### [T-003] Create AI Player Interface [TODO]
+**Dependencies**: T-002
+**Description**: Implement the core AI Player class that handles LLM interaction, maintains conversation history, and processes game outputs.
+**Acceptance Criteria**:
+- AIPlayer class implementation
+- Methods for processing game output
+- Conversation history management
+- LLM integration with function calling
+- Configuration options for different LLMs
+- Error handling and retry mechanisms
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/config/
+
+### [T-004] Build Game Launcher [TODO]
+**Dependencies**: T-003
+**Description**: Create the main executable launcher that can run games with AI assistance.
+**Acceptance Criteria**:
+- Command-line interface for launcher
+- Ability to select and launch games
+- Configuration options for AI and games
+- Game lifecycle management
+- Results reporting and logging
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/launcher/
+- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
+### [T-005] Implement Sample Text Adventure [TODO]
+**Dependencies**: T-004
+**Description**: Create a simple text adventure game as a first template to demonstrate the system.
+**Acceptance Criteria**:
+- Basic text adventure implementation
+- Multiple rooms/locations
+- Items and inventory system
+- Simple puzzles for AI to solve
+- Clear win/lose conditions
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/
 
 ## Low-level tasks
+
+### [T-006] Setup Core Directory Structure [IN PROGRESS]
+**Dependencies**: None
+**Description**: Create the initial directory structure for the project based on architecture requirements.
+**Acceptance Criteria**:
+- Create src/ directory with appropriate subdirectories
+- Set up structure for core components, schema, games, etc.
+- Ensure proper separation of concerns
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/launcher/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/utils/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/config/
+
+### [T-007] Add Zod Schema Library [TODO]
+**Dependencies**: T-006
+**Description**: Add Zod (or similar) schema validation library and set up core schema types.
+**Acceptance Criteria**:
+- Install Zod package
+- Create basic schema utility functions
+- Set up schema type definitions
+- Add example schema implementation
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
+
+### [T-008] Define Core Game Interface [TODO]
+**Dependencies**: T-006
+**Description**: Define the core Game interface that all game templates will implement.
+**Acceptance Criteria**:
+- Create Game interface with required methods
+- Document proper implementation requirements
+- Add type definitions for game state and results
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/index.ts
+
+### [T-009] Update README with Project Information [TODO]
+**Dependencies**: T-006
+**Description**: Update the README with project overview, setup instructions, and usage examples.
+**Acceptance Criteria**:
+- Add project description matching new architecture
+- Include setup and installation instructions
+- Add usage examples for playing text games
+- Document available commands and options
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/README.md
