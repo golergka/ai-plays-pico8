@@ -71,6 +71,14 @@ export interface GameState {
    * Map of possible actions at this step
    */
   actions: ActionSchemas
+  
+  /**
+   * Optional metadata that games can attach to the state
+   * This is not used by the platform directly but can be used
+   * by error handlers or reporting tools to extract game state 
+   * information in case of abnormal termination
+   */
+  _metadata?: Record<string, unknown>
 }
 
 /**

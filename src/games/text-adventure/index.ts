@@ -96,7 +96,8 @@ export class TextAdventure implements Game {
           actionCount: this.state.turns,
           metadata: {
             visitedRooms: Array.from(this.state.visited),
-            inventoryItems: [...this.state.inventory]
+            inventoryItems: [...this.state.inventory],
+            currentRoom: this.state.currentRoom
           }
         }
       }
@@ -113,7 +114,13 @@ export class TextAdventure implements Game {
       type: 'state',
       state: {
         output: this.generateGameOutput(newRoom),
-        actions: TextAdventureActionSchemas
+        actions: TextAdventureActionSchemas,
+        // Add metadata to the state for potential error handling by the platform
+        _metadata: {
+          visitedRooms: Array.from(this.state.visited),
+          inventoryItems: [...this.state.inventory],
+          currentRoom: this.state.currentRoom
+        }
       }
     }
   }

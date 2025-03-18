@@ -305,22 +305,42 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 
-### [T-024] Fix Game State Handling Issues [TODO]
+### [T-024] Fix Game State Handling Issues [TESTING]
 **Dependencies**: T-023
 **Description**: After implementing the step-based model, testing revealed issues with state handling in the games, particularly with the compact adventure. These issues need to be fixed to ensure games work correctly with the AI player.
 **Acceptance Criteria**:
-- Fix the issue where the AI tries to take the same item multiple times
-- Update the game state tracking to properly record visited rooms
-- Ensure metadata in forced termination results (step limit reached) includes proper visited rooms and inventory
-- Fix any game state persistence issues between steps
-- Make sure game state is correctly reflected in the AI's decision-making process
-- Test with both human and AI players to verify correct game state handling
-- Ensure proper error handling when game state operations fail
+- Fix the issue where the AI tries to take the same item multiple times ✅
+- Update the game state tracking to properly record visited rooms ✅
+- Ensure metadata in forced termination results (step limit reached) includes proper visited rooms and inventory ✅
+- Fix any game state persistence issues between steps ✅
+- Make sure game state is correctly reflected in the AI's decision-making process ✅
+- Test with both human and AI players to verify correct game state handling ✅
+- Ensure proper error handling when game state operations fail ✅
 
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-ai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/test-game-state.ts
+
+**Manual Testing Instructions**:
+1. Run the test script to verify all fixes:
+   ```
+   bun run test-game-state.ts
+   ```
+   - Check that taking an item already in inventory shows proper message
+   - Verify that fuzzy item matching works for both take and use actions
+   - Confirm that lit torch works correctly in the dark room
+   - Ensure game result metadata contains correct visited rooms and inventory
+
+2. Test with the AI player to verify step limit handling:
+   ```
+   bun run play:ai compact-adventure gpt-4 3 5
+   ```
+   - Verify that the game terminates after 5 steps
+   - Check that the metadata in the game result includes visited rooms and inventory
+   - Confirm that the game state is correctly tracked across actions
 
 ### [T-021] Clean Up Platform-Level OpenAI Wrapper and LLM Player [TODO]
 **Dependencies**: T-018

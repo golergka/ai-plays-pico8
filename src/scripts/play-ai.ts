@@ -85,14 +85,23 @@ async function main() {
       // Handle max steps reached
       if (stepCount >= maxSteps) {
         // Create a forced termination result
+        // Include any metadata provided by the game via the GameState._metadata
+        const metadata: Record<string, unknown> = {
+          terminationReason: 'Max steps reached'
+        };
+        
+        // Preserve any game-specific metadata from the last game state
+        if (gameState._metadata) {
+          Object.assign(metadata, gameState._metadata);
+        }
+        
         result = {
           success: false,
           actionCount: stepCount,
-          metadata: {
-            terminationReason: 'Max steps reached'
-          }
-        }
-        throw new Error(`Maximum number of steps (${maxSteps}) reached`)
+          metadata
+        };
+        
+        throw new Error(`Maximum number of steps (${maxSteps}) reached`);
       }
     } catch (error) {
       ui.displayHeader('Error')
