@@ -1,8 +1,8 @@
 # Tasks
 
-## Current Task ID Counter: T-009
+## Current Task ID Counter: T-010
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-010 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-011 as the next available ID.
 
 ## Current Priorities
 1. [T-001] Setup Project Structure
@@ -209,3 +209,18 @@ These instructions must not be summarized or removed from this document.
 - Document available commands and options
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/README.md
+
+### [T-010] Implement Human Player Interface [TODO]
+**Dependencies**: T-005
+**Description**: Create a human player interface for playing games in the terminal, allowing users to test games directly without AI assistance.
+**Acceptance Criteria**:
+- Command-line interface for human input
+- Display game output in terminal
+- Support for all text adventure game actions
+- Proper help text and command autocomplete
+- Session history and ability to save/load game state
+- Seamless integration with existing game interfaces
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/
+- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
