@@ -137,18 +137,27 @@ export class LLMPlayer implements GamePlayer {
           let actionType = 'look' // Default action
           
           // Simple pattern matching to infer action
-          if (thoughts.toLowerCase().includes('take key') || 
-              thoughts.toLowerCase().includes('pick up key') ||
-              thoughts.toLowerCase().includes('grab key')) {
+          const lowercaseThoughts = thoughts.toLowerCase();
+          
+          if (lowercaseThoughts.includes('take') && 
+              (lowercaseThoughts.includes('key') || lowercaseThoughts.includes('brass'))) {
             actionType = 'take'
-          } else if (thoughts.toLowerCase().includes('go north') ||
-                     thoughts.toLowerCase().includes('north door') ||
-                     thoughts.toLowerCase().includes('move north')) {
+            console.log("Detected TAKE action")
+          } else if (lowercaseThoughts.includes('north') || lowercaseThoughts.includes('door')) {
             actionType = 'north'
-          } else if (thoughts.toLowerCase().includes('go east') ||
-                     thoughts.toLowerCase().includes('east window') ||
-                     thoughts.toLowerCase().includes('move east')) {
+            console.log("Detected NORTH action")
+          } else if (lowercaseThoughts.includes('east') || lowercaseThoughts.includes('window')) {
             actionType = 'east'
+            console.log("Detected EAST action")
+          } else if (lowercaseThoughts.includes('examine') || lowercaseThoughts.includes('look')) {
+            actionType = 'look'
+            console.log("Detected LOOK action")
+          } else if (lowercaseThoughts.includes('inventory')) {
+            actionType = 'inventory'
+            console.log("Detected INVENTORY action")
+          } else {
+            // If we can't determine the action, log the thoughts
+            console.log("Couldn't determine action from thoughts:", lowercaseThoughts)
           }
           
           console.log(`Inferred action '${actionType}' from thoughts: ${thoughts.substring(0, 50)}...`)
