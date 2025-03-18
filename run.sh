@@ -1,7 +1,1 @@
-#!/bin/bash
-
-# Install dependencies first
-bun install
-
-# Run the AI player script
-bun run play:ai
+claude --dangerously-skip-permissions -p "read docs/CLAUDE.md and act on the main workflow" --print
