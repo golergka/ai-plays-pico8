@@ -8,6 +8,7 @@
   "scripts": {
     "preinstall": "node -e \"if(process.env.npm_execpath.includes('npm')) throw new Error('Please use Bun with this project: https://bun.sh')\"",
     "start": "bun run index.ts",
+    "play:human": "bun run src/scripts/play-human.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

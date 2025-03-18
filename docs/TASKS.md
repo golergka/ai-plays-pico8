@@ -212,22 +212,22 @@ These instructions must not be summarized or removed from this document.
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/README.md
 
-### [T-010] Implement Human Player Interface [IN PROGRESS]
+### [T-010] Implement Human Player Interface [TESTING]
 **Dependencies**: T-005
 **Description**: Create a generic human player interface for playing games in the terminal, allowing users to test any game directly without AI assistance. The interface should be game-agnostic and not require any game-specific code or subclassing.
 **Acceptance Criteria**:
-- Command-line interface for human input
-- Display game output in terminal
-- Generic input handling system that can be adapted to different game schemas
-- Proper help text and command suggestions
-- Interface that respects the Game interface contract
-- Game-agnostic design that doesn't require game-specific implementations
-- Ability to run any game with the human player interface
+- Command-line interface for human input ✅
+- Display game output in terminal ✅
+- Generic input handling system that can be adapted to different game schemas ✅
+- Proper help text and command suggestions ✅
+- Interface that respects the Game interface contract ✅
+- Game-agnostic design that doesn't require game-specific implementations ✅
+- Ability to run any game with the human player interface ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-human.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json
 
 ### [T-011] [URGENT] Fix Action Schema System [TESTING]
 **Dependencies**: T-002, T-007
