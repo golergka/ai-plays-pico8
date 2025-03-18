@@ -33,25 +33,15 @@ export interface LLMPlayerOptions {
   systemPrompt?: string
 
   /**
-   * LLM model to use
+   * Model provider (required)
+   * Example: openai('gpt-4o', { structuredOutputs: true })
    */
-  model?: string
+  model: any
 
   /**
    * Event handler for LLM player events
    */
   onEvent?: LLMPlayerEventHandler
-
-  /**
-   * Model provider (defaults to openai)
-   */
-  provider?: any
-}
-
-// Create a type for the tool call, approximating the structure from the AI library
-interface ToolCall {
-  toolName: string;
-  args: any;
 }
 
 export class LLMPlayer implements GamePlayer {
@@ -59,13 +49,16 @@ export class LLMPlayer implements GamePlayer {
   private options: Required<LLMPlayerOptions>
   private onEvent: LLMPlayerEventHandler
   
-  constructor(options: LLMPlayerOptions = {}) {
+  constructor(options: LLMPlayerOptions) {
+    if (!options.model) {
+      throw new Error('Model provider is required for LLMPlayer')
+    }
+    
     this.options = {
       maxRetries: options.maxRetries || 3,
       systemPrompt: options.systemPrompt || 'You are playing a text-based game. Analyze the game state and take the most appropriate action.',
-      model: options.model || 'gpt-4o',
-      onEvent: options.onEvent || (() => {}),
-      provider: options.provider
+      model: options.model,
+      onEvent: options.onEvent || (() => {})
     }
     
     this.onEvent = this.options.onEvent
@@ -87,7 +80,7 @@ export class LLMPlayer implements GamePlayer {
     this.emitEvent('thinking', 'Analyzing game state and choosing action...')
     
     try {
-      // Create tools for the LLM
+      // Create the reflection tool for providing feedback
       const reflectTool = tool({
         description: 'Tool for reflecting on the current game state and your plan.',
         parameters: z.object({
@@ -99,30 +92,27 @@ export class LLMPlayer implements GamePlayer {
         }
       })
       
-      // For each action schema, create a separate tool
-      const actionTools: Record<string, any> = {}
-      const actionTypes = Object.keys(actionSchemas)
+      // Create a combined action schema that contains a command field
+      // and merges all individual action schemas
+      const combinedActionSchema = z.object({
+        command: z.enum(Object.keys(actionSchemas) as [string, ...string[]]).describe('The action command to execute'),
+        parameters: z.any().describe('Parameters for the selected command')
+      })
       
-      for (const actionType of actionTypes) {
-        const actionSchema = actionSchemas[actionType as keyof T]
-        
-        // We can't directly extend the Schema<any> type, so we recreate it as a Zod schema
-        // by converting it to a tool and assigning it to the tools object
-        actionTools[actionType] = tool({
-          description: `Execute the ${actionType} action in the game.`,
-          parameters: actionSchema as any,
-        })
-      }
+      // Create the action tool using the combined schema
+      const actionTool = tool({
+        description: 'Tool for selecting a game action to perform.',
+        parameters: combinedActionSchema,
+        execute: undefined as any // This is a hack to satisfy the TypeScript checker
+      })
       
       // Call the AI to generate a response
       const { toolCalls } = await generateText({
-        model: this.options.provider 
-          ? this.options.provider(this.options.model, { structuredOutputs: true }) 
-          : undefined,
+        model: this.options.model,
         temperature: 0.2,
         tools: {
           reflect: reflectTool,
-          ...actionTools
+          action: actionTool
         },
         toolChoice: 'required',
         maxSteps: 5,
@@ -130,29 +120,27 @@ export class LLMPlayer implements GamePlayer {
         prompt: gameOutput
       })
       
-      // Find the last non-reflect tool call
-      let lastActionCall: ToolCall | null = null
+      // Get the last tool call that is an action (not a reflection)
+      const actionCall = toolCalls.find(call => call.toolName === 'action')
       
-      if (toolCalls && toolCalls.length > 0) {
-        for (let i = toolCalls.length - 1; i >= 0; i--) {
-          const call = toolCalls[i]
-          if (call && call.toolName !== 'reflect') {
-            lastActionCall = call
-            break
-          }
-        }
-      }
-      
-      if (!lastActionCall) {
+      if (!actionCall) {
         throw new Error('No valid action was selected by the LLM')
       }
       
-      const actionType = lastActionCall.toolName
-      const actionData = lastActionCall.args
+      // Extract the command and parameters
+      const { command, parameters } = actionCall.args
       
-      this.emitEvent('action', `Selected action: ${actionType}`, { action: actionType, data: actionData })
+      // Validate the parameters against the corresponding schema
+      const selectedSchema = actionSchemas[command as keyof T]
+      if (!selectedSchema) {
+        throw new Error(`Unknown action command: ${command}`)
+      }
       
-      return [actionType as keyof T, actionData as SchemaType<T[keyof T]>]
+      const validatedParams = selectedSchema.parse(parameters)
+      
+      this.emitEvent('action', `Selected action: ${command}`, { command, data: validatedParams })
+      
+      return [command as keyof T, validatedParams as SchemaType<T[keyof T]>]
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.emitEvent('error', `Error selecting action: ${errorMessage}`)
