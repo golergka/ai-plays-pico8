@@ -100,11 +100,11 @@ These instructions must not be summarized or removed from this document.
 - Build pipeline working
 - README updated with setup instructions
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/docs/ARCHITECTURE.md
-- /Users/maxyankov/Projects/ai-plays-pico8/tsconfig.json
-- /Users/maxyankov/Projects/ai-plays-pico8/package.json
-- /Users/maxyankov/Projects/ai-plays-pico8/README.md
-- /Users/maxyankov/Projects/ai-plays-pico8/src/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/docs/ARCHITECTURE.md
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/tsconfig.json
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/package.json
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/README.md
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/
 
 ### [T-002] Implement Core Schema System [TODO]
 **Dependencies**: T-001
@@ -116,7 +116,7 @@ These instructions must not be summarized or removed from this document.
 - Validation/parsing of responses against schemas
 - Basic tests demonstrating functionality
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/
 
 ### [T-004] Build Game Launcher [TODO]
 **Dependencies**: T-003
@@ -128,8 +128,8 @@ These instructions must not be summarized or removed from this document.
 - Game lifecycle management
 - Results reporting and logging
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/launcher/
-- /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/launcher/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/index.ts
 
 ### [T-005] Implement Sample Text Adventure [IN PROGRESS]
 **Dependencies**: T-004
@@ -141,9 +141,9 @@ These instructions must not be summarized or removed from this document.
 - Simple puzzles for AI to solve ✅
 - Clear win/lose conditions ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/types.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/types.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/schema.ts
 
 ## Low-level tasks
 
@@ -155,14 +155,14 @@ These instructions must not be summarized or removed from this document.
 - Set up structure for core components, schema, games, etc.
 - Ensure proper separation of concerns
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/types/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/launcher/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/utils/
-- /Users/maxyankov/Projects/ai-plays-pico8/src/config/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/types/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/ai/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/launcher/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/utils/
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/config/
 
 ### [T-007] Add Zod Schema Library [IN PROGRESS]
 **Dependencies**: T-006
@@ -173,11 +173,11 @@ These instructions must not be summarized or removed from this document.
 - Set up schema type definitions ✅
 - Add example schema implementation ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/package.json
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/examples.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/test.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/package.json
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/utils.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/examples.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/schema.test.ts
 
 ### [T-009] Update README with Project Information [TODO]
 **Dependencies**: T-006
@@ -188,7 +188,7 @@ These instructions must not be summarized or removed from this document.
 - Add usage examples for playing text games
 - Document available commands and options
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/README.md
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/README.md
 
 ### [T-010] Implement Human Player Interface [TESTING]
 **Dependencies**: T-005
@@ -202,10 +202,10 @@ These instructions must not be summarized or removed from this document.
 - Game-agnostic design that doesn't require game-specific implementations ✅
 - Ability to run any game with the human player interface ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/scripts/play-human.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/package.json
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/cli/human-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/cli/terminal-ui.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/scripts/play-human.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/package.json
 
 ### [T-011] [URGENT] Fix Action Schema System [TESTING]
 **Dependencies**: T-002, T-007
@@ -217,10 +217,10 @@ These instructions must not be summarized or removed from this document.
 - Update existing game implementations to use the new schema system ✅
 - Add proper typings to infer action types from schema definitions ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/utils.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/schema/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/schema.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/types/game.ts
 
 ### [T-012] Enhance Text Adventure With Action Feedback [TESTING]
 **Dependencies**: T-005, T-010
@@ -232,9 +232,9 @@ These instructions must not be summarized or removed from this document.
 - Ensure feedback is contextual and relevant to the specific action taken ✅
 - Test the implementation with the human player interface ✅
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/types.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/types.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/compact-adventure.ts
 
 **Manual Testing Instructions**:
 1. Test the action feedback in the original text adventure:
