@@ -322,18 +322,37 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
 
-### [T-012] Enhance Text Adventure With Action Feedback [TODO]
+### [T-012] Enhance Text Adventure With Action Feedback [TESTING]
 **Dependencies**: T-005, T-010
 **Description**: Enhance the text adventure demo game to provide clear feedback after each action. Currently, the game shows the current state but doesn't provide explicit feedback about the result of the last action taken.
 **Acceptance Criteria**:
-- Modify the text adventure game to store the result of the last action
-- Update the game output to include a section describing what happened
-- Provide clear feedback for successful and failed actions 
-- Ensure feedback is contextual and relevant to the specific action taken
-- Test the implementation with the human player interface
+- Modify the text adventure game to store the result of the last action ✅
+- Update the game output to include a section describing what happened ✅
+- Provide clear feedback for successful and failed actions ✅
+- Ensure feedback is contextual and relevant to the specific action taken ✅
+- Test the implementation with the human player interface ✅
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/index.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/types.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/compact-adventure.ts
+
+**Manual Testing Instructions**:
+1. Test the action feedback in the original text adventure:
+   ```
+   bun run play:human text-adventure
+   ```
+   - Verify that each action shows a feedback message in the [Last action] section
+   - Try different actions: move, look, examine, take, use, inventory, help
+   - Check that error messages are shown when actions fail
+   - Verify that winning/losing shows appropriate messages
+
+2. Test the action feedback in the compact adventure:
+   ```
+   bun run play:human compact-adventure
+   ```
+   - Verify the same feedback functionality works in the compact adventure
+   - Try special interactions like using the torch and key
+   - Check dark room behavior with/without lit torch
 
 ### [T-013] Create Terminal UI Interface and Test Human Player [DONE]
 **Dependencies**: T-010

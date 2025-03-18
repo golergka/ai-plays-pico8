@@ -22,7 +22,8 @@ export class TextAdventure implements Game {
       visited: new Set<string>(),
       gameOver: false,
       win: false,
-      turns: 0
+      turns: 0,
+      lastActionResult: 'You begin your adventure.'
     }
   }
   
@@ -224,6 +225,11 @@ export class TextAdventure implements Game {
   private generateGameOutput(room: Room): string {
     let output = `== ${room.name} ==\n\n`
     
+    // Show last action result if available
+    if (this.state.lastActionResult) {
+      output += `[Last action] ${this.state.lastActionResult}\n\n`
+    }
+    
     // Add room description
     output += `${room.description}\n\n`
     
@@ -266,7 +272,7 @@ export class TextAdventure implements Game {
         this.handleMove(action.direction, currentRoom)
         break
       case 'look':
-        // No state change needed for look
+        this.state.lastActionResult = 'You look around carefully.'
         break
       case 'examine':
         this.handleExamine(action.target, currentRoom)
@@ -278,10 +284,16 @@ export class TextAdventure implements Game {
         this.handleUse(action.item, action.target, currentRoom)
         break
       case 'inventory':
-        // No state change needed for inventory check
+        const itemNames = this.state.inventory.map(id => {
+          const item = this.items.get(id)
+          return item ? item.name : id
+        }).join(', ')
+        this.state.lastActionResult = itemNames 
+          ? `You are carrying: ${itemNames}.` 
+          : 'Your inventory is empty.'
         break
       case 'help':
-        // No state change needed for help
+        this.state.lastActionResult = 'Available commands: move, look, examine, take, use, inventory, help.'
         break
     }
   }
@@ -297,6 +309,7 @@ export class TextAdventure implements Game {
       if (currentRoom.id === 'library' && direction === 'north') {
         // Check if player has key in inventory
         if (!this.state.inventory.includes('key')) {
+          this.state.lastActionResult = "The door is locked. You need a key to open it.";
           return // Can't move, door is locked
         }
       }
@@ -306,6 +319,14 @@ export class TextAdventure implements Game {
       
       // Mark as visited
       this.state.visited.add(nextRoomId)
+      
+      // Set action result
+      const nextRoom = this.rooms.get(nextRoomId);
+      this.state.lastActionResult = nextRoom 
+        ? `You move ${direction} to the ${nextRoom.name}.` 
+        : `You move ${direction}.`;
+    } else {
+      this.state.lastActionResult = `You can't go ${direction}.`;
     }
   }
   
@@ -316,6 +337,9 @@ export class TextAdventure implements Game {
     // Check interactions in the room
     if (currentRoom.interactions && currentRoom.interactions[target]) {
       const interaction = currentRoom.interactions[target]
+      
+      // Set action result
+      this.state.lastActionResult = interaction.result?.message || `You examine the ${target}.`;
       
       // Apply interaction results
       if (interaction.result) {
@@ -343,6 +367,26 @@ export class TextAdventure implements Game {
           }
         }
       }
+    } else {
+      // Check if target is in inventory
+      const isInInventory = this.state.inventory.some(itemId => {
+        const item = this.items.get(itemId);
+        return item && (item.id === target || item.name.toLowerCase() === target.toLowerCase());
+      });
+      
+      if (isInInventory) {
+        const itemId = this.state.inventory.find(id => {
+          const item = this.items.get(id);
+          return item && (item.id === target || item.name.toLowerCase() === target.toLowerCase());
+        });
+        const item = this.items.get(itemId || '');
+        if (item) {
+          this.state.lastActionResult = `${item.name}: ${item.description}`;
+          return;
+        }
+      }
+      
+      this.state.lastActionResult = `You don't see anything special about the ${target}.`;
     }
   }
   
@@ -351,6 +395,7 @@ export class TextAdventure implements Game {
    */
   private handleTake(itemId: string, currentRoom: Room): void {
     if (!currentRoom.items) {
+      this.state.lastActionResult = `You don't see a ${itemId} here.`;
       return
     }
     
@@ -365,7 +410,15 @@ export class TextAdventure implements Game {
         
         // Add to inventory
         this.state.inventory.push(itemId)
+        
+        this.state.lastActionResult = `You take the ${item.name}.`;
+      } else if (item) {
+        this.state.lastActionResult = `You can't take the ${item.name}.`;
+      } else {
+        this.state.lastActionResult = `You don't see a ${itemId} here.`;
       }
+    } else {
+      this.state.lastActionResult = `You don't see a ${itemId} here.`;
     }
   }
   
@@ -375,13 +428,21 @@ export class TextAdventure implements Game {
   private handleUse(itemId: string, targetId: string | undefined, currentRoom: Room): void {
     // Check if item is in inventory
     if (!this.state.inventory.includes(itemId)) {
+      this.state.lastActionResult = `You don't have a ${itemId}.`;
       return
     }
     
     const item = this.items.get(itemId)
     
     if (!item) {
+      this.state.lastActionResult = `You don't have a ${itemId}.`;
       return
+    }
+    
+    // If no target specified
+    if (!targetId) {
+      this.state.lastActionResult = `You need to specify what to use the ${item.name} on.`;
+      return;
     }
     
     // Special interactions
@@ -394,6 +455,12 @@ export class TextAdventure implements Game {
       if (keyIndex !== -1) {
         this.state.inventory.splice(keyIndex, 1)
       }
+      
+      this.state.lastActionResult = `You unlock the north door with the ${item.name}. The door swings open.`;
+    } else if (item.usableWith && item.usableWith.includes(targetId)) {
+      this.state.lastActionResult = `You use the ${item.name} on the ${targetId}, but nothing happens.`;
+    } else {
+      this.state.lastActionResult = `You can't use the ${item.name} on that.`;
     }
   }
   
@@ -405,12 +472,14 @@ export class TextAdventure implements Game {
     if (this.state.inventory.includes('treasure')) {
       this.state.gameOver = true
       this.state.win = true
+      this.state.lastActionResult = "You've found the ancient treasure! You win!";
     }
     
     // Lose condition: too many turns (simple example)
     if (this.state.turns >= 50) {
       this.state.gameOver = true
       this.state.win = false
+      this.state.lastActionResult = "You've spent too much time exploring. The cave entrance collapses, trapping you inside. Game over.";
     }
   }
 }

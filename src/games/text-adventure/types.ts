@@ -42,6 +42,7 @@ export interface TextAdventureState {
   gameOver: boolean
   win: boolean
   turns: number
+  lastActionResult?: string // Feedback for the last action taken
 }
 
 /**
