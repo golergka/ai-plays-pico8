@@ -5,7 +5,7 @@
 This counter tracks the highest task ID used so far. When creating a new task, use T-017 as the next available ID.
 
 ## Current Priorities
-1. [T-015] Implement LLM Player with proper AI package [IN PROGRESS]
+1. [T-015] Implement LLM Player with proper AI package [TESTING]
 2. [T-016] Create Short Demo Game [TESTING]
 3. [T-001] Setup Project Structure [IN PROGRESS]
 4. [T-002] Implement Core Schema System [TODO]
@@ -162,7 +162,7 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-015] Implement LLM Player with proper AI package [IN PROGRESS]
+### [T-015] Implement LLM Player with proper AI package [TESTING]
 **Dependencies**: T-014
 **Description**: The current LLM Player implementation is incomplete and uses a mock LLM for development. We need a proper implementation using a real AI package. The mock implementation had timeout errors that appear during the LLM player demo script execution, which need to be addressed in the real implementation.
 **Acceptance Criteria**:
@@ -172,6 +172,25 @@ These instructions must not be summarized or removed from this document.
 - Provide proper error handling and retry mechanisms ✅
 - Ensure cleanup properly releases all resources ✅
 - Add proper documentation in JSDoc comments ✅
+
+**Manual Testing Instructions**:
+1. Test the LLM player with the compact adventure game:
+   ```
+   bun run play:ai compact-adventure
+   ```
+   - Verify the LLM can analyze the game state and select appropriate actions
+   - Confirm that reflection tools show the LLM's thought process
+   - Verify tool-based action selection works correctly
+   - Check that multiple turns work correctly
+   
+2. Test error handling by temporarily modifying the code to introduce an error:
+   - Make a temporary change to `src/ai/llm-player.ts` to force an error (e.g., change the model name)
+   - Run the game again and verify error handling works as expected
+   - Revert your changes after testing
+
+3. Verify the implementation is properly game-agnostic:
+   - Check that there's no game-specific code in the llm-player.ts file
+   - Confirm it works based solely on the provided schemas
 **Additional Information**:
 - Will need to coordinate with project owner on the AI package strategy and selection
 - Need to determine if we'll use hosted models or local models
