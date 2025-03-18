@@ -83,38 +83,23 @@ export class LLMPlayer implements GamePlayer {
         }
       })
       
-      // Create a discriminated union schema of all action schemas
-      // For each schema, add a type field with the action name
-      const actionTypes = Object.keys(actionSchemas) as [string, ...string[]];
+      // Create an action schema that's compatible with OpenAI's API
+      // We'll use a simpler approach - declare a type field and a params field
+      const actionSchema = z.object({
+        // The type field will be the action name
+        type: z.enum(Object.keys(actionSchemas) as [string, ...string[]]).describe(
+          'The action to take. Choose from: ' + Object.keys(actionSchemas).join(', ')
+        ),
+        // The params will contain any parameters for the action
+        params: z.object({}).passthrough().describe(
+          'Parameters for the selected action'
+        ),
+      });
       
-      // First, create a simple schema for each action type that just includes the type field
-      const unionSchemas: z.ZodObject<any, any, any>[] = [];
-      
-      // Process each action type
-      for (const actionType of actionTypes) {
-        // Create a schema that has a type field and allows any other fields
-        // We'll validate those other fields separately
-        const schema = z.object({
-          type: z.literal(actionType)
-        }).passthrough();
-        
-        unionSchemas.push(schema);
-      }
-      
-      // Make sure we have at least one schema
-      if (unionSchemas.length === 0) {
-        throw new Error('No action schemas provided');
-      }
-      
-      // Combine them into a discriminated union
-      // The as cast is necessary to satisfy TypeScript's requirement for a tuple with at least one element
-      const actionUnionSchema = z.discriminatedUnion('type', unionSchemas as [z.ZodObject<any, any, any>, ...z.ZodObject<any, any, any>[]]);
-      
-      
-      // Create the action tool using the combined schema
+      // Create the action tool using our schema
       const actionTool = tool({
         description: 'Tool for selecting a game action to perform.',
-        parameters: actionUnionSchema,
+        parameters: actionSchema,
         execute: async () => "Action selected"
       })
       
@@ -138,8 +123,8 @@ export class LLMPlayer implements GamePlayer {
         throw new Error('No valid action was selected by the LLM')
       }
       
-      // Extract the command type and the rest of the parameters
-      const { type, ...parameters } = actionCall.args
+      // Extract the command type and parameters
+      const { type, params } = actionCall.args
       
       // Validate the parameters against the corresponding schema
       const selectedSchema = actionSchemas[type as keyof T]
@@ -147,7 +132,7 @@ export class LLMPlayer implements GamePlayer {
         throw new Error(`Unknown action command: ${type}`)
       }
       
-      const validatedParams = selectedSchema.parse(parameters)
+      const validatedParams = selectedSchema.parse(params)
       
       this.emitEvent('action', `Selected action: ${type}`, { command: type, data: validatedParams })
       
