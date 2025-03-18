@@ -1,18 +1,19 @@
 # Tasks
 
-## Current Task ID Counter: T-017
+## Current Task ID Counter: T-018
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-017 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-018 as the next available ID.
 
 ## Current Priorities
-1. [T-017] Fix Game Schemas to Use Required Parameters Only [URGENT]
-2. [T-015] Implement LLM Player with proper AI package [TESTING]
-2. [T-016] Create Short Demo Game [TESTING]
-3. [T-001] Setup Project Structure [IN PROGRESS]
-4. [T-002] Implement Core Schema System [TODO]
-5. [T-003] Create AI Player Interface [TESTING]
-6. [T-014] Create LLM Player Demo Script [TESTING]
-7. [T-004] Build Game Launcher [TODO]
+1. [T-018] Create Direct LLM API Abstraction Layer [URGENT]
+2. [T-017] Fix Game Schemas to Use Required Parameters Only [URGENT]
+3. [T-015] Implement LLM Player with proper AI package [TESTING]
+4. [T-016] Create Short Demo Game [TESTING]
+5. [T-001] Setup Project Structure [IN PROGRESS]
+6. [T-002] Implement Core Schema System [TODO]
+7. [T-003] Create AI Player Interface [TESTING]
+8. [T-014] Create LLM Player Demo Script [TESTING]
+9. [T-004] Build Game Launcher [TODO]
 
 ## IMPORTANT: INSTRUCTIONS FOR WORKING WITH THIS DOCUMENT
 
@@ -163,6 +164,27 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
+### [T-018] Create Direct LLM API Abstraction Layer [URGENT]
+**Dependencies**: T-015, T-017
+**Description**: Replace the Vercel AI SDK with our own direct API implementation to have more control over the schema format and better error handling. Based on our debugging experiments, we found that directly calling the OpenAI API works better than using the Vercel SDK for our specific schema needs.
+**Acceptance Criteria**:
+- Create a lightweight abstraction layer for LLM APIs (starting with OpenAI)
+- Support function calling with proper schema conversion
+- Ensure all parameters in schemas are correctly marked as required
+- Abstract away provider-specific details behind a common interface
+- Handle error cases and retries appropriately
+- Replace Vercel AI usage in the LLMPlayer implementation
+- Maintain compatibility with our current GamePlayer interface
+- Provide clear documentation of the new abstraction layer
+- Allow for future expansion to other LLM providers
+
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/types.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/package.json
+
 ### [T-017] Fix Game Schemas to Use Required Parameters Only [TESTING]
 **Dependencies**: T-015
 **Description**: OpenAI's function calling API requires that all parameters in a schema be marked as required, but our current game schemas include optional parameters. This needs to be fixed to make the LLM player work properly with our schemas.
@@ -193,16 +215,16 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
 
-### [T-015] Implement LLM Player with proper AI package [TESTING]
-**Dependencies**: T-014
-**Description**: The current LLM Player implementation is incomplete and uses a mock LLM for development. We need a proper implementation using a real AI package. The mock implementation had timeout errors that appear during the LLM player demo script execution, which need to be addressed in the real implementation.
+### [T-015] Implement LLM Player with proper AI package [BLOCKED]
+**Dependencies**: T-018
+**Description**: The current LLM Player implementation is incomplete and uses a mock LLM for development. We need to implement a proper LLM Player with direct API access instead of using the Vercel AI SDK. Our debugging found issues with how the Vercel SDK handles function calling schemas.
 **Acceptance Criteria**:
-- Properly integrate a real AI package (like Vercel's `ai`) ✅
-- Implement the getAction method to use the AI package's chat API ✅
-- Ensure conversation history is maintained correctly ✅
-- Provide proper error handling and retry mechanisms ✅
-- Ensure cleanup properly releases all resources ✅
-- Add proper documentation in JSDoc comments ✅
+- Replace Vercel AI package with our own direct API implementation
+- Implement the getAction method to use the custom API layer
+- Ensure conversation history is maintained correctly
+- Provide proper error handling and retry mechanisms
+- Ensure cleanup properly releases all resources
+- Add proper documentation in JSDoc comments
 
 **Manual Testing Instructions**:
 1. Test the LLM player with the compact adventure game:
@@ -211,23 +233,24 @@ These instructions must not be summarized or removed from this document.
    ```
    - Verify the LLM can analyze the game state and select appropriate actions
    - Confirm that reflection tools show the LLM's thought process
-   - Verify tool-based action selection works correctly
+   - Verify function calling works correctly with our schemas
    - Check that multiple turns work correctly
    
-2. Test error handling by temporarily modifying the code to introduce an error:
-   - Make a temporary change to `src/ai/llm-player.ts` to force an error (e.g., change the model name)
+2. Test error handling:
+   - Make a temporary change to force an error (e.g., invalid API key)
    - Run the game again and verify error handling works as expected
    - Revert your changes after testing
 
 3. Verify the implementation is properly game-agnostic:
    - Check that there's no game-specific code in the llm-player.ts file
    - Confirm it works based solely on the provided schemas
-**Additional Information**:
-- Will need to coordinate with project owner on the AI package strategy and selection
-- Need to determine if we'll use hosted models or local models
-- Requires proper understanding of the selected AI package's API
+
+**Status Update**: This task is now blocked by T-018. We need to implement our own API abstraction layer before we can properly implement the LLM Player. Our debugging revealed that the Vercel AI SDK doesn't handle our schema requirements correctly for OpenAI's function calling API.
+
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts (new)
 
 ### [T-016] Create Short Demo Game [TESTING]
 **Dependencies**: T-005

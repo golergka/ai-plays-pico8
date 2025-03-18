@@ -1,9 +1,9 @@
 import type { GamePlayer, ActionSchemas } from '../types'
 import type { Schema } from '../schema/utils'
-import { combineSchemas, extractAction } from '../schema/utils'
-import { generateText, tool } from 'ai'
-import { openai } from '@ai-sdk/openai'
-import { z } from 'zod'
+// Comment out unused imports for debugging
+// import { combineSchemas, extractAction } from '../schema/utils'
+// import { generateText } from 'ai'
+// import { openai } from '@ai-sdk/openai'
 import 'dotenv/config'
 
 /**
@@ -53,7 +53,7 @@ export class LLMPlayer implements GamePlayer {
   private chatHistory: string[] = []
   private options: Required<LLMPlayerOptions>
   private onEvent: LLMPlayerEventHandler
-  private model = openai('gpt-4o', { structuredOutputs: true })
+  // private model = openai('gpt-4o', { structuredOutputs: true })
   
   constructor(options: LLMPlayerOptions) {
     this.options = {
@@ -76,102 +76,137 @@ export class LLMPlayer implements GamePlayer {
     gameOutput: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-    this.chatHistory.push(gameOutput)
-    
-    this.emitEvent('thinking', 'Analyzing game state and choosing action...')
+    // DEBUGGING: Create a schema where each command is a property
+    // Don't use the provided actionSchemas at all
     
     try {
-      // Create the reflection tool for providing feedback
-      const reflectTool = tool({
-        description: 'Tool for reflecting on the current game state and your plan.',
-        parameters: z.object({
-          thoughts: z.string().describe('Your analysis of the current game state and reasoning about what to do next')
-        }),
-        execute: async ({ thoughts }: { thoughts: string }) => {
-          this.emitEvent('thinking', thoughts)
-          return 'Analysis received. Now choose an action to take.'
-        }
-      })
+      console.log("DEBUG: Creating direct schema object for OpenAI function calling")
       
-      // Use combineSchemas to create a proper discriminated union schema
-      // This creates a schema with a "type" field for discriminating between actions
-      const combinedSchema = combineSchemas(actionSchemas)
-      
-      // Create the action tool using our dynamic schema
-      const actionTool = tool({
-        description: 'Tool for selecting a game action to perform.',
-        parameters: combinedSchema,
-        execute: async () => "Action selected"
-      })
-      
-      // Call the AI to generate a response
-      const { toolCalls } = await generateText({
-        model: this.model,
-        temperature: 0.2,
-        tools: {
-          reflect: reflectTool,
-          action: actionTool
-        },
-        toolChoice: 'required',
-        maxSteps: 5,
-        system: this.options.systemPrompt + '\nYou MUST select an action with the action tool after reflecting. ALWAYS pick an action.',
-        prompt: gameOutput
-      })
-      
-      // Get all tool calls to analyze
-      const reflectCalls = toolCalls.filter(call => call.toolName === 'reflect')
-      const actionCalls = toolCalls.filter(call => call.toolName === 'action')
-      
-      // For debugging
-      this.emitEvent('response', `Got ${toolCalls.length} tool calls: ${actionCalls.length} actions, ${reflectCalls.length} reflections`)
-      
-      // Get the last action call
-      const actionCall = actionCalls.length > 0 ? actionCalls[actionCalls.length - 1] : null
-      
-      // If we don't have an action, we'll try again with forced action tool
-      if (!actionCall) {
-        this.emitEvent('response', 'No action selected, forcing action tool choice...')
-        
-        // Call the AI again but force it to use the action tool
-        const retryResult = await generateText({
-          model: this.model,
-          temperature: 0.2,
-          tools: {
-            action: actionTool
+      // Create a simple schema with command properties
+      const directSchema = {
+        type: "object",
+        properties: {
+          move: {
+            type: "object",
+            properties: {
+              direction: {
+                type: "string",
+                enum: ["north", "south", "east", "west"],
+                description: "Direction to move"
+              }
+            },
+            required: ["direction"],
+            description: "Move in a direction"
           },
-          // Force the AI to use the action tool
-          toolChoice: { type: 'tool', toolName: 'action' },
-          system: this.options.systemPrompt + '\nYou MUST select an appropriate action based on the game state.',
-          prompt: gameOutput
-        })
-        
-        // We should always get a result when forcing tool choice
-        if (retryResult.toolCalls.length === 0) {
-          throw new Error('Failed to get an action from the LLM even with forced tool choice')
-        }
-        
-        // The toolCalls array should not be empty at this point
-        const forcedActionCall = retryResult.toolCalls[0]
-        
-        // And the toolName should be 'action' since we forced it
-        if (!forcedActionCall || forcedActionCall.toolName !== 'action') {
-          throw new Error(`Expected action tool but got ${forcedActionCall?.toolName || 'undefined'}`)
-        }
-        
-        this.emitEvent('response', 'Successfully forced action tool')
-        
-        // Use the forced action call
-        return this.processActionCall({
-          toolName: 'action',
-          args: forcedActionCall.args || {}
-        }, actionSchemas)
+          look: {
+            type: "object",
+            properties: {},
+            description: "Look around the current area"
+          },
+          take: {
+            type: "object",
+            properties: {
+              item: {
+                type: "string",
+                description: "Item to take"
+              }
+            },
+            required: ["item"],
+            description: "Take an item"
+          }
+        },
+        required: ["move", "look", "take"]
       }
       
-      // Process the action call
-      return this.processActionCall({
-        toolName: actionCall.toolName,
-        args: actionCall.args
-      }, actionSchemas)
+      console.log("DEBUG: Direct schema:", JSON.stringify(directSchema, null, 2))
+      
+      // Create a simpler schema for testing
+      const simpleSchema = {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["look"],
+            description: "Action to perform"
+          }
+        },
+        required: ["action"]
+      }
+      
+      console.log("DEBUG: Simple schema:", JSON.stringify(simpleSchema, null, 2))
+      
+      // Call the OpenAI API directly with our schema to debug issues
+      try {
+        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env['OPENAI_API_KEY']}`,
+            "OpenAI-Organization": process.env['OPENAI_ORG_ID'] || ""
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are playing a game. Select an action to perform."
+              },
+              {
+                role: "user",
+                content: gameOutput + '\n\nChoose the "look" action to examine your surroundings.'
+              }
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "action",
+                  description: "Tool for selecting a game action to perform.",
+                  parameters: simpleSchema
+                }
+              }
+            ],
+            tool_choice: {
+              type: "function",
+              function: {
+                name: "action"
+              }
+            }
+          })
+        });
+        
+        const responseData = await openaiResponse.json() as any;
+        console.log("DEBUG: OpenAI API direct response:", JSON.stringify(responseData, null, 2));
+        
+        // Check if there's a tool call in the response
+        if (responseData?.choices?.[0]?.message?.tool_calls?.[0]) {
+          const toolCall = responseData.choices[0].message.tool_calls[0];
+          console.log("DEBUG: Tool call function:", JSON.stringify(toolCall.function, null, 2));
+          
+          // Parse the arguments
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            console.log("DEBUG: Parsed arguments:", JSON.stringify(args, null, 2));
+          } catch (e) {
+            console.log("DEBUG: Error parsing arguments:", e);
+          }
+        }
+        
+        // Exit after printing the response
+        process.exit(0);
+      } catch (e) {
+        console.log("DEBUG: Direct API call error:", e);
+      }
+      
+      // We should never reach here because process.exit(0) is called
+      console.log("DEBUG: Execution continued past OpenAI API call")
+      
+      // Return a dummy action to satisfy the type system
+      const firstActionType = Object.keys(actionSchemas)[0] as keyof T
+      return [
+        firstActionType, 
+        {} as T[keyof T] extends Schema<infer U> ? U : never
+      ]
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       this.emitEvent('error', `Error selecting action: ${errorMessage}`)
@@ -179,39 +214,7 @@ export class LLMPlayer implements GamePlayer {
     }
   }
   
-  /**
-   * Process a tool call and extract action data
-   * 
-   * @param actionCall The tool call to process
-   * @param actionSchemas Map of action schemas
-   * @returns Tuple of action name and validated parameters
-   */
-  private processActionCall<T extends ActionSchemas>(
-    actionCall: { toolName: string, args: Record<string, any> },
-    actionSchemas: T
-  ): [keyof T, T[keyof T] extends Schema<infer U> ? U : never] {
-    // Process the arguments through our combined schema
-    const combinedSchema = combineSchemas(actionSchemas)
-    const validatedData = combinedSchema.parse(actionCall.args)
-    
-    // Extract the action type and parameters
-    const [actionType, actionParams] = extractAction<T>(validatedData)
-    
-    // Get the schema for this action type
-    const schema = actionSchemas[actionType]
-    
-    if (!schema) {
-      throw new Error(`Schema not found for action type: ${String(actionType)}`)
-    }
-    
-    // Validate the parameters against the original schema
-    const validatedParams = schema.parse(actionParams)
-    
-    this.emitEvent('action', `Selected action: ${String(actionType)}`, 
-      { command: String(actionType), data: validatedParams })
-    
-    return [actionType, validatedParams as T[keyof T] extends Schema<infer U> ? U : never]
-  }
+  // For debugging only - this method is not used in the current implementation
   
   /**
    * Get the chat history
