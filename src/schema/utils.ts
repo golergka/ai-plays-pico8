@@ -11,7 +11,7 @@ import type { JsonSchema7Type } from 'zod-to-json-schema'
  * @returns JSON Schema compatible with LLM function calling
  */
 export function toJsonSchema(
-  schema: z.ZodType<any>,
+  schema: z.ZodType<unknown>,
   name?: string,
   description?: string
 ): JsonSchema7Type {
@@ -66,7 +66,7 @@ export function safeParseSchema<T>(
 export function createFunctionSchema(
   name: string,
   description: string,
-  parameters: z.ZodType<any>
+  parameters: z.ZodType<unknown>
 ): {
   name: string
   description: string
@@ -93,11 +93,11 @@ export type Schema<T> = z.ZodType<T>
 /**
  * Type of an instance of a schema
  */
-export type SchemaType<T extends z.ZodType<any>> = z.infer<T>
+export type SchemaType<T extends z.ZodType<unknown>> = z.infer<T>
 
 /**
  * Type helper to extract the action name and payload from a schema map
  */
-export type ActionFromSchemas<T extends Record<string, Schema<any>>> = {
+export type ActionFromSchemas<T extends Record<string, Schema<unknown>>> = {
   [K in keyof T]: [K, SchemaType<T[K]>]
 }[keyof T]

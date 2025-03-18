@@ -4,6 +4,7 @@
     "": {
       "name": "ai-plays-pico8",
       "dependencies": {
+        "@ai-sdk/openai": "^1.2.5",
         "active-win": "^9.0.0",
         "ai": "^4.1.61",
         "capture-window": "^0.2.0",
@@ -28,6 +29,8 @@
     },
   },
   "packages": {
+    "@ai-sdk/openai": ["@ai-sdk/openai@1.2.5", "", { "dependencies": { "@ai-sdk/provider": "1.0.11", "@ai-sdk/provider-utils": "2.1.13" }, "peerDependencies": { "zod": "^3.0.0" } }, "sha512-COK7LzspgQQh5Yq070xfDdVMvp8WX592rXRaMaYNNqu1xpzahxDcM24aF9xgKYWuYH0UMoOw4UmWGwGxr6ygIg=="],
+
     "@ai-sdk/provider": ["@ai-sdk/provider@1.0.11", "", { "dependencies": { "json-schema": "^0.4.0" } }, "sha512-CPyImHGiT3svyfmvPvAFTianZzWFtm0qK82XjwlQIA1C3IQ2iku/PMQXi7aFyrX0TyMh3VTkJPB03tjU2VXVrw=="],
 
     "@ai-sdk/provider-utils": ["@ai-sdk/provider-utils@2.1.13", "", { "dependencies": { "@ai-sdk/provider": "1.0.11", "eventsource-parser": "^3.0.0", "nanoid": "^3.3.8", "secure-json-parse": "^2.7.0" }, "peerDependencies": { "zod": "^3.0.0" }, "optionalPeers": ["zod"] }, "sha512-kLjqsfOdONr6DGcGEntFYM1niXz1H05vyZNf9OAzK+KKKc64izyP4/q/9HX7W4+6g8hm6BnmKxu8vkr6FSOqDg=="],

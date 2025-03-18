@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.2.5",
     "active-win": "^9.0.0",
     "ai": "^4.1.61",
     "capture-window": "^0.2.0",

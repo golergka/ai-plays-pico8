@@ -1,6 +1,7 @@
 import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
 import { generateText, tool } from 'ai'
+import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
 import 'dotenv/config'
 
@@ -10,7 +11,7 @@ import 'dotenv/config'
 export interface LLMPlayerEvent {
   type: 'thinking' | 'response' | 'error' | 'action'
   content: string
-  data?: any
+  data?: Record<string, unknown> | undefined
 }
 
 /**
@@ -33,12 +34,6 @@ export interface LLMPlayerOptions {
   systemPrompt?: string
 
   /**
-   * Model provider (required)
-   * Example: openai('gpt-4o', { structuredOutputs: true })
-   */
-  model: any
-
-  /**
    * Event handler for LLM player events
    */
   onEvent?: LLMPlayerEventHandler
@@ -48,16 +43,12 @@ export class LLMPlayer implements GamePlayer {
   private chatHistory: string[] = []
   private options: Required<LLMPlayerOptions>
   private onEvent: LLMPlayerEventHandler
+  private model = openai('gpt-4o', { structuredOutputs: true })
   
   constructor(options: LLMPlayerOptions) {
-    if (!options.model) {
-      throw new Error('Model provider is required for LLMPlayer')
-    }
-    
     this.options = {
       maxRetries: options.maxRetries || 3,
       systemPrompt: options.systemPrompt || 'You are playing a text-based game. Analyze the game state and take the most appropriate action.',
-      model: options.model,
       onEvent: options.onEvent || (() => {})
     }
     
@@ -71,7 +62,7 @@ export class LLMPlayer implements GamePlayer {
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  async getAction<T extends Record<string, Schema<any>>>(
+  async getAction<T extends Record<string, Schema<unknown>>>(
     gameOutput: string,
     actionSchemas: T
   ): Promise<[keyof T, SchemaType<T[keyof T]>]> {
@@ -94,21 +85,23 @@ export class LLMPlayer implements GamePlayer {
       
       // Create a combined action schema that contains a command field
       // and merges all individual action schemas
+      const commandEnum = z.enum(Object.keys(actionSchemas) as [string, ...string[]]);
       const combinedActionSchema = z.object({
-        command: z.enum(Object.keys(actionSchemas) as [string, ...string[]]).describe('The action command to execute'),
-        parameters: z.any().describe('Parameters for the selected command')
+        command: commandEnum.describe('The action command to execute'),
+        parameters: z.record(z.string(), z.unknown()).describe('Parameters for the selected command')
       })
       
       // Create the action tool using the combined schema
+      // We need an execute function to satisfy TypeScript
       const actionTool = tool({
         description: 'Tool for selecting a game action to perform.',
         parameters: combinedActionSchema,
-        execute: undefined as any // This is a hack to satisfy the TypeScript checker
+        execute: async () => "Action selected"
       })
       
       // Call the AI to generate a response
       const { toolCalls } = await generateText({
-        model: this.options.model,
+        model: this.model,
         temperature: 0.2,
         tools: {
           reflect: reflectTool,
@@ -158,7 +151,7 @@ export class LLMPlayer implements GamePlayer {
   /**
    * Emit an event to the registered handler
    */
-  private emitEvent(type: LLMPlayerEvent['type'], content: string, data?: any): void {
+  private emitEvent(type: LLMPlayerEvent['type'], content: string, data?: Record<string, unknown>): void {
     this.onEvent({ type, content, data })
   }
   

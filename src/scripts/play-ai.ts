@@ -41,7 +41,6 @@ async function main() {
   try {
     // Create LLM player with event handler
     const player = new LLMPlayer({
-      model,
       maxRetries,
       onEvent: handleLLMEvent(ui)
     })
