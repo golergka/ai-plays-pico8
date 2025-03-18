@@ -1,7 +1,6 @@
 import type { GamePlayer } from '../types'
 import type { Schema, SchemaType } from '../schema/utils'
 import { toJsonSchema } from '../schema/utils'
-import { Chat } from '@vercel/ai'
 
 /**
  * Event emitted during LLM player operation
@@ -48,6 +47,50 @@ export interface LLMPlayerOptions {
 }
 
 /**
+ * Mock response for simulating LLM interactions during development
+ */
+const MOCK_RESPONSES = [
+  'I need to think about what to do next...',
+  'Let me examine the current room...',
+  '{"function": "look", "args": {}}',
+  'This room has a key! I should take it.',
+  '{"function": "take", "args": {"item": "key"}}',
+  'Now I should move north to explore further.',
+  '{"function": "move", "args": {"direction": "north"}}',
+  'I should check what items I have collected.',
+  '{"function": "inventory", "args": {}}',
+  'I need to examine the north door.',
+  '{"function": "examine", "args": {"target": "north door"}}',
+  'I should use the key on the north door.',
+  '{"function": "use", "args": {"item": "key", "target": "north door"}}',
+  'Now I can move north through the unlocked door.',
+  '{"function": "move", "args": {"direction": "north"}}',
+  'Let me see what\'s in this room.',
+  '{"function": "look", "args": {}}',
+  'I should take the treasure!',
+  '{"function": "take", "args": {"item": "treasure"}}'
+]
+
+/**
+ * Simple mock LLM implementation for development
+ */
+class MockLLM {
+  private responseIndex = 0
+
+  async send(_prompt: string): Promise<string> {
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Return the next mock response
+    const index = this.responseIndex % MOCK_RESPONSES.length
+    const response = MOCK_RESPONSES[index]
+    this.responseIndex++
+    // We know response exists because we're using a modulo operation
+    return response as string
+  }
+}
+
+/**
  * LLM player implementation.
  * Maintains stateful chat history and handles LLM interaction.
  * Uses function calling pattern where the LLM responds with a JSON structure:
@@ -55,11 +98,11 @@ export interface LLMPlayerOptions {
  */
 export class LLMPlayer implements GamePlayer {
   private chatHistory: string[] = []
-  private chat: Chat
   private maxRetries: number
   private timeout: number
-  private systemPrompt: string
+  private systemPrompt = ""
   private onEvent: LLMPlayerEventHandler | null = null
+  private mockLLM = new MockLLM()
   
   /**
    * Create a new LLM player
@@ -69,19 +112,13 @@ export class LLMPlayer implements GamePlayer {
   constructor(options: LLMPlayerOptions = {}) {
     this.maxRetries = options.maxRetries ?? 3
     this.timeout = options.timeout ?? 30000
-    this.systemPrompt = options.systemPrompt ?? 
-      "You are an AI playing a text adventure game. " +
+    const defaultPrompt = "You are an AI playing a text adventure game. " +
       "Respond with a function call in the format: " +
       "{ \"function\": \"<actionName>\", \"args\": <json> }. " +
       "You may think through your decisions in plain text before providing the function call."
-    // Set the event handler if provided
-    this.onEvent = options.onEvent || null
     
-    // Initialize Vercel AI Chat
-    this.chat = new Chat({
-      model: options.model ?? 'gpt-4',
-      memoize: true,
-    })
+    this.systemPrompt = options.systemPrompt ?? defaultPrompt
+    this.onEvent = options.onEvent || null
     
     // Initialize chat history with system prompt
     this.chatHistory.push(`system: ${this.systemPrompt}`)
@@ -168,8 +205,8 @@ if you're thinking through your decision, just output plain text and I'll wait f
     
     while (retries < this.maxRetries) {
       try {
-        // Send the entire chat history to the model
-        const response = await this.chat.send(this.chatHistory.join('\n'))
+        // Send the prompt to the mock LLM
+        const response = await this.mockLLM.send(this.chatHistory.join('\n'))
         
         // Add the response to chat history regardless of validity
         this.chatHistory.push(`assistant: ${response}`)

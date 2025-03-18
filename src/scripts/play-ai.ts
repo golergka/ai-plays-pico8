@@ -5,7 +5,6 @@ import { LLMPlayer } from '../ai/llm-player'
 import type { LLMPlayerEvent } from '../ai/llm-player'
 import { TextAdventure } from '../games/text-adventure'
 import { TerminalUI } from '../cli/terminal-ui'
-// Use dynamic import for ESM compatibility
 import chalk from 'chalk'
 
 async function main() {
