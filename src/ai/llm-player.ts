@@ -112,8 +112,13 @@ export class LLMPlayer implements GamePlayer {
           reflect: reflectTool,
           action: actionTool
         },
+        // Force the AI to use the action tool as the final step
+        toolChoice: {
+          type: "function",
+          function: { name: "action" }
+        },
         maxSteps: 5,
-        system: this.options.systemPrompt,
+        system: this.options.systemPrompt + '\nYou MUST select an action with the action tool after reflecting. ALWAYS pick an action.',
         prompt: gameOutput
       })
       
