@@ -1,8 +1,8 @@
 # Tasks
 
-## Current Task ID Counter: T-010
+## Current Task ID Counter: T-011
 
-This counter tracks the highest task ID used so far. When creating a new task, use T-011 as the next available ID.
+This counter tracks the highest task ID used so far. When creating a new task, use T-012 as the next available ID.
 
 ## Current Priorities
 1. [T-001] Setup Project Structure
@@ -212,7 +212,7 @@ These instructions must not be summarized or removed from this document.
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/README.md
 
-### [T-010] Implement Human Player Interface [TODO]
+### [T-010] Implement Human Player Interface [IN PROGRESS]
 **Dependencies**: T-005
 **Description**: Create a generic human player interface for playing games in the terminal, allowing users to test any game directly without AI assistance. The interface should be game-agnostic and not require any game-specific code or subclassing.
 **Acceptance Criteria**:
@@ -228,3 +228,18 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/human-player.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/cli/terminal-ui.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/index.ts
+
+### [T-011] [URGENT] Fix Action Schema System [TODO]
+**Dependencies**: T-002, T-007
+**Description**: The current action schema system needs to be reworked. It should be a map of action names to action schemas, rather than a single schema. This will allow for better type safety and more flexible action handling.
+**Acceptance Criteria**:
+- Refactor schema system to use a map of action names to schemas
+- Update type definitions to ensure type safety across the system
+- Ensure schema system generates correct JSON schema for function calling
+- Update existing game implementations to use the new schema system
+- Add proper typings to infer action types from schema definitions
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/utils.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/schema/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
