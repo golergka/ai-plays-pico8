@@ -1,11 +1,12 @@
 # Tasks
 
-## Current Task ID Counter: T-016
+## Current Task ID Counter: T-017
 
 This counter tracks the highest task ID used so far. When creating a new task, use T-017 as the next available ID.
 
 ## Current Priorities
-1. [T-015] Implement LLM Player with proper AI package [TESTING]
+1. [T-017] Fix Game Schemas to Use Required Parameters Only [URGENT]
+2. [T-015] Implement LLM Player with proper AI package [TESTING]
 2. [T-016] Create Short Demo Game [TESTING]
 3. [T-001] Setup Project Structure [IN PROGRESS]
 4. [T-002] Implement Core Schema System [TODO]
@@ -161,6 +162,19 @@ These instructions must not be summarized or removed from this document.
 - /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
 
 ## Low-level tasks
+
+### [T-017] Fix Game Schemas to Use Required Parameters Only [URGENT]
+**Dependencies**: T-015
+**Description**: OpenAI's function calling API requires that all parameters in a schema be marked as required, but our current game schemas include optional parameters. This needs to be fixed to make the LLM player work properly with our schemas.
+**Acceptance Criteria**:
+- Update all game schemas to use only required parameters
+- For actions with optional parameters, split them into multiple action variants
+- Update the text adventure schema to remove optional parameters for the `use` action
+- Update documentation to clearly state this requirement
+- Test the updated schemas with the LLM player
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/src/games/text-adventure/schema.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/types/game.ts
 
 ### [T-015] Implement LLM Player with proper AI package [TESTING]
 **Dependencies**: T-014

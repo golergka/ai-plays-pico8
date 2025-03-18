@@ -1,6 +1,16 @@
 import type { Schema } from '../schema/utils'
 
 /**
+ * Map of action names to their schemas
+ * 
+ * IMPORTANT: All parameters in each schema should be marked as REQUIRED,
+ * not optional. OpenAI's function calling API expects all schema properties
+ * to be required. If a parameter is truly optional, you must split the action
+ * into multiple variations or use default values.
+ */
+export type ActionSchemas = Record<string, Schema<unknown>>
+
+/**
  * Result of a completed game
  */
 export interface GameResult {
@@ -37,7 +47,7 @@ export interface GamePlayer {
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  getAction<T extends Record<string, Schema<any>>>(
+  getAction<T extends ActionSchemas>(
     gameOutput: string, 
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]>
