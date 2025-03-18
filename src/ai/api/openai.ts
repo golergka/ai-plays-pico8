@@ -34,9 +34,11 @@ export interface ToolDefinition<T extends z.ZodType> {
 }
 
 /**
- * Tool choice for OpenAI API
+ * Tool choice for OpenAI API (internal format)
+ * 
+ * @internal This is the format expected by the OpenAI API, not to be used directly
  */
-export type ToolChoice = 
+export type OpenAIToolChoice = 
   | 'auto' 
   | 'none' 
   | { type: 'function'; function: { name: string } }
@@ -47,9 +49,11 @@ export type ToolChoice =
 export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
   model: string
   messages: Message[]
-  tools?: ToolDefinition<z.ZodType>[]
-  toolSchemas?: T
-  toolChoice?: ToolChoice
+  tools: {
+    definitions: ToolDefinition<z.ZodType>[]
+    schemas: T
+    choice?: 'auto' | 'none' | keyof T
+  }
   temperature?: number
   maxTokens?: number
 }
@@ -187,19 +191,25 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   // Add tools if specified
   let toolCallSchema: z.ZodType | null = null
   
-  if (params.tools && params.tools.length > 0) {
-    // Convert tools to OpenAI format
-    body['tools'] = params.tools.map(createOpenAITool)
+  // Convert tools to OpenAI format
+  body['tools'] = params.tools.definitions.map(createOpenAITool)
     
-    // Add tool_choice if specified
-    if (params.toolChoice) {
-      body['tool_choice'] = params.toolChoice
+  // Add tool_choice if specified
+  if (params.tools.choice) {
+    if (params.tools.choice === 'auto' || params.tools.choice === 'none') {
+      body['tool_choice'] = params.tools.choice
+    } else {
+      // Convert string tool name to OpenAI tool choice format
+      body['tool_choice'] = {
+        type: 'function',
+        function: {
+          name: params.tools.choice as string
+        }
+      }
     }
-  }
-  
-  // Create tool parsing schema if tool schemas provided
-  if (params.toolSchemas) {
-    toolCallSchema = createToolCallSchema(params.toolSchemas)
+    
+    // Create tool parsing schema from the provided schemas
+    toolCallSchema = createToolCallSchema(params.tools.schemas)
   }
   
   // Call the API
@@ -267,14 +277,14 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
     result.toolName = toolCall.function.name
     
     // Parse arguments if schema is available
-    if (toolCallSchema && params.toolSchemas) {
+    if (toolCallSchema && params.tools?.schemas) {
       try {
         const parsedArgs = JSON.parse(toolCall.function.arguments)
         
         // Check if the tool exists in our schemas
         const toolName = toolCall.function.name
-        if (Object.keys(params.toolSchemas).includes(toolName)) {
-          const schema = params.toolSchemas[toolName]
+        if (Object.keys(params.tools.schemas).includes(toolName)) {
+          const schema = params.tools.schemas[toolName]
           
           // Safety check - this should never happen due to the includes check above
           if (!schema) {

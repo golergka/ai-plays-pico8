@@ -5,8 +5,8 @@
 This counter tracks the highest task ID used so far. When creating a new task, use T-018 as the next available ID.
 
 ## Current Priorities
-1. [T-018] Create Direct LLM API Abstraction Layer [URGENT]
-2. [T-017] Fix Game Schemas to Use Required Parameters Only [URGENT]
+1. [T-018] Create Direct LLM API Abstraction Layer [TESTING]
+2. [T-017] Fix Game Schemas to Use Required Parameters Only [TESTING]
 3. [T-015] Implement LLM Player with proper AI package [TESTING]
 4. [T-016] Create Short Demo Game [TESTING]
 5. [T-001] Setup Project Structure [IN PROGRESS]
@@ -164,26 +164,42 @@ These instructions must not be summarized or removed from this document.
 
 ## Low-level tasks
 
-### [T-018] Create Direct LLM API Abstraction Layer [URGENT]
+### [T-018] Create Direct LLM API Abstraction Layer [TESTING]
 **Dependencies**: T-015, T-017
 **Description**: Replace the Vercel AI SDK with our own direct API implementation to have more control over the schema format and better error handling. Based on our debugging experiments, we found that directly calling the OpenAI API works better than using the Vercel SDK for our specific schema needs.
 **Acceptance Criteria**:
-- Create a lightweight abstraction layer for LLM APIs (starting with OpenAI)
-- Support function calling with proper schema conversion
-- Ensure all parameters in schemas are correctly marked as required
-- Abstract away provider-specific details behind a common interface
-- Handle error cases and retries appropriately
-- Replace Vercel AI usage in the LLMPlayer implementation
-- Maintain compatibility with our current GamePlayer interface
-- Provide clear documentation of the new abstraction layer
-- Allow for future expansion to other LLM providers
+- Create a lightweight abstraction layer for LLM APIs (starting with OpenAI) ✅
+- Support function calling with proper schema conversion ✅
+- Ensure all parameters in schemas are correctly marked as required ✅
+- Abstract away provider-specific details behind a common interface ✅
+- Handle error cases and retries appropriately ✅
+- Replace Vercel AI usage in the LLMPlayer implementation ✅
+- Maintain compatibility with our current GamePlayer interface ✅
+- Provide clear documentation of the new abstraction layer ✅
+- Ensure tools and toolChoice props are properly linked together ✅
+- Allow for future expansion to other LLM providers ✅
 
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/llm-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts (new)
-- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts (new)
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/index.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/openai.ts
 - /Users/maxyankov/Projects/ai-plays-pico8/src/ai/api/types.ts (new)
 - /Users/maxyankov/Projects/ai-plays-pico8/package.json
+
+**Manual Testing Instructions**:
+1. Test the OpenAI API implementation with the text adventure game:
+   ```
+   bun run play:ai compact-adventure
+   ```
+   - Verify the API correctly calls the OpenAI service
+   - Confirm the tools, schemas, and tool choice are properly passed and used
+   - Check that function calls are correctly processed
+   - Verify that error handling works as expected
+   
+2. Verify the new interface structure:
+   - Run the typecheck to confirm no type errors: `bun run typecheck`
+   - Test the structured `tools` object with its properties
+   - Confirm the string-based tool choice works correctly
 
 ### [T-017] Fix Game Schemas to Use Required Parameters Only [TESTING]
 **Dependencies**: T-015

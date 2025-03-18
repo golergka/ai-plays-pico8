@@ -124,13 +124,10 @@ export class LLMPlayer implements GamePlayer {
         const result = await callOpenAI({
           model: this.options.model,
           messages: this.chatHistory,
-          tools,
-          toolSchemas,
-          toolChoice: {
-            type: 'function',
-            function: {
-              name: 'action'
-            }
+          tools: {
+            definitions: tools,
+            schemas: toolSchemas,
+            choice: 'action'
           }
         })
         
