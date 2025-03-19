@@ -1,7 +1,8 @@
 # AI GameDev Monorepo Guidelines
 
-This is a monorepo with multiple packages. Each package has its own documentation and workflows.
-
+* This is a monorepo with multiple packages. You, Claude, should select relevant documntation to read and use it as instructions.
+* Each package has its own set of documentation at `packages/<package_name>/docs/`.
+* If you were not told what package to work on, open TASKS.md of several different packages and then decide task on hand.
 * When you work on a particular package, you can run monorepo-wide scripts for your workflows.
 * When you work on a particular package, ONLY MODIFY THE FILES IN THAT PACKAGE, unless you change shared types — in which case you should modify other package's code as little as possible.
 * Different packages have their own workflows and task lists. If you realise some significant changes are needed in another package, do not modify it directly but add a new task to it's TASKS.md.
