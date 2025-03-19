@@ -7,7 +7,7 @@ import type {
   GameResult, 
   StepResult, 
   ActionSchemas 
-} from '@ai-gamedev/playtest/src/types/game'
+} from '@ai-gamedev/playtest'
 
 // Re-export types from playtest
 export type { Game, GameState, GameResult, StepResult, ActionSchemas }

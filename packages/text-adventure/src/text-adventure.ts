@@ -5,7 +5,7 @@ import { z } from 'zod'
 import type { Game, GameState, StepResult } from './types'
 import type { TextAdventureOutput } from './types'
 import type { GameMap, Room } from './schema'
-import { createFunctionSchema, Schema } from '@ai-gamedev/playtest/src/schema/utils'
+import { Schema } from '@ai-gamedev/playtest'
 
 /**
  * Game that implements the Text Adventure mechanics

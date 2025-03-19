@@ -2,7 +2,7 @@
  * Compact text adventure game implementation
  */
 import { TextAdventure } from '@ai-gamedev/text-adventure'
-import type { GameState, StepResult } from '@ai-gamedev/playtest/src/types/game'
+import type { GameState, StepResult } from '@ai-gamedev/playtest'
 import { z } from 'zod'
 
 /**

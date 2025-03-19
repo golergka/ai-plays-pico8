@@ -7,7 +7,7 @@ import { TextAdventure } from '@ai-gamedev/text-adventure'
 import { CompactTextAdventure } from '@ai-gamedev/compact-adventure'
 import { TerminalUI } from '../cli/terminal-ui'
 import chalk from 'chalk'
-import type { GameResult } from '@ai-gamedev/text-adventure'
+import type { GameResult } from '../types'
 
 async function main() {
   const args = process.argv.slice(2)
