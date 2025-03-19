@@ -10,7 +10,10 @@
   },
   "scripts": {
     "start": "bun run index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "play:human": "bun run cli.ts human",
+    "play:ai": "bun run cli.ts ai",
+    "play:claude": "bun run cli.ts claude"
   },
   "dependencies": {
     "@ai-gamedev/playtest": "workspace:*",

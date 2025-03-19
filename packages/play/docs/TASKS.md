@@ -2,7 +2,7 @@
 
 ## Project Task Prefix: PLAY
 
-## Current Task ID Counter: PLAY-008
+## Current Task ID Counter: PLAY-009
 
 This counter tracks the highest task ID used so far. When creating a new task, use PLAY-009 as the next available ID.
 
@@ -239,22 +239,22 @@ These instructions must not be summarized or removed from this document.
    - Confirm that the terminal UI shows the new "Human Interactive Player" name
    - Check that all interactive commands work as before
 
-### [PLAY-007] Implement Claude Save-Based Player [TODO]
+### [PLAY-007] Implement Claude Save-Based Player [DONE]
 **Dependencies**: PLAY-005, PLAY-006
 **Description**: Create a new player implementation called ClaudeSavePlayer that works with saved game states instead of interactive input. This player should load a game state from a save file, process a single action, save the updated state, display the result, and exit. This allows Claude to play games by modifying the save files directly rather than through interactive prompts.
 **Acceptance Criteria**:
-- Create a new ClaudeSavePlayer class implementing the GamePlayer interface
-- Implement loading and saving of game state to/from files
-- Support specifying a save file path for persistence
-- Add command-line interface with a single action parameter
-- Process exactly one action per invocation
-- Display the updated game state and result after processing the action
-- Create a dedicated save folder with proper .gitignore configuration
-- Support creating a new game when no save file exists
-- Provide graceful error handling and informative error messages
+- ✅ Create a new ClaudeSavePlayer class implementing the GamePlayer interface
+- ✅ Implement loading and saving of game state to/from files
+- ✅ Support specifying a save file path for persistence
+- ✅ Add command-line interface with a single action parameter
+- ✅ Process exactly one action per invocation
+- ✅ Display the updated game state and result after processing the action
+- ✅ Create a dedicated save folder with proper .gitignore configuration
+- ✅ Support creating a new game when no save file exists
+- ✅ Provide graceful error handling and informative error messages
 **Relevant Files**:
 - /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/claude-save-player.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/scripts/play-claude.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/play-claude.ts
 
 **Manual Testing Instructions**:
 1. Test creating a new game:
@@ -282,6 +282,35 @@ These instructions must not be summarized or removed from this document.
    - Confirm that a subsequent valid action works correctly
 
 ### [PLAY-008] Create Root-Level Game CLI [TODO]
+
+### [PLAY-009] Improve Claude Player Command Line Arguments [TODO]
+**Dependencies**: PLAY-007
+**Description**: The current Claude player implementation requires using a `--action="command args"` flag, which is cumbersome and doesn't match the natural way commands are entered. Instead, the player should accept commands directly as trailing arguments after any flags, similar to how a human would type them.
+**Acceptance Criteria**:
+- Modify the ClaudeSavePlayer to parse commands from trailing arguments instead of requiring an `--action` flag
+- Support both simple commands like `look` and complex commands like `move north`
+- Preserve full command string including any quoted text
+- Maintain backward compatibility with the existing `--action` flag approach
+- Update help text to show the new, simpler command format
+- Update examples to demonstrate the new command format
+**Relevant Files**:
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/cli/claude-save-player.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/cli.ts 
+
+**Manual Testing Instructions**:
+1. Test the new command format:
+   ```
+   bun run play:claude text-adventure look
+   bun run play:claude text-adventure move north
+   ```
+   - Verify that the commands are correctly parsed and executed
+   - Check that commands with multiple words work properly
+
+2. Test backward compatibility:
+   ```
+   bun run play:claude text-adventure --action="look"
+   ```
+   - Verify that the old format with the --action flag still works
 **Dependencies**: PLAY-007
 **Description**: Create a unified command-line interface at the root of the repository that allows accessing all player types (interactive, AI, Claude) with a consistent interface. This CLI should provide clear documentation on available commands and options, making it easier for users to play games with different player implementations.
 **Acceptance Criteria**:
