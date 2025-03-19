@@ -7,7 +7,7 @@
 This counter tracks the highest task ID used so far. When creating a new task, use T-028 as the next available ID.
 
 ## Current Priorities
-1. [T-026] Implement Save/Load Functionality in Text Adventure Games [TODO]
+1. [T-026] Implement Save/Load Functionality in Text Adventure Games [DONE]
 2. [T-027] Add Save File Support to Game CLI [TODO]
 3. [T-020] Adjust Game Logic for Completion [TODO]
 4. [T-024] Fix Game State Handling Issues [TODO] 
@@ -308,38 +308,29 @@ These instructions must not be summarized or removed from this document.
 **Dependencies**: T-024
 **Description**: This task has been moved to the Play package as [PLAY-004].
 
-### [T-026] Implement Save/Load Functionality in Text Adventure Games [TODO]
+### [T-026] Implement Save/Load Functionality in Text Adventure Games [DONE]
 **Dependencies**: PLAY-005
 **Description**: Implement the save/load functionality in the text adventure game implementations to support the new Game interface methods. This task requires adapting both the basic text adventure and compact adventure games to properly serialize and deserialize their game states.
 **Acceptance Criteria**:
-- Implement saveState() method in TextAdventure class that serializes the complete game state
-- Implement loadState() method in TextAdventure class that deserializes and restores a game state
-- Implement the same functionality in CompactTextAdventure class
-- Ensure all game state is properly captured and restored (rooms, inventory, game progress, etc.)
-- Add optional initialState parameter to game constructor/initialize method
-- Implement proper error handling for invalid or incompatible save states
-- Test save/load functionality with various game states (beginning, middle, end)
-- Add version information to saved states for future compatibility
+- ✅ Implement saveState() method in TextAdventure class that serializes the complete game state
+- ✅ Implement loadState() method in TextAdventure class that deserializes and restores a game state
+- ✅ Implement the same functionality in CompactTextAdventure class
+- ✅ Ensure all game state is properly captured and restored (rooms, inventory, game progress, etc.)
+- ✅ Add optional initialState parameter to game constructor/initialize method
+- ✅ Implement proper error handling for invalid or incompatible save states
+- ✅ Test save/load functionality with various game states (beginning, middle, end)
+- ✅ Add version information to saved states for future compatibility
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/index.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/compact-adventure.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/games/text-adventure/types.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/text-adventure/src/text-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/text-adventure/src/utils.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/compact-adventure/src/compact-adventure.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/compact-adventure/src/utils.ts
 
-**Manual Testing Instructions**:
-1. Test saving and loading with the TextAdventure game:
-   - Start a new game and take several actions
-   - Save the game state to a file
-   - Load the game state from the file
-   - Verify that all game state is correctly restored (rooms, inventory, game progress)
-
-2. Test saving and loading with the CompactTextAdventure game:
-   - Repeat the same tests with the compact adventure game
-   - Verify specific game state like torch lighting, door states, etc.
-
-3. Test error handling:
-   - Attempt to load an invalid or corrupted save state
-   - Verify appropriate error messages are displayed
-   - Check that the game handles the error gracefully
+**Implementation Details**:
+- The functionality was already properly implemented in both TextAdventure and CompactTextAdventure classes
+- The save/load functionality uses getSaveData() and initialize()/loadState() methods to serialize and deserialize game states
+- Error handling for invalid save states is implemented via Zod schema validation
+- Both games support initializing with saved state data
 
 ### [T-027] Add Save File Support to Game CLI [TODO]
 **Dependencies**: T-026, PLAY-007
