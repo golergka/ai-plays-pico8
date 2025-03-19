@@ -2,19 +2,24 @@
  * Compact text adventure game implementation
  */
 import { TextAdventure } from '@ai-gamedev/text-adventure'
-import type { GameState, StepResult } from '@ai-gamedev/playtest'
+import type { GameState, StepResult, SaveableGame } from '@ai-gamedev/playtest'
 import { z } from 'zod'
 
 /**
  * A more compact version of the text adventure game with simplified mechanics
+ * Inherits SaveableGame interface from TextAdventure
  */
-export class CompactTextAdventure extends TextAdventure {
+export class CompactTextAdventure extends TextAdventure implements SaveableGame {
+  // Additional state specific to compact adventure
+  private lastCommand: string = ''
+  
   /**
    * Initialize the game
    */
   async initialize(): Promise<void> {
     await super.initialize()
     // Add compact-specific initialization
+    this.lastCommand = ''
   }
   
   /**
@@ -53,6 +58,9 @@ You are in a small room with a door to the north.`,
     if (actionType === 'execute') {
       const { command } = actionData as { command: string }
       const lowerCommand = command.toLowerCase()
+      
+      // Store the last command
+      this.lastCommand = command
       
       if (lowerCommand.includes('look')) {
         return {
@@ -99,6 +107,22 @@ You are in a small room with a door to the north.`,
           execute: actionSchema
         }
       }
+    }
+  }
+  
+  /**
+   * Override getSaveData to include compact-specific state
+   * @returns Enhanced save data that includes compact-specific state
+   */
+  getSaveData(): ReturnType<TextAdventure['getSaveData']> & { lastCommand: string, gameType: 'compact' } {
+    // Get the base save data from the parent class
+    const baseSaveData = super.getSaveData()
+    
+    // Add compact-specific data
+    return {
+      ...baseSaveData,
+      lastCommand: this.lastCommand,
+      gameType: 'compact' as const
     }
   }
 }

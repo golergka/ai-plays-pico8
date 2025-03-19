@@ -1,4 +1,5 @@
 import type { Schema } from '../schema/utils'
+import { z } from 'zod'
 
 /**
  * Map of action names to their schemas
@@ -117,4 +118,25 @@ export interface Game {
    * Clean up resources when game ends
    */
   cleanup(): Promise<void>
+}
+
+/**
+ * Extended interface for games that support save/load functionality
+ */
+export interface SaveableGame extends Game {
+  /**
+   * Get the schema for this game's save data
+   * This schema defines the structure of data returned by getSaveData
+   * 
+   * @returns Zod schema describing the save data structure
+   */
+  getSchema(): z.ZodType<unknown>
+  
+  /**
+   * Get serializable save data representing the current game state
+   * This data should conform to the schema returned by getSchema
+   * 
+   * @returns Serializable data representing the current game state
+   */
+  getSaveData(): unknown
 }

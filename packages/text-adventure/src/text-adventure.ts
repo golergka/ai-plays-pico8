@@ -2,15 +2,16 @@
  * Text Adventure game implementation
  */
 import { z } from 'zod'
-import type { Game, GameState, StepResult } from './types'
-import type { TextAdventureOutput } from './types'
+import type { SaveableGame, GameState, StepResult } from './types'
+import type { TextAdventureOutput, TextAdventureSaveData } from './types'
 import type { GameMap, Room } from './schema'
 import { Schema } from '@ai-gamedev/playtest'
+import { TextAdventureSaveSchema } from './types'
 
 /**
- * Game that implements the Text Adventure mechanics
+ * Game that implements the Text Adventure mechanics with save/load functionality
  */
-export class TextAdventure implements Game {
+export class TextAdventure implements SaveableGame {
   private gameMap: GameMap | null = null
   private currentRoomId: string = ''
   private inventory: string[] = []
@@ -164,5 +165,35 @@ export class TextAdventure implements Game {
    */
   async cleanup(): Promise<void> {
     // Clean up any resources
+  }
+
+  /**
+   * Get the schema for this game's save data
+   * This schema defines the structure of data returned by getSaveData
+   * 
+   * @returns Zod schema describing the save data structure
+   */
+  getSchema(): z.ZodType<TextAdventureSaveData> {
+    return TextAdventureSaveSchema
+  }
+  
+  /**
+   * Get serializable save data representing the current game state
+   * This data conforms to the schema returned by getSchema
+   * 
+   * @returns Serializable data representing the current game state
+   */
+  getSaveData(): TextAdventureSaveData {
+    return {
+      currentRoomId: this.currentRoomId,
+      inventory: [...this.inventory],
+      visitedRooms: [...this.visitedRooms],
+      gameMap: this.gameMap || {
+        title: "Empty Game",
+        description: "No game loaded",
+        startRoom: "",
+        rooms: {}
+      }
+    }
   }
 }

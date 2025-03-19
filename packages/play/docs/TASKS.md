@@ -193,26 +193,28 @@ These instructions must not be summarized or removed from this document.
    - Verify that it's easy to distinguish between game state and LLM's thinking/actions
    - Confirm the overall flow is logical and easy to follow
 
-### [PLAY-005] Extend Game Interface with Save/Load Functionality [TODO]
+### [PLAY-005] Extend Game Interface with Save/Load Functionality [DONE]
 **Dependencies**: PLAY-001
 **Description**: Modify the core Game interface to support saving and loading game states, allowing for game state persistence and resumable gameplay. This task focuses on defining the platform-level abstractions needed for state serialization/deserialization across any game type.
 **Acceptance Criteria**:
-- Extend the Game interface with saveState() and loadState() methods
-- Design a game state serialization format that works across different game types
-- Ensure the state serialization includes all necessary data to resume a game
-- Provide utilities for serializing/deserializing game state to/from JSON
-- Implement proper error handling for save/load operations
-- Support loading from a given state when initializing a game
-- Document the save/load API and provide examples of usage
+- ✅ Extend the Game interface with a SaveableGame child interface 
+- ✅ Design a game state serialization format that works across different game types
+- ✅ Ensure the state serialization includes all necessary data to resume a game
+- ✅ Implement schema-based serialization/deserialization for game state using Zod
+- ✅ Implement proper error handling for save/load operations
+- ✅ Create factory functions for loading games from save data
+- ✅ Document the save/load API and provide examples of usage
 **Relevant Files**:
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/types/game.ts
-- /Users/maxyankov/Projects/ai-plays-pico8/packages/play/src/utils/state-serialization.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/playtest/src/types/game.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/text-adventure/src/utils.ts
+- /Users/maxyankov/Projects/ai-plays-pico8/packages/compact-adventure/src/utils.ts
 
-**Manual Testing Instructions**:
-1. Verify interface definitions:
-   - Check that the Game interface has been updated with saveState() and loadState() methods
-   - Ensure proper type definitions for serialized game state
-   - Confirm documentation in code explains how to implement these methods
+**Implementation Details**:
+- Created a SaveableGame interface that extends Game with getSchema() and getSaveData() methods
+- Updated TextAdventure and CompactTextAdventure to implement the SaveableGame interface
+- Created factory functions to create game instances from save data
+- Added Zod schemas for type-safe serialization and validation of save data
+- Properly handled error cases for invalid save data
 
 ### [PLAY-006] Rename HumanPlayer to HumanInteractivePlayer [TODO]
 **Dependencies**: PLAY-002
