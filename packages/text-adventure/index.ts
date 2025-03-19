@@ -5,6 +5,4 @@
 // Re-export types and schemas
 export * from './src/types'
 export * from './src/schema'
-
-// Copy the TextAdventure class from playtest
-export { TextAdventure } from '@ai-gamedev/playtest/src/games/text-adventure'
+export { TextAdventure } from './src/text-adventure'

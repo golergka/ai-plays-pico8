@@ -2,9 +2,10 @@
  * Script to play a game with human input
  */
 import { HumanPlayer } from '../cli/human-player'
-import { TextAdventure, CompactTextAdventure } from '../games/text-adventure'
+import { TextAdventure } from '@ai-gamedev/text-adventure'
+import { CompactTextAdventure } from '@ai-gamedev/compact-adventure'
 import { TerminalUI } from '../cli/terminal-ui'
-import type { GameResult } from '../types'
+import type { GameResult } from '@ai-gamedev/text-adventure'
 
 async function main() {
   const args = process.argv.slice(2)

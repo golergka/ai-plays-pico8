@@ -6,4 +6,4 @@
 export * from '@ai-gamedev/text-adventure'
 
 // Export the compact game class
-export { CompactTextAdventure } from '@ai-gamedev/playtest/src/games/text-adventure'
+export { CompactTextAdventure } from './src/compact-adventure'
