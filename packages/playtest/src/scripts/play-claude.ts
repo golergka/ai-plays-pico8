@@ -9,31 +9,34 @@ import type { SaveableGame } from '@ai-gamedev/playtest'
 import chalk from 'chalk'
 import { ClaudeSavePlayer } from './claude-save-player'
 
-export async function playClaudeGame(options: {
-  gameType?: string
-  saveDir?: string
-}) {
-  const gameType = options.gameType || 'text-adventure'
-  const saveDir = options.saveDir || path.join(process.cwd(), 'saves')
+async function main() {
+  const args = process.argv.slice(2)
+  const gameType = args[0] || 'text-adventure'
+  const saveDir = args[1] || path.join(process.cwd(), 'saves')
   
   // Create a terminal UI for displaying messages
   const ui = new TerminalUI()
 
-  // Initialize the appropriate game
-  const game = await initializeGame(gameType)
-  if (!game) {
-    ui.displayError(`Unknown game type: ${gameType}`)
-    process.exit(1)
-  }
-
   // Display usage instructions
   ui.displayHeader('Claude Save Player')
-  ui.display(`Game settings:`)
+  ui.display(`Usage: bun run play:claude [game-type] [save-dir]`)
+  ui.display(`  game-type: Game to play (default: text-adventure)`)
+  ui.display(`            Options: text-adventure, compact-adventure`)
+  ui.display(`  save-dir: Directory to store save files (default: ./saves)`)
+  ui.display(``)
+  ui.display(`Current settings:`)
   ui.display(`  Game: ${gameType}`)
   ui.display(`  Save directory: ${saveDir}`)
   ui.display(``)
 
   try {
+    // Initialize the appropriate game
+    const game = await initializeGame(gameType)
+    if (!game) {
+      ui.displayError(`Unknown game type: ${gameType}`)
+      process.exit(1)
+    }
+
     // Create the Claude Save Player
     const player = new ClaudeSavePlayer({
       gameId: gameType,
@@ -110,9 +113,14 @@ export async function playClaudeGame(options: {
       ui.displayHeader('Error')
       ui.display(chalk.red(`Error processing action: ${error instanceof Error ? error.message : String(error)}`))
     }
+  } catch (error) {
+    ui.displayError(`Error: ${error instanceof Error ? error.message : String(error)}`)
+    process.exit(1)
   } finally {
     // Clean up game resources
-    await game.cleanup()
+    if (game) {
+      await game.cleanup()
+    }
     ui.cleanup()
   }
 }
@@ -136,3 +144,9 @@ async function initializeGame(gameType: string): Promise<SaveableGame | null> {
   
   return null
 }
+
+// Start the application
+main().catch(error => {
+  console.error('Error:', error)
+  process.exit(1)
+})
