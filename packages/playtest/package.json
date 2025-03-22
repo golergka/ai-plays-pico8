@@ -9,6 +9,7 @@
     "start": "bun run index.ts",
     "play:human": "bun run src/scripts/play-human.ts",
     "play:ai": "bun run src/scripts/play-ai.ts",
+    "play:claude": "bun run src/scripts/play-claude.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

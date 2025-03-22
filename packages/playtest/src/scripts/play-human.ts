@@ -3,7 +3,7 @@
  */
 import { HumanPlayer } from '../cli/human-player'
 import { TerminalUI } from '../cli/terminal-ui'
-import { playGame } from '@ai-gamedev/play/src/play-game'
+import { playGame } from './play-game'
 
 async function main() {
   const args = process.argv.slice(2)

@@ -17,10 +17,10 @@
     "test:ui": "bun run --cwd packages/playtest test:ui",
     "test:coverage": "bun run test:coverage:all",
     "test:coverage:all": "bun run --cwd packages/playtest test:coverage & bun run --cwd packages/text-adventure test:coverage & bun run --cwd packages/compact-adventure test:coverage",
-    "play": "bun run packages/play/cli.ts",
-    "play:human": "bun run packages/play/cli.ts human",
-    "play:ai": "bun run packages/play/cli.ts ai",
-    "start": "bun run packages/play/cli.ts"
+    "play": "bun run packages/playtest/cli.ts",
+    "play:human": "bun run packages/playtest/cli.ts human",
+    "play:ai": "bun run packages/playtest/cli.ts ai",
+    "start": "bun run packages/playtest/cli.ts"
   },
   "packageManager": "bun@1.2.0"
 }

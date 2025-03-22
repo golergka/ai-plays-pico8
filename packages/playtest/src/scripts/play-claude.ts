@@ -2,12 +2,12 @@
  * Script to let Claude play a game using save files rather than interactive prompts
  */
 import path from 'path'
-import { ClaudeSavePlayer } from './cli/claude-save-player'
 import { TerminalUI } from '@ai-gamedev/playtest'
 import { TextAdventure } from '@ai-gamedev/text-adventure'
 import { CompactTextAdventure } from '@ai-gamedev/compact-adventure'
 import type { SaveableGame } from '@ai-gamedev/playtest'
 import chalk from 'chalk'
+import { ClaudeSavePlayer } from './claude-save-player'
 
 export async function playClaudeGame(options: {
   gameType?: string

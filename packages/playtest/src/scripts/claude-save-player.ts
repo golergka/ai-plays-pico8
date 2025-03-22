@@ -78,7 +78,7 @@ export class ClaudeSavePlayer implements GamePlayer {
     if (args.length === 0) {
       // No arguments provided, use empty object
       actionData = {}
-    } else if (args.length === 1 && args[0].startsWith('{') && args[0].endsWith('}')) {
+    } else if (args.length === 1 && args[0]?.startsWith('{') && args[0].endsWith('}')) {
       // JSON object provided
       try {
         actionData = JSON.parse(args[0])
