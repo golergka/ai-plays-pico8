@@ -40,7 +40,7 @@ export async function playGame(
   player: GamePlayer,
   options: PlayGameOptions = {}
 ): Promise<GameResult | null> {
-  const gameType = options.gameType || "text-adventure";
+  const gameType = options.gameType || "compact-adventure";
   const maxSteps = options.maxSteps || Infinity;
   const ui = options.ui || new TerminalUI();
   const useColors = options.useColors !== undefined ? options.useColors : true;

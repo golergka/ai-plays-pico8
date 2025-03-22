@@ -50,7 +50,7 @@ export class ClaudeSavePlayer implements GamePlayer {
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
   async getAction<T extends Record<string, Schema<unknown>>>(
-    gameOutput: string,
+    _: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
     // Check if action was provided via command line arguments

@@ -29,9 +29,9 @@ async function main() {
   ui.display(`  Save directory: ${saveDir}`)
   ui.display(``)
 
+  const game = await initializeGame(gameType)
   try {
     // Initialize the appropriate game
-    const game = await initializeGame(gameType)
     if (!game) {
       ui.displayError(`Unknown game type: ${gameType}`)
       process.exit(1)
