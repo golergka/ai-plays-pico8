@@ -4,8 +4,7 @@
 import { z } from 'zod'
 import type { SaveableGame, GameState, StepResult } from './types'
 import type { TextAdventureOutput, TextAdventureSaveData } from './types'
-import type { GameMap, Room } from './schema'
-import { Schema } from '@ai-gamedev/playtest'
+import type { GameMap } from './schema'
 import { TextAdventureSaveSchema } from './types'
 
 /**
@@ -93,7 +92,8 @@ export class TextAdventure implements SaveableGame {
    * Process a game step
    */
   async step(action: [string, unknown]): Promise<StepResult> {
-    const [actionType, actionData] = action
+    // TODO: actually process action data
+    const [actionType, _actionData] = action
     
     // Define basic action schemas for next state
     const lookSchema = z.object({

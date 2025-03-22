@@ -16,7 +16,7 @@ export class CompactTextAdventure extends TextAdventure implements SaveableGame 
   /**
    * Initialize the game
    */
-  async initialize(): Promise<void> {
+  override async initialize(): Promise<void> {
     await super.initialize()
     // Add compact-specific initialization
     this.lastCommand = ''
@@ -25,7 +25,7 @@ export class CompactTextAdventure extends TextAdventure implements SaveableGame 
   /**
    * Start the game with compact-specific configuration
    */
-  async start(): Promise<GameState> {
+  override async start(): Promise<GameState> {
     // We'll override the parent class behavior for simplicity
     const actionSchema = z.object({
       command: z.string().describe('The command to execute (e.g., "go north", "look", "take key")')
@@ -46,7 +46,7 @@ You are in a small room with a door to the north.`,
   /**
    * Process a game step with simplified command parsing
    */
-  async step(action: [string, unknown]): Promise<StepResult> {
+  override async step(action: [string, unknown]): Promise<StepResult> {
     const [actionType, actionData] = action
     
     // Define our action schema for the next step
@@ -114,7 +114,7 @@ You are in a small room with a door to the north.`,
    * Override getSaveData to include compact-specific state
    * @returns Enhanced save data that includes compact-specific state
    */
-  getSaveData(): ReturnType<TextAdventure['getSaveData']> & { lastCommand: string, gameType: 'compact' } {
+  override getSaveData(): ReturnType<TextAdventure['getSaveData']> & { lastCommand: string, gameType: 'compact' } {
     // Get the base save data from the parent class
     const baseSaveData = super.getSaveData()
     

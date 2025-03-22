@@ -1,9 +1,8 @@
 /**
  * Utility functions for text adventure games
  */
-import { z } from 'zod'
 import { TextAdventure } from './text-adventure'
-import { TextAdventureSaveSchema, TextAdventureSaveData } from './types'
+import { TextAdventureSaveSchema } from './types'
 
 /**
  * Create a TextAdventure instance from save data
