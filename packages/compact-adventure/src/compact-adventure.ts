@@ -27,10 +27,6 @@ export class CompactTextAdventure extends TextAdventure implements SaveableGame 
    */
   override async start(): Promise<GameState> {
     // We'll override the parent class behavior for simplicity
-    const actionSchema = z.object({
-      command: z.string().describe('The command to execute (e.g., "go north", "look", "take key")')
-    }).describe('Execute a text adventure command')
-    
     return {
       output: `# Compact Adventure
       
@@ -38,7 +34,13 @@ Welcome to the compact text adventure game. Type simple commands to interact wit
 
 You are in a small room with a door to the north.`,
       actions: {
-        execute: actionSchema
+        look: z.object({}).describe('Look around the room'),
+        go: z.object({
+          direction: z.string().describe('The direction to go (e.g., "north", "south", "east", "west")')
+        }).describe('Move in a direction'),
+        take: z.object({
+          item: z.string().describe('The item to take')
+        }).describe('Take an item')
       }
     }
   }
@@ -49,63 +51,71 @@ You are in a small room with a door to the north.`,
   override async step(action: [string, unknown]): Promise<StepResult> {
     const [actionType, actionData] = action
     
-    // Define our action schema for the next step
-    const actionSchema = z.object({
-      command: z.string().describe('The command to execute (e.g., "go north", "look", "take key")')
-    }).describe('Execute a text adventure command')
+    // Store the last command
+    this.lastCommand = actionType
     
-    // Simple command processing
-    if (actionType === 'execute') {
-      const { command } = actionData as { command: string }
-      const lowerCommand = command.toLowerCase()
-      
-      // Store the last command
-      this.lastCommand = command
-      
-      if (lowerCommand.includes('look')) {
-        return {
-          type: 'state',
-          state: {
-            output: `You look around the compact room. It's small but cozy.`,
-            actions: {
-              execute: actionSchema
-            }
-          }
+    // Define the actions available for the next state
+    const nextActions = {
+      look: z.object({}).describe('Look around the room'),
+      go: z.object({
+        direction: z.string().describe('The direction to go (e.g., "north", "south", "east", "west")')
+      }).describe('Move in a direction'),
+      take: z.object({
+        item: z.string().describe('The item to take')
+      }).describe('Take an item')
+    }
+    
+    // Process different action types
+    if (actionType === 'look') {
+      return {
+        type: 'state',
+        state: {
+          output: `You look around the compact room. It's small but cozy.`,
+          actions: nextActions
         }
       }
+    }
+    
+    if (actionType === 'go') {
+      const { direction } = actionData as { direction: string }
+      const lowerDirection = direction.toLowerCase()
       
-      if (lowerCommand.includes('go') || lowerCommand.includes('move') || lowerCommand.includes('north')) {
+      if (lowerDirection === 'north') {
         return {
           type: 'state',
           state: {
             output: `You move north into a small corridor.`,
-            actions: {
-              execute: actionSchema
-            }
+            actions: nextActions
           }
         }
-      }
-      
-      // Default response for unrecognized commands
-      return {
-        type: 'state',
-        state: {
-          output: `I don't understand "${command}". Try simple commands like "look" or "go north".`,
-          actions: {
-            execute: actionSchema
+      } else {
+        return {
+          type: 'state',
+          state: {
+            output: `You can't go ${direction} from here.`,
+            actions: nextActions
           }
         }
       }
     }
     
-    // Fallback response
+    if (actionType === 'take') {
+      const { item } = actionData as { item: string }
+      return {
+        type: 'state',
+        state: {
+          output: `There is no ${item} here to take.`,
+          actions: nextActions
+        }
+      }
+    }
+    
+    // Fallback response for unrecognized action types
     return {
       type: 'state',
       state: {
-        output: `Command not recognized. Please try again.`,
-        actions: {
-          execute: actionSchema
-        }
+        output: `Command not recognized. Please try a valid action.`,
+        actions: nextActions
       }
     }
   }
