@@ -7,7 +7,6 @@
     "strict": true,
     "outDir": "dist",
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
     "types": ["bun-types"],
     "paths": {
       "@ai-gamedev/playtest": ["../playtest"],
