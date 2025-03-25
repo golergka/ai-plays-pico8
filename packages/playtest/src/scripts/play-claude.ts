@@ -6,7 +6,6 @@ import { TerminalUI } from '@ai-gamedev/playtest'
 import { TextAdventure } from '@ai-gamedev/text-adventure'
 import { CompactTextAdventure } from '@ai-gamedev/compact-adventure'
 import type { SaveableGame } from '@ai-gamedev/playtest'
-import chalk from 'chalk'
 import { ClaudeSavePlayer } from './claude-save-player'
 
 async function main() {
@@ -14,8 +13,8 @@ async function main() {
   const gameType = args[0] || 'text-adventure'
   const saveDir = args[1] || path.join(process.cwd(), 'saves')
   
-  // Create a terminal UI for displaying messages
-  const ui = new TerminalUI()
+  // Create a terminal UI for displaying messages (with default colors enabled)
+  const ui = new TerminalUI({ useColors: true })
 
   // Display usage instructions
   ui.displayHeader('Claude Save Player')
@@ -73,7 +72,7 @@ async function main() {
       
       // Display the action being taken
       ui.displayHeader('Action')
-      ui.display(chalk.yellow(`${actionType} ${JSON.stringify(actionData)}`))
+      ui.display(ui.color(`${actionType} ${JSON.stringify(actionData)}`, 'yellow'))
 
       // Process the step
       const stepResult = await game.step([actionType as string, actionData])
@@ -85,7 +84,7 @@ async function main() {
       if (stepResult.type === 'result') {
         // Game is complete
         ui.displayHeader('Game Finished')
-        ui.display(`Result: ${stepResult.result.success ? chalk.green('Victory!') : chalk.red('Defeat')}`)
+        ui.display(`Result: ${stepResult.result.success ? ui.color('Victory!', 'green') : ui.color('Defeat', 'red')}`)
         if (stepResult.result.score !== undefined) {
           ui.display(`Score: ${stepResult.result.score}`)
         }
@@ -111,7 +110,7 @@ async function main() {
       }
     } catch (error) {
       ui.displayHeader('Error')
-      ui.display(chalk.red(`Error processing action: ${error instanceof Error ? error.message : String(error)}`))
+      ui.display(ui.color(`Error processing action: ${error instanceof Error ? error.message : String(error)}`, 'red'))
     }
   } catch (error) {
     ui.displayError(`Error: ${error instanceof Error ? error.message : String(error)}`)

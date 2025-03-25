@@ -32,6 +32,15 @@ export interface ITerminalUI {
   displayHelp(commands: Record<string, string>): void
   
   /**
+   * Colorize text based on the specified color
+   * 
+   * @param text Text to colorize
+   * @param color Color name
+   * @returns Colorized or plain text based on useColors setting
+   */
+  color(text: string, color: 'blue' | 'green' | 'red' | 'yellow' | 'bold'): string
+  
+  /**
    * Prompt user for input
    * 
    * @param prompt Prompt text

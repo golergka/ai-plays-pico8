@@ -3,7 +3,6 @@
  */
 import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
-import chalk from "chalk";
 import { TerminalUI } from "../cli/terminal-ui";
 import type { Game, GamePlayer, GameResult } from "../types";
 
@@ -42,17 +41,8 @@ export async function playGame(
 ): Promise<GameResult | null> {
   const gameType = options.gameType || "compact-adventure";
   const maxSteps = options.maxSteps || Infinity;
-  const ui = options.ui || new TerminalUI();
   const useColors = options.useColors !== undefined ? options.useColors : true;
-
-  // Helper for colored output
-  const color = {
-    blue: (text: string) => (useColors ? chalk.blue(text) : text),
-    green: (text: string) => (useColors ? chalk.green(text) : text),
-    red: (text: string) => (useColors ? chalk.red(text) : text),
-    yellow: (text: string) => (useColors ? chalk.yellow(text) : text),
-    bold: (text: string) => (useColors ? chalk.bold(text) : text),
-  };
+  const ui = options.ui || new TerminalUI({ useColors });
 
   // Initialize the appropriate game
   const game = await initializeGame(gameType);
@@ -123,10 +113,11 @@ export async function playGame(
     } catch (error) {
       ui.displayHeader("Error");
       ui.display(
-        color.red(
+        ui.color(
           `Game terminated: ${
             error instanceof Error ? error.message : String(error)
-          }`
+          }`,
+          "red"
         )
       );
 
@@ -148,7 +139,7 @@ export async function playGame(
       ui.displayHeader("Game Finished");
       ui.display(
         `Result: ${
-          result.success ? color.green("Victory!") : color.red("Defeat")
+          result.success ? ui.color("Victory!", "green") : ui.color("Defeat", "red")
         }`
       );
       if (result.score !== undefined) {
@@ -168,7 +159,7 @@ export async function playGame(
       }
     } else {
       ui.displayHeader("Game Terminated");
-      ui.display(color.red("The game was terminated without a result."));
+      ui.display(ui.color("The game was terminated without a result.", "red"));
     }
 
     return result;

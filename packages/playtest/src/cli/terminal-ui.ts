@@ -1,4 +1,5 @@
 import readline from 'node:readline'
+import chalk from 'chalk'
 import type { ITerminalUI } from './i-terminal-ui'
 
 /**
@@ -14,6 +15,11 @@ export interface TerminalUIOptions {
    * Custom output stream (defaults to process.stdout)
    */
   output?: NodeJS.WritableStream
+  
+  /**
+   * Whether to use colored output (defaults to true)
+   */
+  useColors?: boolean
 }
 
 /**
@@ -22,6 +28,7 @@ export interface TerminalUIOptions {
  */
 export class TerminalUI implements ITerminalUI {
   private rl: readline.Interface
+  private useColors: boolean
   
   /**
    * Create a new terminal UI
@@ -33,6 +40,7 @@ export class TerminalUI implements ITerminalUI {
       input: options.input || process.stdin,
       output: options.output || process.stdout
     })
+    this.useColors = options.useColors !== undefined ? options.useColors : true
   }
   
   /**
@@ -61,7 +69,7 @@ export class TerminalUI implements ITerminalUI {
    * @param text Error text
    */
   displayError(text: string): void {
-    console.error(`\x1b[31mError: ${text}\x1b[0m`)
+    console.error(this.useColors ? chalk.red(`Error: ${text}`) : `Error: ${text}`)
   }
   
   /**
@@ -73,10 +81,34 @@ export class TerminalUI implements ITerminalUI {
     this.displayHeader('Available Commands')
     
     for (const [command, description] of Object.entries(commands)) {
-      console.log(`\x1b[33m${command}\x1b[0m: ${description}`)
+      if (this.useColors) {
+        console.log(`${chalk.yellow(command)}: ${description}`)
+      } else {
+        console.log(`${command}: ${description}`)
+      }
     }
     
     console.log('')
+  }
+  
+  /**
+   * Colorize text based on the specified color
+   * 
+   * @param text Text to colorize
+   * @param color Color name
+   * @returns Colorized or plain text based on useColors setting
+   */
+  color(text: string, color: 'blue' | 'green' | 'red' | 'yellow' | 'bold'): string {
+    if (!this.useColors) return text
+    
+    switch (color) {
+      case 'blue': return chalk.blue(text)
+      case 'green': return chalk.green(text)
+      case 'red': return chalk.red(text)
+      case 'yellow': return chalk.yellow(text)
+      case 'bold': return chalk.bold(text)
+      default: return text
+    }
   }
   
   /**

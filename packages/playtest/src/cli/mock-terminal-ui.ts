@@ -117,6 +117,18 @@ export class MockTerminalUI implements ITerminalUI {
   }
   
   /**
+   * Colorize text based on the specified color
+   * In mock implementation, this just returns the original text
+   * 
+   * @param text Text to colorize
+   * @param color Color name
+   * @returns Original text unchanged
+   */
+  color(text: string, _color: 'blue' | 'green' | 'red' | 'yellow' | 'bold'): string {
+    return text
+  }
+  
+  /**
    * Clean up resources
    */
   cleanup(): void {

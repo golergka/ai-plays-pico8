@@ -1,7 +1,6 @@
 /**
  * Script to let an LLM play a text adventure game
  */
-import chalk from 'chalk'
 import { TerminalUI } from '../cli/terminal-ui'
 import { LLMPlayer, type LLMPlayerEvent } from '../ai'
 import { playGame } from './play-game'
@@ -13,8 +12,8 @@ async function main() {
   const maxRetries = parseInt(args[2] || '3', 10)
   const maxSteps = parseInt(args[3] || '10', 10)
 
-  // Create a terminal UI for displaying messages
-  const ui = new TerminalUI()
+  // Create a terminal UI for displaying messages (with default colors enabled)
+  const ui = new TerminalUI({ useColors: true })
 
   // Display usage instructions
   ui.displayHeader('LLM Player Demo')
@@ -62,22 +61,22 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
     switch (event.type) {
       case 'thinking':
         ui.displayHeader('LLM Thinking')
-        ui.display(chalk.blue(event.content))
+        ui.display(ui.color(event.content, 'blue'))
         break
       case 'response':
         ui.displayHeader('LLM Response')
-        ui.display(chalk.green(event.content))
+        ui.display(ui.color(event.content, 'green'))
         break
       case 'error':
         ui.displayHeader('Error')
-        ui.display(chalk.red(event.content))
+        ui.display(ui.color(event.content, 'red'))
         break
       case 'action':
         ui.displayHeader('Action')
-        ui.display(chalk.yellow(event.content))
+        ui.display(ui.color(event.content, 'yellow'))
         if (event.data) {
           const { action, args } = event.data
-          ui.display(`  Function: ${chalk.bold(String(action))}`)
+          ui.display(`  Function: ${ui.color(String(action), 'bold')}`)
           ui.display(`  Arguments: ${JSON.stringify(args, null, 2)}`)
         }
         break
