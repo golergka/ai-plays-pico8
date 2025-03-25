@@ -11,6 +11,45 @@ import { TextAdventureSaveSchema } from './types'
  * Game that implements the Text Adventure mechanics with save/load functionality
  */
 export class TextAdventure implements SaveableGame {
+  private readonly initialGameMap: GameMap = {
+    title: "Simple Dungeon",
+    description: "A small dungeon with three rooms",
+    startRoom: "start",
+    rooms: {
+      start: {
+        id: "start",
+        title: "Entrance Chamber",
+        description: "A dimly lit chamber with rough stone walls. Torches flicker in wall sconces.",
+        exits: {
+          north: "corridor"
+        },
+        items: [],
+        characters: []
+      },
+      corridor: {
+        id: "corridor",
+        title: "Dark Corridor",
+        description: "A long, dark corridor stretches before you. The air is musty.",
+        exits: {
+          south: "start",
+          east: "treasure"
+        },
+        items: [],
+        characters: []
+      },
+      treasure: {
+        id: "treasure",
+        title: "Treasure Chamber",
+        description: "A grand chamber with golden decorations on the walls. Ancient treasures lie scattered about.",
+        exits: {
+          west: "corridor"
+        },
+        items: ["golden_chalice"],
+        characters: []
+      }
+    }
+  };
+
   private gameMap: GameMap | null = null
   private currentRoomId: string = ''
   private inventory: string[] = []
@@ -20,11 +59,10 @@ export class TextAdventure implements SaveableGame {
    * Initialize the game
    */
   async initialize(): Promise<void> {
-    // Implementation would load a game map
-    this.gameMap = null
-    this.currentRoomId = ''
-    this.inventory = []
-    this.visitedRooms = new Set()
+    this.gameMap = this.initialGameMap;
+    this.currentRoomId = this.gameMap.startRoom;
+    this.inventory = [];
+    this.visitedRooms = new Set([this.currentRoomId]);
   }
   
   /**
@@ -62,30 +100,31 @@ export class TextAdventure implements SaveableGame {
    * Start the game
    */
   async start(): Promise<GameState> {
-    // Define basic action schemas
-    const lookSchema = z.object({
-      target: z.string().describe('What to look at')
-    }).describe('Look at something in the environment')
+    if (!this.gameMap) throw new Error("Game not initialized");
     
-    const moveSchema = z.object({
-      direction: z.string().describe('Direction to move (north, south, east, west)')
-    }).describe('Move in a direction')
+    const currentRoom = this.gameMap.rooms[this.currentRoomId];
+    const availableExits = Object.keys(currentRoom.exits);
     
-    // Build the game output
     const output: TextAdventureOutput = {
-      title: 'Text Adventure',
-      description: 'You are in a simple room with exits to the north and east.',
-      feedback: 'The game has started. Look around to explore.'
-    }
+      title: currentRoom.title,
+      description: currentRoom.description,
+      exits: availableExits,
+      items: currentRoom.items,
+      characters: currentRoom.characters
+    };
     
-    // Return initial game state
     return {
       output: this.formatOutput(output),
       actions: {
-        look: lookSchema,
-        move: moveSchema
+        look: z.object({
+          target: z.string().describe('What to look at')
+        }).describe('Look at something in the environment'),
+        move: z.object({
+          direction: z.enum(availableExits as [string, ...string[]])
+            .describe('Direction to move')
+        }).describe('Move in a direction')
       }
-    }
+    };
   }
   
   /**
@@ -123,21 +162,62 @@ export class TextAdventure implements SaveableGame {
         }
       }
     } else if (actionType === 'move') {
-      const output: TextAdventureOutput = {
-        title: 'Moving',
-        description: 'You move to a new area.',
-        feedback: 'You can continue exploring.'
-      }
+      const moveData = actionData as { direction: string };
+      const currentRoom = this.gameMap!.rooms[this.currentRoomId];
       
-      return {
-        type: 'state',
-        state: {
-          output: this.formatOutput(output),
-          actions: {
-            look: lookSchema,
-            move: moveSchema
+      if (currentRoom.exits[moveData.direction]) {
+        const newRoomId = currentRoom.exits[moveData.direction];
+        const newRoom = this.gameMap!.rooms[newRoomId];
+        this.currentRoomId = newRoomId;
+        this.visitedRooms.add(newRoomId);
+        
+        const output: TextAdventureOutput = {
+          title: newRoom.title,
+          description: newRoom.description,
+          feedback: `You move ${moveData.direction}.`,
+          exits: Object.keys(newRoom.exits),
+          items: newRoom.items,
+          characters: newRoom.characters
+        };
+        
+        return {
+          type: 'state',
+          state: {
+            output: this.formatOutput(output),
+            actions: {
+              look: z.object({
+                target: z.string().describe('What to look at')
+              }).describe('Look at something in the environment'),
+              move: z.object({
+                direction: z.enum(Object.keys(newRoom.exits) as [string, ...string[]])
+                  .describe('Direction to move')
+              }).describe('Move in a direction')
+            }
           }
-        }
+        };
+      } else {
+        return {
+          type: 'state',
+          state: {
+            output: this.formatOutput({
+              title: currentRoom.title,
+              description: currentRoom.description,
+              feedback: `You cannot move ${moveData.direction} from here.`,
+              exits: Object.keys(currentRoom.exits),
+              items: currentRoom.items,
+              characters: currentRoom.characters
+            }),
+            actions: {
+              look: z.object({
+                target: z.string().describe('What to look at')
+              }).describe('Look at something in the environment'),
+              move: z.object({
+                direction: z.enum(Object.keys(currentRoom.exits) as [string, ...string[]])
+                  .describe('Direction to move')
+              }).describe('Move in a direction')
+            }
+          }
+        };
       }
     }
     
