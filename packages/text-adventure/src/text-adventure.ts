@@ -18,7 +18,7 @@ export class TextAdventure implements SaveableGame {
     rooms: {
       start: {
         id: "start",
-        title: "Entrance Chamber",
+        name: "Entrance Chamber",
         description: "A dimly lit chamber with rough stone walls. Torches flicker in wall sconces.",
         exits: {
           north: "corridor"
@@ -28,7 +28,7 @@ export class TextAdventure implements SaveableGame {
       },
       corridor: {
         id: "corridor",
-        title: "Dark Corridor",
+        name: "Dark Corridor",
         description: "A long, dark corridor stretches before you. The air is musty.",
         exits: {
           south: "start",
@@ -39,7 +39,7 @@ export class TextAdventure implements SaveableGame {
       },
       treasure: {
         id: "treasure",
-        title: "Treasure Chamber",
+        name: "Treasure Chamber",
         description: "A grand chamber with golden decorations on the walls. Ancient treasures lie scattered about.",
         exits: {
           west: "corridor"
@@ -103,10 +103,13 @@ export class TextAdventure implements SaveableGame {
     if (!this.gameMap) throw new Error("Game not initialized");
     
     const currentRoom = this.gameMap.rooms[this.currentRoomId];
-    const availableExits = Object.keys(currentRoom.exits);
+    if (!currentRoom) {
+      throw new Error("Current room not found");
+    }
+    const availableExits = currentRoom.exits ? Object.keys(currentRoom.exits) : [];
     
     const output: TextAdventureOutput = {
-      title: currentRoom.title,
+      title: currentRoom.name,
       description: currentRoom.description,
       exits: availableExits,
       items: currentRoom.items,
@@ -132,7 +135,7 @@ export class TextAdventure implements SaveableGame {
    */
   async step(action: [string, unknown]): Promise<StepResult> {
     // TODO: actually process action data
-    const [actionType, _actionData] = action
+    const [actionType, actionData] = action
     
     // Define basic action schemas for next state
     const lookSchema = z.object({
@@ -164,18 +167,21 @@ export class TextAdventure implements SaveableGame {
     } else if (actionType === 'move') {
       const moveData = actionData as { direction: string };
       const currentRoom = this.gameMap!.rooms[this.currentRoomId];
+      if (!currentRoom) {
+        throw new Error("Current room not found");
+      }
       
-      if (currentRoom.exits[moveData.direction]) {
+      if (currentRoom.exits?.[moveData.direction]) {
         const newRoomId = currentRoom.exits[moveData.direction];
         const newRoom = this.gameMap!.rooms[newRoomId];
         this.currentRoomId = newRoomId;
         this.visitedRooms.add(newRoomId);
         
         const output: TextAdventureOutput = {
-          title: newRoom.title,
+          title: newRoom.name,
           description: newRoom.description,
           feedback: `You move ${moveData.direction}.`,
-          exits: Object.keys(newRoom.exits),
+          exits: Object.keys(newRoom.name),
           items: newRoom.items,
           characters: newRoom.characters
         };
@@ -189,21 +195,22 @@ export class TextAdventure implements SaveableGame {
                 target: z.string().describe('What to look at')
               }).describe('Look at something in the environment'),
               move: z.object({
-                direction: z.enum(Object.keys(newRoom.exits) as [string, ...string[]])
+                direction: z.enum(Object.keys(newRoom.name) as [string, ...string[]])
                   .describe('Direction to move')
               }).describe('Move in a direction')
             }
           }
         };
       } else {
+        const exits = currentRoom.exits ? Object.keys(currentRoom.exits) : [];
         return {
           type: 'state',
           state: {
             output: this.formatOutput({
-              title: currentRoom.title,
+              title: currentRoom.name,
               description: currentRoom.description,
               feedback: `You cannot move ${moveData.direction} from here.`,
-              exits: Object.keys(currentRoom.exits),
+              exits,
               items: currentRoom.items,
               characters: currentRoom.characters
             }),
@@ -212,7 +219,7 @@ export class TextAdventure implements SaveableGame {
                 target: z.string().describe('What to look at')
               }).describe('Look at something in the environment'),
               move: z.object({
-                direction: z.enum(Object.keys(currentRoom.exits) as [string, ...string[]])
+                direction: z.enum(Object.keys(exits) as [string, ...string[]])
                   .describe('Direction to move')
               }).describe('Move in a direction')
             }
