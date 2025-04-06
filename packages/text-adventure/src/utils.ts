@@ -6,6 +6,7 @@ import {
   TextAdventureSaveSchema,
   type Entity,
 } from "./types";
+import _ from "lodash";
 
 export type EntityLookupResult<T extends Entity> = 
   | { type: 'found'; entity: T; matchedTag: string }
@@ -75,7 +76,7 @@ export async function createTextAdventureFromSave(
   // Apply the save data to the game instance (using private property access)
   Object.assign(game, {
     currentRoomId: validatedData.currentRoomId,
-    inventory: [...validatedData.inventory],
+    inventory: _.cloneDeep(validatedData.inventory),
     visitedRooms: new Set(validatedData.visitedRooms),
     gameMap: validatedData.gameMap,
   });

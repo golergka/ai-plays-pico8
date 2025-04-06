@@ -9,6 +9,7 @@ import type {
   TextAdventureSaveData,
   Room,
   Item,
+  Entity,
 } from "./types";
 import { findEntity } from "./utils";
 import {
