@@ -77,6 +77,20 @@ export const TextAdventureSaveSchema = z.object({
   gameMap: GameMapSchema
 })
 
+// Base interface for mappable entities
+export interface EntityMapData {
+  id: string;
+  tags: string[];
+  name: string;
+  description: string;
+}
+
+// Result type for entity lookups
+export type EntityLookupResult<T extends EntityMapData> = 
+  | { type: 'found'; entity: T; matchedTag: string }
+  | { type: 'ambiguous'; matches: Array<{ entity: T; matchedTag: string }> }
+  | { type: 'notFound' };
+
 export type Direction = z.infer<typeof DirectionSchema>
 export type Room = z.infer<typeof RoomSchema>
 export type Item = z.infer<typeof ItemSchema>
