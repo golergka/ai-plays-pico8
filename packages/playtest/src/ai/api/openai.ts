@@ -218,48 +218,18 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
     toolCallSchema = createToolCallSchema(params.tools.schemas);
   }
 
-  // Call the API
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env["OPENAI_API_KEY"]}`,
-      "OpenAI-Organization": process.env["OPENAI_ORG_ID"] || "",
-    },
-    body: JSON.stringify(body),
+  // Initialize OpenAI client
+  const client = new OpenAI({
+    apiKey: process.env["OPENAI_API_KEY"],
+    organization: process.env["OPENAI_ORG_ID"],
   });
 
-  if (!response.ok) {
-    const errorData = (await response
-      .json()
-      .catch(() => ({ error: { message: "Unknown error" } }))) as {
-      error?: { message?: string };
-    };
-    throw new Error(
-      `OpenAI API error (${response.status}): ${
-        errorData?.error?.message || "Unknown error"
-      }`
-    );
-  }
-
-  const rawResponse = await response.json();
+  // Call the API
+  const rawResponse = await client.chat.completions.create(body);
 
   // Parse and validate the response structure with Zod
-  let parsedResponse: RawOpenAIResponse;
-
-  try {
-    parsedResponse = OpenAIResponseSchema.parse(rawResponse);
-  } catch (error) {
-    // Error will be thrown with a clear message
-    throw new Error(
-      `Invalid response from OpenAI API: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-
   // Extract the content and tool calls from the response
-  const message = parsedResponse.choices[0]?.message;
+  const message = rawResponse.choices[0]?.message;
 
   // Create the simplified result object
   const result: OpenAIResult<z.infer<T[keyof T]>> = {
@@ -269,11 +239,11 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   };
 
   // Add usage if available
-  if (parsedResponse.usage) {
+  if (rawResponse.usage) {
     result.usage = {
-      promptTokens: parsedResponse.usage.prompt_tokens,
-      completionTokens: parsedResponse.usage.completion_tokens,
-      totalTokens: parsedResponse.usage.total_tokens,
+      promptTokens: rawResponse.usage.prompt_tokens,
+      completionTokens: rawResponse.usage.completion_tokens,
+      totalTokens: rawResponse.usage.total_tokens,
     };
   }
 
