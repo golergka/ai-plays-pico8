@@ -38,7 +38,7 @@ export interface InputOutput {
    */
   askForAction<T extends ActionSchemas>(
     gameState: string, 
-    feedback: string,
+    feedback: string | null,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]>
   

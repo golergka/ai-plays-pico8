@@ -136,7 +136,7 @@ export class LLMPlayer implements InputOutput {
     this.options.onEvent(event);
   }
 
-  private getChatHistory(): Message[] {
+  private constructRequestHistory(): Message[] {
     return [
       {
         role: "system",
@@ -153,11 +153,10 @@ export class LLMPlayer implements InputOutput {
     for (let retries = 0; retries < this.options.maxRetries; retries++) {
       let result: Awaited<ReturnType<typeof callOpenAI>>;
       // Used only for this iteration to save errors on top of
-      const callChatHistory = this.getChatHistory();
       try {
         result = await callOpenAI({
           model: this.options.model,
-          messages: callChatHistory,
+          messages: this.constructRequestHistory(),
           tools: {
             definitions,
             schemas,
@@ -166,28 +165,31 @@ export class LLMPlayer implements InputOutput {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.addMessage(
-          { role: "system", content: `Error:\n\n${message}` },
-          LLMPlayerEventType.error
-        );
+        this.addMessage({
+          type: LLMPlayerEventType.error,
+          message: { role: "system", content: `Error:\n\n${message}` }
+        });
         continue;
       }
 
       // Add assistant response to chat history
-      this.addMessage(result.message, LLMPlayerEventType.playerAction);
+      this.addMessage({
+        type: LLMPlayerEventType.playerAction,
+        message: result.message
+      });
 
       const [toolUse, ...rest] = result.toolUse;
 
       for (const failed of rest) {
         const ignoredMessage = IGNORED_TOOL_MESSAGE;
-        this.addMessage(
-          {
+        this.addMessage({
+          type: LLMPlayerEventType.error,
+          message: {
             role: "tool",
             content: ignoredMessage,
             tool_call_id: failed.callId,
-          },
-          LLMPlayerEventType.error
-        );
+          }
+        });
       }
 
       if (toolUse) {
@@ -195,10 +197,10 @@ export class LLMPlayer implements InputOutput {
       }
 
       const noAction = NO_ACTION_MESSAGE;
-      this.addMessage(
-        { role: "system", content: noAction },
-        LLMPlayerEventType.error
-      );
+      this.addMessage({
+        type: LLMPlayerEventType.error,
+        message: { role: "system", content: noAction }
+      });
     }
 
     throw new Error(MAX_RETRIES_MESSAGE(this.options.maxRetries));
@@ -218,23 +220,23 @@ export class LLMPlayer implements InputOutput {
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
     // Add feedback to chat history
     if (feedback) {
-      this.addMessage(
-        this.lastToolCallId
+      this.addMessage({
+        type: LLMPlayerEventType.gameAction,
+        message: this.lastToolCallId
           ? {
               role: "tool",
               content: feedback,
               tool_call_id: this.lastToolCallId,
             }
-          : { role: "system", content: feedback },
-        LLMPlayerEventType.gameAction
-      );
+          : { role: "system", content: feedback }
+      });
     }
 
     // Add latest game state to chat history
-    this.addMessage(
-      { role: "system", content: gameState },
-      LLMPlayerEventType.gameState
-    );
+    this.addMessage({
+      type: LLMPlayerEventType.gameState,
+      message: { role: "system", content: gameState }
+    });
 
     const { definitions, schemas } = convertActionSchemas(actionSchemas);
 
@@ -251,27 +253,30 @@ export class LLMPlayer implements InputOutput {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.addMessage(
-        { role: "system", content: `Error:\n\n${errorMessage}` },
-        LLMPlayerEventType.error,
-        { error }
-      );
+      this.addMessage({
+        type: LLMPlayerEventType.error,
+        message: { role: "system", content: `Error:\n\n${errorMessage}` },
+        data: { error }
+      });
       throw error;
     }
   }
 
   async askForFeedback(): Promise<string> {
-    this.addMessage(
-      { role: "system", content: FEEDBACK_PROMPT },
-      LLMPlayerEventType.prompt
-    );
+    this.addMessage({
+      type: LLMPlayerEventType.prompt,
+      message: { role: "system", content: FEEDBACK_PROMPT }
+    });
 
     const feedback = await callOpenAI({
       model: this.options.model,
-      messages: this.getChatHistory(),
+      messages: this.constructRequestHistory(),
     });
 
-    this.addMessage(feedback.message, LLMPlayerEventType.playtesterFeedback);
+    this.addMessage({
+      type: LLMPlayerEventType.playtesterFeedback,
+      message: feedback.message
+    });
 
     return feedback.message.content as string;
   }

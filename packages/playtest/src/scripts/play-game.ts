@@ -40,7 +40,6 @@ export async function playGame(
   // Initialize the appropriate game
   let game = await initializeGame(gameType);
   if (!game) {
-    io.outputResult(`Unknown game type: ${gameType}`);
     throw new Error(`Unknown game type: ${gameType}`);
   }
 
@@ -65,7 +64,6 @@ export async function playGame(
           io.outputResult(`Game completed: ${stepResult.result.description}`)
           game = await initializeGame(gameType);
           if (!game) {
-            io.outputResult(`Unknown game type: ${gameType}`);
             throw new Error(`Unknown game type: ${gameType}`);
           }
           gameState = await game.start();
@@ -75,7 +73,6 @@ export async function playGame(
       }
 
       io.outputResult(`Maximum number of LLM play-through steps (${maxSteps}) reached`);
-
     } catch (error) {
       io.outputResult(
         `Game terminated due to an internal error: ${
