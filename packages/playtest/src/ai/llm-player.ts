@@ -99,14 +99,16 @@ export class LLMPlayer implements InputOutput {
     };
 
     this.onEvent = this.options.onEvent;
+  }
 
-    // Initialize chat history with system message
-    this.chatHistory = [
-      {
+  private getChatHistory(): Message[] {
+    return [
+{
         role: "system",
         content: this.options.systemPrompt,
       },
-    ];
+      ...this.chatHistory,
+    ]
   }
 
   private async getToolUse(
@@ -115,10 +117,12 @@ export class LLMPlayer implements InputOutput {
   ): Promise<ToolUse> {
     for (let retries = 0; retries < this.options.maxRetries; retries++) {
       let result: Awaited<ReturnType<typeof callOpenAI>>;
+      // Used only for this iteration to save errors on top of
+      const callChatHistory = this.getChatHistory();
       try {
         result = await callOpenAI({
           model: this.options.model,
-          messages: this.chatHistory,
+          messages: callChatHistory,
           tools: {
             definitions,
             schemas,
@@ -127,7 +131,7 @@ export class LLMPlayer implements InputOutput {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.chatHistory.push({
+        callChatHistory.push({
           role: "system",
           content: `Error:\n\n${message}`,
         });
@@ -231,7 +235,7 @@ export class LLMPlayer implements InputOutput {
     });
     this.chatHistory.push({
       role: "system",
-      content: "Please provide feedback on the game.",
+      content: "As a play-tester, please provide feedback on the game that you have just played. You can assume a role of a qualified QA and game designer to steer developers in the right direction.",
     });
 
     const feedback = await callOpenAI({
@@ -251,13 +255,6 @@ export class LLMPlayer implements InputOutput {
       content: text,
     });
     this.emitEvent("system", text);
-  }
-
-  /**
-   * Get the chat history
-   */
-  getChatHistory(): Message[] {
-    return [...this.chatHistory];
   }
 
   /**
