@@ -13,20 +13,50 @@ import OpenAI from 'openai';
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
 
 /**
- * Message schema for OpenAI API
+ * Message schemas for OpenAI API matching their types exactly
  */
-const MessageSchema = z.object({
-  role: z.enum(['system', 'user', 'assistant', 'tool']),
-  content: z.string().nullable(),
-  toolCall: z.object({
-    name: z.string(),
-    arguments: z.record(z.unknown())
-  }).optional(),
+const SystemMessageSchema = z.object({
+  role: z.literal('system'),
+  content: z.string(),
   name: z.string().optional()
 })
 
+const UserMessageSchema = z.object({
+  role: z.literal('user'),
+  content: z.string(),
+  name: z.string().optional()
+})
+
+const AssistantMessageSchema = z.object({
+  role: z.literal('assistant'),
+  content: z.string().nullable(),
+  tool_calls: z.array(z.object({
+    id: z.string(),
+    type: z.literal('function'),
+    function: z.object({
+      name: z.string(),
+      arguments: z.string()
+    })
+  })).optional(),
+  name: z.string().optional()
+})
+
+const ToolMessageSchema = z.object({
+  role: z.literal('tool'),
+  content: z.string(),
+  tool_call_id: z.string(),
+  name: z.string().optional()
+})
+
+const MessageSchema = z.discriminatedUnion('role', [
+  SystemMessageSchema,
+  UserMessageSchema,
+  AssistantMessageSchema,
+  ToolMessageSchema
+])
+
 /**
- * Message type for OpenAI API
+ * Message type for OpenAI API matching their ChatCompletionMessageParam type
  */
 export type Message = z.infer<typeof MessageSchema>
 
@@ -234,21 +264,8 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   }
 
   // Extract tool call if present
-  if (message?.tool_calls && message.tool_calls.length > 0) {
-    if (message.tool_calls.length > 1) {
-      console.warn(
-        `OpenAI returned ${message.tool_calls.length} tool calls, but we only support one. Using the first.`
-      );
-    }
-
+  if (message?.tool_calls?.[0]) {
     const toolCall = message.tool_calls[0];
-
-    // Safety check - this should never happen due to the array check above
-    if (!toolCall) {
-      console.warn("Tool call was undefined when it shouldn't be");
-      return result;
-    }
-
     result.toolName = toolCall.function.name;
 
     // Parse arguments if schema is available
