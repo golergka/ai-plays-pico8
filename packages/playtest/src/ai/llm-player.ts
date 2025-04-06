@@ -8,6 +8,7 @@ import {
   type ToolUse,
 } from "./api";
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
 
 const SYSTEM_PROMPT = `
 You are a play-tester for a text-based game. You can take actions using tool 
@@ -78,6 +79,8 @@ export interface LLMPlayerOptions {
    * Event handler for LLM player events
    */
   onEvent?: LLMPlayerEventHandler;
+
+  sessionId?: string;
 }
 
 function convertActionSchemas<T extends ActionSchemas>(
@@ -124,6 +127,7 @@ export class LLMPlayer implements InputOutput {
       maxRetries: options.maxRetries || 3,
       model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
+      sessionId: randomUUID()
     };
   }
 
@@ -150,7 +154,7 @@ export class LLMPlayer implements InputOutput {
         // Skip all errors and game state messages before the last game state
         case LLMPlayerEventType.error:
         case LLMPlayerEventType.gameState:
-          if (index > lastGameState) {
+          if (index >= lastGameState) {
             messageHistory.push(entry.message);
           }
           break;
@@ -180,6 +184,7 @@ export class LLMPlayer implements InputOutput {
             schemas,
             choice: "auto", // Let the AI choose which action to take
           },
+          langfuseSessionId: this.options.sessionId,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -289,6 +294,7 @@ export class LLMPlayer implements InputOutput {
     const feedback = await callOpenAI({
       model: this.options.model,
       messages: this.constructRequestHistory(),
+      langfuseSessionId: this.options.sessionId,
     });
 
     this.addMessage({

@@ -3,13 +3,9 @@ import { z } from "zod";
 import { toJsonSchema } from "../../schema/utils";
 import type { JsonSchema7Type } from "zod-to-json-schema";
 import OpenAI from "openai";
-import { observeOpenAI } from "langfuse";
+import { observeOpenAI, Langfuse } from "langfuse";
 
-// Initialize OpenAI client
-const client = observeOpenAI(new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env["OPEN_ROUTER_API_KEY"],
-}));
+const langfuse = new Langfuse();
 
 /**
  * Tool definition with Zod schema
@@ -44,6 +40,7 @@ export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
     choice?: "auto" | "none" | keyof T;
   };
   temperature?: number;
+  langfuseSessionId: string;
 }
 
 export interface ToolUse<T = unknown> {
@@ -158,6 +155,17 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
             },
           };
   }
+
+  const trace = langfuse.trace({ sessionId: params.langfuseSessionId })
+
+  // Initialize OpenAI client
+  const client = observeOpenAI(
+    new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: process.env["OPEN_ROUTER_API_KEY"],
+    }),
+    { parent: trace, }
+  );
 
   // Call the API
   const rawResponse = await client.chat.completions.create(requestParams);
