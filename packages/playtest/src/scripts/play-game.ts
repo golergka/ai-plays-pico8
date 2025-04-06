@@ -49,6 +49,7 @@ export async function playGame(
     let gameState = await game.start();
 
     for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
+      /*
       // Check and add quit action
       if ("quit" in gameState.actions) {
         throw new Error("Game already has a quit action defined");
@@ -58,19 +59,23 @@ export async function playGame(
         ...gameState.actions,
         quit: z.object({}).describe("Finish the play-test early. This will not restart the game but take you straight to the final prompt, where you will be asked to provide feedback."),
       };
+      */
 
       // Get action from player
       const [actionType, actionData] = await io.askForAction(
         gameState.gameState,
         gameState.feedback,
-        actionsWithQuit
+        gameState.actions
+        // actionsWithQuit
       );
 
+      /*
       // Handle quit action
       if (actionType === "quit") {
         io.outputResult("Game ended by player");
         return;
       }
+      */
 
       // Process step
       const stepResult = await game.step([actionType as string, actionData]);
