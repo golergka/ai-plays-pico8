@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import type { GamePlayer, SaveableGame } from '@ai-gamedev/playtest'
+import type { SaveableGame } from '@ai-gamedev/playtest'
 import type { Schema } from '@ai-gamedev/playtest'
 
 /**
@@ -26,7 +26,7 @@ export interface ClaudeSavePlayerOptions {
  * 3. Saving the updated state
  * 4. Displaying the result
  */
-export class ClaudeSavePlayer implements GamePlayer {
+export class ClaudeSavePlayer {
   private saveDir: string
   private gameId: string
   private saveFilePath: string

@@ -3,8 +3,7 @@
  */
 import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
-import { TerminalUI } from "../cli/terminal-ui";
-import type { Game, GamePlayer, GameResult } from "../types";
+import type { Game, InputOutput, GameResult } from "../types";
 
 export interface PlayGameOptions {
   /**
@@ -18,44 +17,34 @@ export interface PlayGameOptions {
   maxSteps?: number;
 
   /**
-   * Custom terminal UI instance
-   */
-  ui?: TerminalUI;
-
-  /**
    * Whether to use colored output
    */
   useColors?: boolean;
 }
 
 /**
- * Play a game with the provided player
+ * Play a game with the provided input/output handler
  *
- * @param player The player implementation (AI, human, etc.)
+ * @param io The input/output implementation (AI, human, etc.)
  * @param options Game configuration options
  * @returns Promise resolving with the game result
  */
 export async function playGame(
-  player: GamePlayer,
+  io: InputOutput,
   options: PlayGameOptions = {}
 ): Promise<GameResult | null> {
   const gameType = options.gameType || "compact-adventure";
   const maxSteps = options.maxSteps || Infinity;
-  const useColors = options.useColors !== undefined ? options.useColors : true;
-  const ui = options.ui || new TerminalUI({ useColors });
 
   // Initialize the appropriate game
   const game = await initializeGame(gameType);
   if (!game) {
-    ui.displayError(`Unknown game type: ${gameType}`);
+    io.outputResult(`Unknown game type: ${gameType}`);
     throw new Error(`Unknown game type: ${gameType}`);
   }
 
   // Run the game with the provided player
   try {
-    // Start the game
-    ui.displayHeader(`Starting ${gameType}...`);
-
     // Get initial state
     const initialState = await game.start();
     let gameState = initialState;
@@ -65,12 +54,8 @@ export async function playGame(
     // Main game loop
     try {
       while (stepCount < maxSteps) {
-        // Display current game state
-        ui.displayHeader("Game State");
-        ui.display(gameState.output);
-
         // Get action from player
-        const [actionType, actionData] = await player.getAction(
+        const [actionType, actionData] = await io.askForAction(
           gameState.output,
           gameState.actions
         );
@@ -103,29 +88,23 @@ export async function playGame(
         }
 
         result = {
-          success: false,
-          actionCount: stepCount,
+          description: `Game terminated due to maximum number of steps (${maxSteps}) reached`,
           metadata,
         };
 
         throw new Error(`Maximum number of steps (${maxSteps}) reached`);
       }
     } catch (error) {
-      ui.displayHeader("Error");
-      ui.display(
-        ui.color(
-          `Game terminated: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-          "red"
-        )
+      io.outputResult(
+        `Game terminated: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
 
       // If we don't have a result yet, create one for the error case
       if (!result) {
         result = {
-          success: false,
-          actionCount: stepCount,
+          description: "Game terminated with an error",
           metadata: {
             terminationReason: "Error",
             error: error instanceof Error ? error.message : String(error),
@@ -136,36 +115,13 @@ export async function playGame(
 
     // Display game result if we have one
     if (result) {
-      ui.displayHeader("Game Finished");
-      ui.display(
-        `Result: ${
-          result.success ? ui.color("Victory!", "green") : ui.color("Defeat", "red")
-        }`
-      );
-      if (result.score !== undefined) {
-        ui.display(`Score: ${result.score}`);
-      }
-      ui.display(`Actions taken: ${result.actionCount}`);
-
-      // Display metadata
-      if (result.metadata) {
-        ui.displayHeader("Game Statistics");
-        const visitedRooms =
-          (result.metadata["visitedRooms"] as string[]) || [];
-        const inventoryItems =
-          (result.metadata["inventoryItems"] as string[]) || [];
-        ui.display(`Visited rooms: ${visitedRooms.join(", ") || "none"}`);
-        ui.display(`Final inventory: ${inventoryItems.join(", ") || "empty"}`);
-      }
-    } else {
-      ui.displayHeader("Game Terminated");
-      ui.display(ui.color("The game was terminated without a result.", "red"));
+      io.outputResult(result.description);
     }
 
     return result;
   } finally {
     // Clean up resources
-    await player.cleanup();
+    await io.cleanup();
     await game.cleanup();
   }
 }

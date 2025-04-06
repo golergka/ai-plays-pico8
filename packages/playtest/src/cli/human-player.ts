@@ -1,4 +1,4 @@
-import type { GamePlayer } from '../types'
+import type { InputOutput } from '../types'
 import type { Schema } from '../schema/utils'
 import type { ITerminalUI } from './i-terminal-ui'
 import { TerminalUI } from './terminal-ui'
@@ -22,7 +22,7 @@ export interface HumanPlayerOptions {
 /**
  * Human player implementation that allows playing games from the terminal
  */
-export class HumanPlayer implements GamePlayer {
+export class HumanPlayer implements InputOutput {
   private terminalUI: ITerminalUI
   private showHelp: boolean
   
@@ -35,7 +35,7 @@ export class HumanPlayer implements GamePlayer {
     this.terminalUI = options.terminalUI || new TerminalUI()
     this.showHelp = options.showHelp !== undefined ? options.showHelp : true
   }
-  
+
   /**
    * Get an action from the human player based on game output and action schemas
    * 
@@ -43,10 +43,12 @@ export class HumanPlayer implements GamePlayer {
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  async getAction<T extends Record<string, Schema<any>>>(
+  async askForAction<T extends Record<string, Schema<any>>>(
     gameOutput: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
+    this.terminalUI.displayHeader('Game State')
+
     // Display game output
     this.terminalUI.display(gameOutput)
     
@@ -107,6 +109,11 @@ export class HumanPlayer implements GamePlayer {
     }
     
     return [actionName, actionData]
+  }
+  
+  outputResult(text: string): void {
+    this.terminalUI.displayHeader('Game Finished');
+    this.terminalUI.display(text)
   }
   
   /**

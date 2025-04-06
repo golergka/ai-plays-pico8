@@ -15,20 +15,7 @@ export type ActionSchemas = Record<string, Schema<unknown>>
  * Result of a completed game
  */
 export interface GameResult {
-  /**
-   * Whether the game was completed successfully
-   */
-  success: boolean
-  
-  /**
-   * Final score (if applicable)
-   */
-  score?: number
-  
-  /**
-   * Number of actions/turns taken
-   */
-  actionCount: number
+  description: string
   
   /**
    * Any additional metadata about the game result
@@ -37,24 +24,26 @@ export interface GameResult {
 }
 
 /**
- * Interface for game players (AI or human)
- * Uses our schema system for type safety
+ * Interface for input/output handlers (AI or human)
+ * Abstracts the interaction with players regardless of medium
  */
-export interface GamePlayer {
+export interface InputOutput {
   /**
-   * Get an action from the player based on game output and action schemas
+   * Get an action from the input source based on provided text and available actions
    * 
-   * @param gameOutput Text description of current game state
+   * @param text Description text to display/process before getting input
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  getAction<T extends ActionSchemas>(
-    gameOutput: string, 
+  askForAction<T extends ActionSchemas>(
+    text: string, 
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]>
   
+  outputResult(text: string): void
+
   /**
-   * Clean up resources when game ends
+   * Clean up resources when done
    */
   cleanup(): Promise<void>
 }

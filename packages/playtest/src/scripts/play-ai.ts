@@ -43,7 +43,6 @@ async function main() {
     await playGame(player, {
       gameType,
       maxSteps,
-      ui
     })
   } catch (error) {
     ui.displayError(`Error: ${error instanceof Error ? error.message : String(error)}`)

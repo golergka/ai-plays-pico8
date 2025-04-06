@@ -1,4 +1,4 @@
-import type { GamePlayer, ActionSchemas } from '../types'
+import type { InputOutput, ActionSchemas } from '../types'
 import type { Schema } from '../schema/utils'
 import { z } from 'zod'
 import { callOpenAI, type Message, type ToolDefinition } from './api'
@@ -52,7 +52,7 @@ export interface LLMPlayerOptions {
  * 
  * All game-specific handling should be done at the schema level by the caller.
  */
-export class LLMPlayer implements GamePlayer {
+export class LLMPlayer implements InputOutput {
   private chatHistory: Message[] = []
   private options: Required<LLMPlayerOptions>
   private onEvent: LLMPlayerEventHandler
@@ -83,7 +83,7 @@ export class LLMPlayer implements GamePlayer {
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  async getAction<T extends ActionSchemas>(
+  async askForAction<T extends ActionSchemas>(
     gameOutput: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
@@ -178,6 +178,13 @@ export class LLMPlayer implements GamePlayer {
       this.emitEvent('error', `Error selecting action: ${errorMessage}`)
       throw error
     }
+  }
+  
+  outputResult(text: string): void {
+    this.chatHistory.push({
+      role: 'system',
+      content: text
+    });
   }
   
   /**

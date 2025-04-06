@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@adobe/jsonschema2md": "^8.0.2",
     "@ai-sdk/openai": "^1.2.5",
     "active-win": "^9.0.0",
     "ai": "^4.1.61",

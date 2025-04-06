@@ -28,8 +28,7 @@ async function main() {
     
     // Play the game with the human player
     await playGame(player, {
-      gameType,
-      ui
+      gameType
     })
   } catch (error) {
     ui.displayError(`Error: ${error instanceof Error ? error.message : String(error)}`)

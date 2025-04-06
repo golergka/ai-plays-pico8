@@ -86,6 +86,7 @@ export class TextAdventure implements SaveableGame {
     }
     
     if (output.exits && output.exits.length > 0) {
+      console.log('debug exits', { exits: output.exits })
       parts.push(`\nExits: ${output.exits.join(', ')}`)
     }
     
@@ -112,8 +113,8 @@ export class TextAdventure implements SaveableGame {
       title: currentRoom.name,
       description: currentRoom.description,
       exits: availableExits,
-      items: currentRoom.items,
-      characters: currentRoom.characters
+      items: currentRoom.items ?? [],
+      characters: currentRoom.characters ?? []
     };
     
     return {
@@ -172,18 +173,25 @@ export class TextAdventure implements SaveableGame {
       }
       
       if (currentRoom.exits?.[moveData.direction]) {
-        const newRoomId = currentRoom.exits[moveData.direction];
-        const newRoom = this.gameMap!.rooms[newRoomId];
+        const newRoomId = currentRoom.exits?.[moveData.direction];
+        if (!newRoomId) {
+          throw new Error("New room not found");
+        }
         this.currentRoomId = newRoomId;
         this.visitedRooms.add(newRoomId);
+
+        const newRoom = this.gameMap!.rooms[newRoomId];
+        if (!newRoom) {
+          throw new Error("New room not found");
+        }
         
         const output: TextAdventureOutput = {
           title: newRoom.name,
           description: newRoom.description,
           feedback: `You move ${moveData.direction}.`,
-          exits: Object.keys(newRoom.name),
-          items: newRoom.items,
-          characters: newRoom.characters
+          exits: newRoom.exits ? Object.keys(newRoom.exits) : [],
+          items: newRoom.items ?? [],
+          characters: newRoom.characters ?? []
         };
         
         return {
@@ -211,8 +219,8 @@ export class TextAdventure implements SaveableGame {
               description: currentRoom.description,
               feedback: `You cannot move ${moveData.direction} from here.`,
               exits,
-              items: currentRoom.items,
-              characters: currentRoom.characters
+              items: currentRoom.items ?? [],
+              characters: currentRoom.characters ?? []
             }),
             actions: {
               look: z.object({
