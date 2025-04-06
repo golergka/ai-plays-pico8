@@ -56,7 +56,7 @@ export async function playGame(
 
       const actionsWithQuit = {
         ...gameState.actions,
-        quit: z.object({}).describe("Quit the current game"),
+        quit: z.object({}).describe("Finish the play-test early. This will not restart the game but take you straight to the final prompt, where you will be asked to provide feedback."),
       };
 
       // Get action from player
