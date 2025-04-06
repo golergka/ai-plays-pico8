@@ -55,6 +55,52 @@ export class TextAdventure implements SaveableGame {
     return currentRoom;
   }
 
+  private createAmbiguousState(target: string, matches: Array<{entity: Entity}>, context: string): StepResult {
+    return {
+      type: "state",
+      state: {
+        gameState: this.formatGameState(),
+        feedback: `Which ${target} do you mean? ${context}: ${matches
+          .map((m) => m.entity.name)
+          .join(", ")}`,
+        actions,
+      },
+    };
+  }
+
+  private createNotFoundState(target: string): StepResult {
+    return {
+      type: "state",
+      state: {
+        gameState: this.formatGameState(),
+        feedback: `You don't see any ${target} here.`,
+        actions,
+      },
+    };
+  }
+
+  private findEntityWithFeedback<T extends Entity>(
+    target: string,
+    entities: Record<string, T> | undefined,
+    context: string,
+    handler: (entity: T) => StepResult
+  ): StepResult | null {
+    if (!entities) {
+      return null;
+    }
+
+    const result = findEntity(target, entities);
+    
+    switch (result.type) {
+      case "found":
+        return handler(result.entity);
+      case "ambiguous":
+        return this.createAmbiguousState(target, result.matches, context);
+      case "notFound":
+        return null;
+    }
+  }
+
   private addScore(points: number, reason: string): string {
     this.score += points;
     return `(+${points} points: ${reason})`;
@@ -77,188 +123,103 @@ export class TextAdventure implements SaveableGame {
     }
 
     // Check features
-    if (currentRoom.features) {
-      const featureResult = findEntity(target, currentRoom.features);
-      switch (featureResult.type) {
-        case "found":
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: featureResult.entity.description,
-              actions,
-            },
-          };
-        case "ambiguous":
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? I can see: ${featureResult.matches
-                .map((m) => m.entity.name)
-                .join(", ")}`,
-              actions,
-            },
-          };
-      }
-    }
+    const featureResult = this.findEntityWithFeedback(
+      target,
+      currentRoom.features,
+      "Features here",
+      (feature) => ({
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: feature.description,
+          actions,
+        },
+      })
+    );
+    if (featureResult) return featureResult;
 
-    // Check inventory items
-    const inventoryResult = findEntity(target, this.inventory);
-    switch (inventoryResult.type) {
-      case "found":
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: inventoryResult.entity.description,
-            actions,
-          },
-        };
-      case "ambiguous":
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `Which ${target} do you mean? In your inventory: ${inventoryResult.matches
-              .map((m) => m.entity.name)
-              .join(", ")}`,
-            actions,
-          },
-        };
-    }
+    // Check inventory
+    const inventoryResult = this.findEntityWithFeedback(
+      target,
+      this.inventory,
+      "In your inventory",
+      (item) => ({
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: item.description,
+          actions,
+        },
+      })
+    );
+    if (inventoryResult) return inventoryResult;
 
     // Check room items
-    if (currentRoom.items) {
-      const itemResult = findEntity(target, currentRoom.items);
-      switch (itemResult.type) {
-        case "found":
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: itemResult.entity.description,
-              actions,
-            },
-          };
-        case "ambiguous":
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? In the room: ${itemResult.matches
-                .map((m) => m.entity.name)
-                .join(", ")}`,
-              actions,
-            },
-          };
-      }
-    }
+    const itemResult = this.findEntityWithFeedback(
+      target,
+      currentRoom.items,
+      "In the room",
+      (item) => ({
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: item.description,
+          actions,
+        },
+      })
+    );
+    if (itemResult) return itemResult;
 
     // Check characters
-    if (currentRoom.characters) {
-      const characterResult = findEntity(target, currentRoom.characters);
-      switch (characterResult.type) {
-        case "found":
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: characterResult.entity.description,
-              actions,
-            },
-          };
-        case "ambiguous":
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? Characters here: ${characterResult.matches
-                .map((m) => m.entity.name)
-                .join(", ")}`,
-              actions,
-            },
-          };
-      }
-    }
+    const characterResult = this.findEntityWithFeedback(
+      target,
+      currentRoom.characters,
+      "Characters here",
+      (character) => ({
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: character.description,
+          actions,
+        },
+      })
+    );
+    if (characterResult) return characterResult;
 
-    return {
-      type: "state",
-      state: {
-        gameState: this.formatGameState(),
-        feedback: `You don't see any ${target} here.`,
-        actions,
-      },
-    };
+    return this.createNotFoundState(target);
   }
 
   private handleTake(actionData: unknown): StepResult {
     const { item: targetItem } = actions.take.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
-    if (!currentRoom.items) {
-      return {
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: `You don't see any ${targetItem} here.`,
-          actions,
-        },
-      };
-    }
-
-    const itemResult = findEntity(targetItem, currentRoom.items);
-    switch (itemResult.type) {
-      case "notFound":
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `You don't see any ${targetItem} here.`,
-            actions,
-          },
-        };
-
-      case "ambiguous":
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `Which ${targetItem} do you mean? Available: ${itemResult.matches
-              .map((m) => m.entity.name)
-              .join(", ")}`,
-            actions,
-          },
-        };
-
-      case "found": {
-        const takenItem = itemResult.entity;
-
-        if (!takenItem.takeable) {
+    return this.findEntityWithFeedback(
+      targetItem,
+      currentRoom.items,
+      "Available",
+      (item) => {
+        if (!item.takeable) {
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `You can't take the ${takenItem.name}.`,
+              feedback: `You can't take the ${item.name}.`,
               actions,
             },
           };
         }
 
         // Remove from room items
-        const { [takenItem.id]: _, ...remainingItems } = currentRoom.items;
+        const { [item.id]: _, ...remainingItems } = currentRoom.items!;
         currentRoom.items = remainingItems;
 
         // Add to inventory
-        this.inventory[takenItem.id] = takenItem;
+        this.inventory[item.id] = item;
 
         // Score based on item value
         let scoreMessage = "";
-        if (takenItem.id === "golden_chalice") {
-          scoreMessage = this.addScore(
-            50,
-            "found the legendary Golden Chalice"
-          );
+        if (item.id === "golden_chalice") {
+          scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
           return {
             type: "result",
             result: {
@@ -269,7 +230,7 @@ export class TextAdventure implements SaveableGame {
               },
             },
           };
-        } else if (takenItem.id === "sacred_gem") {
+        } else if (item.id === "sacred_gem") {
           scoreMessage = this.addScore(20, "found a rare sacred gem");
         } else {
           scoreMessage = this.addScore(5, "collected a treasure");
@@ -279,12 +240,12 @@ export class TextAdventure implements SaveableGame {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `You carefully take the ${takenItem.name}. ${scoreMessage}`,
+            feedback: `You carefully take the ${item.name}. ${scoreMessage}`,
             actions,
           },
         };
       }
-    }
+    ) ?? this.createNotFoundState(targetItem);
   }
 
   private handleMove(actionData: unknown): StepResult {
