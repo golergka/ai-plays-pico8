@@ -7,19 +7,19 @@ import {
   type Entity,
 } from "./types";
 
-export type EntityLookupResult = 
-  | { type: 'found'; entity: Entity; matchedTag: string }
-  | { type: 'ambiguous'; matches: Array<{ entity: Entity; matchedTag: string }> }
+export type EntityLookupResult<T extends Entity> = 
+  | { type: 'found'; entity: T; matchedTag: string }
+  | { type: 'ambiguous'; matches: Array<{ entity: T; matchedTag: string }> }
   | { type: 'notFound' };
 
 /**
  * Find an entity in a collection based on user input
  * Matches against entity tags and handles partial matches
  */
-export function findEntity(
+export function findEntity<T extends Entity>(
   searchText: string,
-  entities: EntityMap
-): EntityLookupResult {
+  entities: Record<string, T>
+): EntityLookupResult<T> {
   const searchWords = searchText.toLowerCase().split(/\s+/);
 
   const [match, ...rest] = Object.values(entities).flatMap((entity) => {
