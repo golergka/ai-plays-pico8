@@ -1,12 +1,26 @@
 import type { GameMap } from "./types";
 
+export const RoomIds = {
+  ENTRANCE: 'entrance',
+  MAIN_HALL: 'mainHall',
+  EAST_WING: 'eastWing',
+  WEST_WING: 'westWing',
+  NORTH_CORRIDOR: 'northCorridor',
+  MEDITATION: 'meditation',
+  GUARD_ROOM: 'guardRoom',
+  INNER_SANCTUM: 'innerSanctum',
+  TREASURE_VAULT: 'treasureVault'
+} as const;
+
+export type RoomId = typeof RoomIds[keyof typeof RoomIds];
+
 export const gameMap: GameMap = {
   title: "Ancient Maze Temple",
   description: "A complex temple filled with twisting corridors and hidden chambers",
-  startRoom: "entrance",
+  startRoom: RoomIds.ENTRANCE,
   rooms: {
-    entrance: {
-      id: "entrance",
+    [RoomIds.ENTRANCE]: {
+      id: RoomIds.ENTRANCE,
       name: "Temple Entrance", 
       description: "A grand entranceway with weathered stone columns. Ancient inscriptions cover the walls. The musty air carries the weight of centuries, and your footsteps echo ominously through the chamber.",
       exits: {
@@ -15,7 +29,7 @@ export const gameMap: GameMap = {
           name: "Northern Passage",
           description: "A passage leading north into the main hall",
           tags: ["north", "passage", "doorway"],
-          targetRoom: "mainHall"
+          targetRoom: RoomIds.MAIN_HALL
         }
       },
       items: {
@@ -48,8 +62,8 @@ export const gameMap: GameMap = {
         }
       }
     },
-    mainHall: {
-      id: "mainHall",
+    [RoomIds.MAIN_HALL]: {
+      id: RoomIds.MAIN_HALL,
       name: "Main Hall",
       description: "A vast ceremonial hall with high ceilings. Faded murals depict forgotten rituals. The air is thick with dust, and your torch casts dancing shadows on the crumbling walls.",
       exits: {
@@ -58,28 +72,28 @@ export const gameMap: GameMap = {
           name: "Southern Passage",
           description: "The passage back to the entrance",
           tags: ["south", "passage", "entrance"],
-          targetRoom: "entrance"
+          targetRoom: RoomIds.ENTRANCE
         },
         east: {
           id: "east",
           name: "Eastern Passage", 
           description: "A passage leading to the east wing",
           tags: ["east", "passage"],
-          targetRoom: "eastWing"
+          targetRoom: RoomIds.EAST_WING
         },
         west: {
           id: "west",
           name: "Western Passage",
           description: "A passage leading to the west wing",
           tags: ["west", "passage"],
-          targetRoom: "westWing"
+          targetRoom: RoomIds.WEST_WING
         },
         north: {
           id: "north",
           name: "Northern Passage",
           description: "A passage leading to the north corridor",
           tags: ["north", "passage"],
-          targetRoom: "northCorridor"
+          targetRoom: RoomIds.NORTH_CORRIDOR
         }
       },
       items: {
