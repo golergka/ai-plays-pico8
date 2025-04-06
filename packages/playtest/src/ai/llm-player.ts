@@ -32,16 +32,27 @@ Assistant inner monologue has been noted, but no in-game action was taken.
 Proceed with your next action.
 `.trim();
 
-const MAX_RETRIES_MESSAGE = (retries: number) => `
+const MAX_RETRIES_MESSAGE = (retries: number) =>
+  `
 No valid tool use found after ${retries} retries
 `.trim();
+
+export enum LLMPlayerEventType {
+  playerInput = "playerInput",
+  error = "error",
+  playerAction = "playerAction",
+  prompt = "prompt",
+  gameAction = "gameAction",
+  gameState = "gameState",
+  playtesterFeedback = "playtesterFeedback",
+}
 
 /**
  * Event emitted during LLM player operation
  */
 export interface LLMPlayerEvent {
-  type: "response" | "error" | "action" | "prompt" | "system";
-  content: string;
+  type: LLMPlayerEventType;
+  message: Message;
   data?: Record<string, unknown> | undefined;
 }
 
@@ -104,7 +115,7 @@ function convertActionSchemas<T extends ActionSchemas>(
  * All game-specific handling should be done at the schema level by the caller.
  */
 export class LLMPlayer implements InputOutput {
-  private chatHistory: Message[] = [];
+  private eventHistory: LLMPlayerEvent[] = [];
   private readonly options: Required<LLMPlayerOptions>;
 
   private lastToolCallId: string | null = null;
@@ -117,13 +128,21 @@ export class LLMPlayer implements InputOutput {
     };
   }
 
+  /**
+   * Add a message to chat history and emit corresponding event
+   */
+  private addMessage(event: LLMPlayerEvent) {
+    this.eventHistory.push(event);
+    this.options.onEvent(event);
+  }
+
   private getChatHistory(): Message[] {
     return [
       {
         role: "system",
         content: SYSTEM_PROMPT,
       },
-      ...this.chatHistory,
+      ...this.eventHistory.map(({ message }) => message),
     ];
   }
 
@@ -149,13 +168,13 @@ export class LLMPlayer implements InputOutput {
         const message = error instanceof Error ? error.message : String(error);
         this.addMessage(
           { role: "system", content: `Error:\n\n${message}` },
-          "error"
+          LLMPlayerEventType.error
         );
         continue;
       }
 
       // Add assistant response to chat history
-      this.addMessage(result.message, "response");
+      this.addMessage(result.message, LLMPlayerEventType.playerAction);
 
       const [toolUse, ...rest] = result.toolUse;
 
@@ -167,7 +186,7 @@ export class LLMPlayer implements InputOutput {
             content: ignoredMessage,
             tool_call_id: failed.callId,
           },
-          "system"
+          LLMPlayerEventType.error
         );
       }
 
@@ -176,7 +195,10 @@ export class LLMPlayer implements InputOutput {
       }
 
       const noAction = NO_ACTION_MESSAGE;
-      this.addMessage({ role: "system", content: noAction }, "system");
+      this.addMessage(
+        { role: "system", content: noAction },
+        LLMPlayerEventType.error
+      );
     }
 
     throw new Error(MAX_RETRIES_MESSAGE(this.options.maxRetries));
@@ -195,19 +217,24 @@ export class LLMPlayer implements InputOutput {
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
     // Add feedback to chat history
-    this.addMessage(
-      this.lastToolCallId
-        ? {
-            role: "tool",
-            content: feedback,
-            tool_call_id: this.lastToolCallId,
-          }
-        : { role: "system", content: feedback },
-      "prompt"
-    );
+    if (feedback) {
+      this.addMessage(
+        this.lastToolCallId
+          ? {
+              role: "tool",
+              content: feedback,
+              tool_call_id: this.lastToolCallId,
+            }
+          : { role: "system", content: feedback },
+        LLMPlayerEventType.gameAction
+      );
+    }
 
     // Add latest game state to chat history
-    this.addMessage({ role: "system", content: gameState }, "system");
+    this.addMessage(
+      { role: "system", content: gameState },
+      LLMPlayerEventType.gameState
+    );
 
     const { definitions, schemas } = convertActionSchemas(actionSchemas);
 
@@ -226,42 +253,33 @@ export class LLMPlayer implements InputOutput {
         error instanceof Error ? error.message : String(error);
       this.addMessage(
         { role: "system", content: `Error:\n\n${errorMessage}` },
-        "error"
+        LLMPlayerEventType.error,
+        { error }
       );
       throw error;
     }
   }
 
   async askForFeedback(): Promise<string> {
-    this.addMessage({ role: "system", content: FEEDBACK_PROMPT }, "system");
+    this.addMessage(
+      { role: "system", content: FEEDBACK_PROMPT },
+      LLMPlayerEventType.prompt
+    );
 
     const feedback = await callOpenAI({
       model: this.options.model,
-      messages: this.chatHistory,
+      messages: this.getChatHistory(),
     });
 
-    this.addMessage(feedback.message, "response");
+    this.addMessage(feedback.message, LLMPlayerEventType.playtesterFeedback);
 
     return feedback.message.content as string;
   }
 
   outputResult(text: string): void {
-    this.addMessage({ role: "system", content: text }, "system");
-  }
-
-  /**
-   * Add a message to chat history and emit corresponding event
-   */
-  private addMessage(
-    message: Message,
-    eventType: LLMPlayerEvent["type"],
-    eventData?: Record<string, unknown>
-  ) {
-    this.chatHistory.push(message);
-    this.options.onEvent({
-      type: eventType,
-      content: message.content as string,
-      data: eventData,
+    this.addMessage({
+      message: { role: "system", content: text },
+      type: LLMPlayerEventType.gameAction,
     });
   }
 
@@ -270,6 +288,6 @@ export class LLMPlayer implements InputOutput {
    */
   async cleanup(): Promise<void> {
     // Clear the chat history
-    this.chatHistory = [];
+    this.eventHistory = [];
   }
 }
