@@ -14,9 +14,9 @@ export const gameMap: GameMap = {
       },
       items: ["torch"],
       features: {
-        "columns": "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
-        "inscriptions": "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
-        "doorway": "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements."
+        "stone columns": "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
+        "wall inscriptions": "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
+        "grand doorway": "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements."
       }
     },
     mainHall: {
@@ -31,9 +31,9 @@ export const gameMap: GameMap = {
       },
       items: ["old_coin"],
       features: {
-        "murals": "The faded murals show robed figures performing complex ceremonies around a golden chalice.",
-        "ceiling": "The vaulted ceiling stretches high above, decorated with astronomical symbols.",
-        "altar": "A large stone altar dominates the center of the hall, its surface stained dark with age."
+        "ancient murals": "The faded murals show robed figures performing complex ceremonies around a golden chalice.",
+        "vaulted ceiling": "The vaulted ceiling stretches high above, decorated with astronomical symbols.",
+        "stone altar": "A large stone altar dominates the center of the hall, its surface stained dark with age."
       }
     },
     eastWing: {
@@ -46,9 +46,9 @@ export const gameMap: GameMap = {
       },
       items: ["ancient_scroll"],
       features: {
-        "shelves": "Wooden shelves line the walls, sagging under the weight of ancient tomes and scrolls.",
-        "desk": "A scholar's desk sits in the corner, covered in dust and fragments of pottery.",
-        "brazier": "An old bronze brazier stands cold and empty, its surface green with age."
+        "wooden shelves": "Wooden shelves line the walls, sagging under the weight of ancient tomes and scrolls.",
+        "scholar's desk": "A scholar's desk sits in the corner, covered in dust and fragments of pottery.",
+        "bronze brazier": "An old bronze brazier stands cold and empty, its surface green with age."
       }
     },
     westWing: {
@@ -61,9 +61,9 @@ export const gameMap: GameMap = {
       },
       items: ["rusty_sword"],
       features: {
-        "weapon_racks": "The wooden weapon racks stand mostly empty, though you can see where weapons once rested.",
-        "training_circle": "A circular area marked in the stone floor suggests this was once a practice area.",
-        "armor_stand": "A toppled armor stand lies in the corner, its bronze surface dulled by time."
+        "weapon racks": "The wooden weapon racks stand mostly empty, though you can see where weapons once rested.",
+        "training circle": "A circular area marked in the stone floor suggests this was once a practice area.",
+        "armor stand": "A toppled armor stand lies in the corner, its bronze surface dulled by time."
       }
     },
     northCorridor: {
@@ -77,9 +77,9 @@ export const gameMap: GameMap = {
         north: "innerSanctum",
       },
       features: {
-        "lights": "Mysterious crystals embedded in the walls emit a soft, pulsing blue light.",
-        "carvings": "The walls are carved with flowing patterns that seem to move in the flickering light.",
-        "archway": "A grand archway ahead bears symbols of power and protection."
+        "crystal lights": "Mysterious crystals embedded in the walls emit a soft, pulsing blue light.",
+        "wall carvings": "The walls are carved with flowing patterns that seem to move in the flickering light.",
+        "grand archway": "A grand archway ahead bears symbols of power and protection."
       }
     },
     meditation: {
@@ -92,9 +92,9 @@ export const gameMap: GameMap = {
       },
       items: ["crystal_shard"],
       features: {
-        "fountain": "A small fountain trickles with surprisingly clear water, creating a peaceful atmosphere.",
-        "crystals": "Natural crystal formations grow from the walls, catching and refracting light beautifully.",
-        "cushions": "Ancient meditation cushions, now mostly dust, are arranged in a circle."
+        "stone fountain": "A small fountain trickles with surprisingly clear water, creating a peaceful atmosphere.",
+        "crystal formations": "Natural crystal formations grow from the walls, catching and refracting light beautifully.",
+        "meditation cushions": "Ancient meditation cushions, now mostly dust, are arranged in a circle."
       }
     },
     guardRoom: {
@@ -107,9 +107,9 @@ export const gameMap: GameMap = {
       },
       items: ["guard_badge"],
       features: {
-        "firepit": "A cold firepit contains the ashes of long-dead fires.",
-        "bunks": "Stone bunks line the walls, their old bedding reduced to dust.",
-        "weapon_rack": "A fallen weapon rack lies against the wall, its contents long since looted."
+        "stone firepit": "A cold firepit contains the ashes of long-dead fires.",
+        "stone bunks": "Stone bunks line the walls, their old bedding reduced to dust.",
+        "fallen weapon rack": "A fallen weapon rack lies against the wall, its contents long since looted."
       }
     },
     innerSanctum: {
@@ -122,9 +122,9 @@ export const gameMap: GameMap = {
       },
       items: ["sacred_gem"],
       features: {
-        "pedestals": "Ornate pedestals display various religious artifacts and offerings.",
-        "symbols": "Glowing symbols on the floor form a complex magical pattern.",
-        "statues": "Golden statues of ancient deities stand in alcoves around the room."
+        "ornate pedestals": "Ornate pedestals display various religious artifacts and offerings.",
+        "glowing symbols": "Glowing symbols on the floor form a complex magical pattern.",
+        "golden statues": "Golden statues of ancient deities stand in alcoves around the room."
       }
     },
     treasureVault: {
@@ -136,9 +136,9 @@ export const gameMap: GameMap = {
       },
       items: ["golden_chalice"],
       features: {
-        "treasure_piles": "Piles of ancient coins and jewelry glitter in your torchlight.",
-        "altar": "A golden altar stands at the center, clearly meant for the legendary chalice.",
-        "murals": "Rich murals depict the history of the temple's treasures and their guardians."
+        "treasure piles": "Piles of ancient coins and jewelry glitter in your torchlight.",
+        "golden altar": "A golden altar stands at the center, clearly meant for the legendary chalice.",
+        "treasure murals": "Rich murals depict the history of the temple's treasures and their guardians."
       }
     },
   },
