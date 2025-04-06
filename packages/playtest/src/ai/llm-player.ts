@@ -187,7 +187,7 @@ export class LLMPlayer implements InputOutput {
   }
 
   private async summariseIfNeccessary(usage: OpenAIResult["usage"]) {
-    if (!usage || usage.total_tokens < 2000) {
+    if (!usage || usage.total_tokens < 5000) {
       return;
     }
 
@@ -203,7 +203,7 @@ export class LLMPlayer implements InputOutput {
         role: "system",
         content: SUMMARIZE_PROMPT
       },
-      ...this.eventHistory.slice(lastSummaryIndex + 1).map((entry) => entry.message),
+      ...this.eventHistory.slice(lastSummaryIndex, -1).map((entry) => entry.message),
     ]
 
     const summaryRes = await callOpenAI({
@@ -241,13 +241,13 @@ export class LLMPlayer implements InputOutput {
           langfuseSessionId: this.options.sessionId,
         });
 
-        this.summariseIfNeccessary(result.usage);
-
         // Add assistant response to chat history
         this.addMessage({
           type: LLMPlayerEventType.playerAction,
           message: result.message,
         });
+
+        await this.summariseIfNeccessary(result.usage);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         this.addMessage({
@@ -353,12 +353,12 @@ export class LLMPlayer implements InputOutput {
       langfuseSessionId: this.options.sessionId,
     });
 
-    this.summariseIfNeccessary(feedback.usage);
-
     this.addMessage({
       type: LLMPlayerEventType.playtesterFeedback,
       message: feedback.message,
     });
+
+    await this.summariseIfNeccessary(feedback.usage);
 
     return feedback.message.content as string;
   }
