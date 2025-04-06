@@ -11,6 +11,7 @@ import type {
   Item,
   Entity,
 } from "./types";
+import { ItemIds } from "./map";
 import { findEntity } from "./utils";
 import {
   DirectionSchema,
@@ -219,7 +220,7 @@ export class TextAdventure implements SaveableGame {
 
         // Score based on item value
         let scoreMessage = "";
-        if (item.id === "golden_chalice") {
+        if (item.id === ItemIds.goldenChalice) {
           scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
           return {
             type: "result",
@@ -231,7 +232,7 @@ export class TextAdventure implements SaveableGame {
               },
             },
           };
-        } else if (item.id === "sacred_gem") {
+        } else if (item.id === ItemIds.sacredGem) {
           scoreMessage = this.addScore(20, "found a rare sacred gem");
         } else {
           scoreMessage = this.addScore(5, "collected a treasure");
