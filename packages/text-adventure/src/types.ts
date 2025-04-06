@@ -28,7 +28,8 @@ export const RoomSchema = z.object({
   description: z.string(),
   items: z.array(z.string()).optional(),
   exits: z.record(DirectionSchema, z.string()).optional(),
-  characters: z.array(z.string()).optional()
+  characters: z.array(z.string()).optional(),
+  features: z.record(z.string(), z.string()).optional(), // Map of feature ID to description
 })
 
 // Item schema

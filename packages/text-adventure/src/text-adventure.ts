@@ -63,6 +63,18 @@ export class TextAdventure implements SaveableGame {
       };
     }
 
+    // Looking at room features
+    if (currentRoom.features && target in currentRoom.features) {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: currentRoom.features[target],
+          actions
+        }
+      };
+    }
+
     // Looking at inventory items
     const inventoryItem = this.gameMap.items?.[target];
     if (inventoryItem && this.inventory.includes(target)) {
@@ -212,6 +224,13 @@ export class TextAdventure implements SaveableGame {
 
     if (currentRoom.items && currentRoom.items.length > 0) {
       parts.push(`You see: ${currentRoom.items.join(", ")}`);
+    }
+
+    if (currentRoom.features) {
+      const features = Object.keys(currentRoom.features);
+      if (features.length > 0) {
+        parts.push(`Notable features: ${features.join(", ")}`);
+      }
     }
 
     if (currentRoom.exits) {
