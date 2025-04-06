@@ -205,12 +205,6 @@ export class LLMPlayer implements InputOutput {
       const actionData = toolUse.call;
       this.lastToolCallId = toolUse.callId;
 
-      this.addMessage(
-        { role: "system", content: `Selected action: ${String(actionName)}` },
-        "action",
-        { action: actionName, args: actionData }
-      );
-
       return [
         actionName,
         actionData as T[keyof T] extends Schema<infer U> ? U : never,
