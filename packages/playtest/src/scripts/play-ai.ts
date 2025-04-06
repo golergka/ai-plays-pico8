@@ -2,7 +2,7 @@
  * Script to let an LLM play a text adventure game
  */
 import { TerminalUI } from "../cli/terminal-ui";
-import { LLMPlayer, type LLMPlayerEvent } from "../ai";
+import { LLMPlayer, LLMPlayerEventType, type LLMPlayerEvent } from "../ai";
 import { playGame } from "./play-game";
 
 async function main() {
@@ -66,46 +66,45 @@ async function main() {
 function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
   return (event: LLMPlayerEvent) => {
     switch (event.type) {
-      case "response":
-        ui.displayHeader("LLM Response");
-        ui.display(ui.color(event.content, "green"));
+      case LLMPlayerEventType.gameAction:
+        ui.displayHeader("Game action response");
+        ui.display(ui.color(event.message.content as string, "green"));
         break;
-      case "error":
+      case LLMPlayerEventType.error:
         ui.displayHeader("Error");
-        ui.display(ui.color(event.content, "red"));
+        ui.display(ui.color(event.message.content as string, "red"));
         break;
-      case "action":
+      case LLMPlayerEventType.playerAction:
         ui.displayHeader("Action");
-        ui.display(ui.color(event.content, "yellow"));
+        ui.display(ui.color(event.message.content as string, "yellow"));
         if (event.data) {
           const { action, args } = event.data;
           ui.display(`  Function: ${ui.color(String(action), "bold")}`);
           ui.display(`  Arguments: ${JSON.stringify(args, null, 2)}`);
         }
         break;
-      case "prompt":
-        ui.displayHeader("Prompt");
-        ui.display(ui.color(event.content, "cyan"));
+      case LLMPlayerEventType.prompt:
+        ui.displayHeader("System prompt");
+        ui.display(ui.color(event.message.content as string, "cyan"));
         if (event.data) {
           const { prompt } = event.data;
           ui.display(`  Prompt: ${ui.color(String(prompt), "bold")}`);
         }
         break;
-      case "system":
-        ui.displayHeader("System Message");
-        ui.display(ui.color(event.content, "blue"));
-        if (event.data) {
-          const { systemMessage } = event.data;
-          ui.display(
-            `  System Message: ${ui.color(String(systemMessage), "bold")}`
-          );
-        }
+      case LLMPlayerEventType.gameState:
+        ui.displayHeader("Game state");
+        ui.display(ui.color(event.message.content as string, "blue"));
         break;
+      case LLMPlayerEventType.playtesterFeedback:
+        ui.displayHeader("Playtester feedback");
+        ui.display(ui.color(event.message.content as string, "yellow"));
+        break;
+
       default:
         ui.displayHeader("Unknown Event");
         ui.display(ui.color(`Unknown event type: ${event.type}`, "red"));
-        if (event.content) {
-          ui.display(`  Content: ${ui.color(event.content, "gray")}`);
+        if (event.message.content) {
+          ui.display(`  Content: ${ui.color(event.message.content as string, "gray")}`);
         }
         if (event.data) {
           ui.display(`  Data: ${JSON.stringify(event.data, null, 2)}`);

@@ -38,7 +38,6 @@ No valid tool use found after ${retries} retries
 `.trim();
 
 export enum LLMPlayerEventType {
-  playerInput = "playerInput",
   error = "error",
   playerAction = "playerAction",
   prompt = "prompt",
