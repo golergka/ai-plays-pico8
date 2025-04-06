@@ -65,11 +65,12 @@ export class TextAdventure implements SaveableGame {
 
     // Looking at room features
     if (currentRoom.features && target in currentRoom.features) {
+      const targetFeature = currentRoom.features[target];
       return {
         type: "state",
         state: {
           gameState: this.formatGameState(),
-          feedback: currentRoom.features[target],
+          feedback: targetFeature ?? `You don't see any ${target} here.`,
           actions
         }
       };
