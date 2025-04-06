@@ -1,0 +1,1 @@
+export { StrategyGame } from './src/strategy-game'

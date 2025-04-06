@@ -5,26 +5,27 @@ import type { StrategyGameOutput, StrategyGameState } from "./types";
 const actions = {
   gather: z
     .object({
-      workers: z.number().min(1).describe("Number of people to send gathering food")
+      workers: z
+        .number()
+        .min(1)
+        .describe("Number of people to send gathering food"),
     })
     .describe("Send people to gather food"),
-  rest: z
-    .object({})
-    .describe("Rest for the day, consuming food")
+  rest: z.object({}).describe("Rest for the day, consuming food"),
 } as const;
 
 export class StrategyGame implements Game {
   private state: StrategyGameState = {
     food: 10,
     population: 5,
-    day: 1
+    day: 1,
   };
 
   async initialize(): Promise<void> {
     this.state = {
       food: 10,
       population: 5,
-      day: 1
+      day: 1,
     };
   }
 
@@ -37,7 +38,7 @@ export class StrategyGame implements Game {
     ].join("\n\n");
   }
 
-  private simulateDay(baseMessage: string): StepResult | null {
+  private simulateDay(baseFeedback: string): StepResult {
     this.state.day += 1;
     const foodConsumed = this.state.population;
     this.state.food -= foodConsumed;
@@ -50,9 +51,9 @@ export class StrategyGame implements Game {
           description: "Your tribe has run out of food and perished.",
           metadata: {
             survived_days: this.state.day,
-            final_population: this.state.population
-          }
-        }
+            final_population: this.state.population,
+          },
+        },
       };
     }
 
@@ -61,31 +62,32 @@ export class StrategyGame implements Game {
       return {
         type: "result",
         result: {
-          description: "Your tribe has grown strong and prosperous! You've won!",
+          description:
+            "Your tribe has grown strong and prosperous! You've won!",
           metadata: {
             survived_days: this.state.day,
             final_population: this.state.population,
-            food_stored: this.state.food
-          }
-        }
+            food_stored: this.state.food,
+          },
+        },
       };
     }
 
     // Check population growth
     if (this.state.food > this.state.population * 2) {
       this.state.population += 1;
-      return {
-        type: "state",
-        state: {
-          output: this.formatOutput(
-            this.getGameState(`${baseMessage} A new member has joined your tribe!`)
-          ),
-          actions
-        }
-      };
+      baseFeedback += `\n\nYour tribe has grown! Population increased to ${this.state.population}.`;
     }
 
-    return null;
+    return {
+      type: 'state',
+      state: {
+        output: this.formatOutput(
+          this.getGameState(`${baseFeedback}\n\nFood consumed: ${foodConsumed}`)
+        ),
+        actions,
+      }
+    }
   }
 
   private getGameState(status: string): StrategyGameOutput {
@@ -93,9 +95,9 @@ export class StrategyGame implements Game {
       status,
       resources: {
         food: this.state.food,
-        population: this.state.population
+        population: this.state.population,
       },
-      day: this.state.day
+      day: this.state.day,
     };
   }
 
@@ -106,68 +108,52 @@ export class StrategyGame implements Game {
 
     return {
       output: this.formatOutput(output),
-      actions
+      actions,
     };
   }
 
   async step(action: [string, unknown]): Promise<StepResult> {
     const [actionType, actionData] = action;
 
-    if (actionType === "gather") {
-      const { workers } = actions.gather.parse(actionData);
-      
-      if (workers > this.state.population) {
+    switch (actionType) {
+      case 'gather': {
+        const { workers } = actions.gather.parse(actionData);
+
+        if (workers > this.state.population) {
+          return {
+            type: "state",
+            state: {
+              output: this.formatOutput(
+                this.getGameState(
+                  `You only have ${this.state.population} people available!`
+                )
+              ),
+              actions,
+            },
+          };
+        }
+
+        const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
+        this.state.food += foodGathered;
+
+        return this.simulateDay(`Your gatherers collected ${foodGathered} food!`);
+
+      }
+      case 'rest': {
+        return this.simulateDay("Your tribe rests for the day.");
+      }
+      default: {
         return {
           type: "state",
           state: {
             output: this.formatOutput(
-              this.getGameState(`You only have ${this.state.population} people available!`)
+              this.getGameState("Action not recognized.")
             ),
-            actions
-          }
+            actions,
+          },
         };
       }
-
-      const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
-      this.state.food += foodGathered;
-      
-      const simResult = this.simulateDay(`Your gatherers collected ${foodGathered} food!`);
-      if (simResult) return simResult;
-
-      return {
-        type: "state",
-        state: {
-          output: this.formatOutput(
-            this.getGameState(`Your gatherers collected ${foodGathered} food!`)
-          ),
-          actions
-        }
-      };
-
-    } else if (actionType === "rest") {
-      const simResult = this.simulateDay("Your tribe rests for the day.");
-      if (simResult) return simResult;
-
-      return {
-        type: "state",
-        state: {
-          output: this.formatOutput(
-            this.getGameState("Your tribe rests for the day.")
-          ),
-          actions
-        }
-      };
     }
-
-    return {
-      type: "state",
-      state: {
-        output: this.formatOutput(
-          this.getGameState("Action not recognized.")
-        ),
-        actions
-      }
-    };
   }
 
   async cleanup(): Promise<void> {

@@ -19,7 +19,7 @@ async function main() {
   ui.displayHeader('LLM Player Demo')
   ui.display(`Usage: bun run play:ai [game-type] [model] [max-retries] [max-steps]`)
   ui.display(`  game-type: Game to play (default: text-adventure)`)
-  ui.display(`            Options: text-adventure, compact-adventure`)
+  ui.display(`            Options: text-adventure, compact-adventure, strategy-game`)
   ui.display(`  model: LLM model to use (default: openrouter/auto)`)
   ui.display(`  max-retries: Maximum retries for invalid actions (default: 3)`)
   ui.display(`  max-steps: Maximum steps to run (default: 10)`)

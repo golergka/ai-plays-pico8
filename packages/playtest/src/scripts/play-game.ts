@@ -3,6 +3,7 @@
  */
 import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
+import { StrategyGame } from "@ai-gamedev/strategy-game";
 import type { Game, InputOutput, GameResult } from "../types";
 
 export interface PlayGameOptions {
@@ -133,15 +134,25 @@ export async function playGame(
  * @returns Initialized game instance or null if game type not found
  */
 export async function initializeGame(gameType: string): Promise<Game | null> {
-  if (gameType === "text-adventure") {
-    const game = new TextAdventure();
-    await game.initialize();
-    return game;
-  } else if (gameType === "compact-adventure") {
-    const game = new CompactTextAdventure();
-    await game.initialize();
-    return game;
+  switch (gameType) {
+    case "text-adventure": {
+      const game = new TextAdventure();
+      await game.initialize();
+      return game;
+    }
+    case 'compact-adventure':
+      {
+        const game = new CompactTextAdventure();
+        await game.initialize();
+        return game;
+      }
+    case 'strategy-game':
+      {
+        const game = new StrategyGame();
+        await game.initialize();
+        return game;
+      }
   }
 
-  return null;
+  throw new Error(`Unknown game type: ${gameType}`);
 }
