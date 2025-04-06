@@ -1,5 +1,18 @@
 import type { GameMap } from "./types";
 
+export enum ItemIds {
+  torch = "torch",
+  oldCoin = "old_coin",
+  ancientScroll = "ancient_scroll",
+  rustySword = "rusty_sword",
+  crystalShard = "crystal_shard",
+  guardBadge = "guard_badge",
+  sacredGem = "sacred_gem",
+  goldenChalice = "golden_chalice",
+}
+
+export type ItemId = (typeof ItemIds)[keyof typeof ItemIds];
+
 export enum RoomIds {
   entrance = "entrance",
   mainHall = "mainHall",
@@ -35,8 +48,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        torch: {
-          id: "torch",
+        [ItemIds.torch]: {
+          id: ItemIds.torch,
           name: "Ancient Torch",
           description:
             "A weathered torch that still burns with an eternal flame",
@@ -104,8 +117,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        old_coin: {
-          id: "old_coin",
+        [ItemIds.oldCoin]: {
+          id: ItemIds.oldCoin,
           name: "Ancient Gold Coin",
           description: "A tarnished gold coin bearing unfamiliar markings",
           tags: ["coin", "gold", "money"],
@@ -158,8 +171,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        ancient_scroll: {
-          id: "ancient_scroll",
+        [ItemIds.ancientScroll]: {
+          id: ItemIds.ancientScroll,
           name: "Ancient Scroll",
           description: "A fragile scroll covered in mysterious writing",
           tags: ["scroll", "paper", "writing"],
@@ -211,8 +224,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        rusty_sword: {
-          id: "rusty_sword",
+        [ItemIds.rustySword]: {
+          id: ItemIds.rustySword,
           name: "Rusty Sword",
           description:
             "An old sword, its blade dulled by rust but still usable",
@@ -325,8 +338,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        crystal_shard: {
-          id: "crystal_shard",
+        [ItemIds.crystalShard]: {
+          id: ItemIds.crystalShard,
           name: "Crystal Shard",
           description:
             "A piece of glowing crystal that thrums with magical energy",
@@ -380,8 +393,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        guard_badge: {
-          id: "guard_badge",
+        [ItemIds.guardBadge]: {
+          id: ItemIds.guardBadge,
           name: "Guard Badge",
           description:
             "An ancient badge of office, still gleaming despite its age",
@@ -434,8 +447,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        sacred_gem: {
-          id: "sacred_gem",
+        [ItemIds.sacredGem]: {
+          id: ItemIds.sacredGem,
           name: "Sacred Gem",
           description:
             "A perfectly cut gem that seems to glow with inner light",
@@ -482,8 +495,8 @@ export const gameMap: GameMap = {
         },
       },
       items: {
-        golden_chalice: {
-          id: "golden_chalice",
+        [ItemIds.goldenChalice]: {
+          id: ItemIds.goldenChalice,
           name: "Golden Chalice",
           description:
             "The legendary chalice of the temple, its surface etched with magical runes",
