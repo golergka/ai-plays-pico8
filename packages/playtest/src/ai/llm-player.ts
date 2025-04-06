@@ -137,13 +137,32 @@ export class LLMPlayer implements InputOutput {
   }
 
   private constructRequestHistory(): Message[] {
-    return [
+    const lastGameState = this.eventHistory.findLastIndex(
+      (event) => event.type === LLMPlayerEventType.gameState
+    );
+    const messageHistory: Message[] = [
       {
         role: "system",
         content: SYSTEM_PROMPT,
-      },
-      ...this.eventHistory.map(({ message }) => message),
-    ];
+      }
+    ]
+    this.eventHistory.forEach((entry, index) => {
+      switch (entry.type) {
+        // Skip all errors and game state messages before the last game state
+        case LLMPlayerEventType.error:
+        case LLMPlayerEventType.gameState:
+          if (index > lastGameState) {
+            messageHistory.push(entry.message);
+          }
+          break;
+
+        default:
+          messageHistory.push(entry.message);
+          break;
+      }
+    })
+
+    return messageHistory;
   }
 
   private async getToolUse(
