@@ -1,11 +1,11 @@
-import type { InputOutput, ActionSchemas } from "../types";
+import type { InputOutput, ActionSchemas, GameResult } from "../types";
 import type { Schema } from "../schema/utils";
 import { z } from "zod";
 import {
   callOpenAI,
   type Message,
-  type OpenAIResult,
   type ToolDefinition,
+  type ToolUse,
 } from "./api";
 import "dotenv/config";
 
@@ -93,7 +93,7 @@ export class LLMPlayer implements InputOutput {
       maxRetries: options.maxRetries || 3,
       systemPrompt:
         options.systemPrompt ||
-        "You are a play-tester for a text-based game. You can take actions using tool usage, as any player. You can also output text as your inner monologue, either as your chain of thought to help you plan your actions, or as comment intended for the game developers. However, your text output will not advance the game.",
+        "You are a play-tester for a text-based game. You can take actions using tool usage, as any player. You can also output text as your inner monologue, either as your chain of thought to help you plan your actions, or as comment intended for the game developers. However, your text output will not advance the game. Only one tool can be used at a time.",
       model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
     };
@@ -112,7 +112,7 @@ export class LLMPlayer implements InputOutput {
   private async getToolUse(
     definitions: ToolDefinition<z.ZodType>[],
     schemas: Record<string, z.ZodType>
-  ): Promise<NonNullable<OpenAIResult["toolUse"]>> {
+  ): Promise<ToolUse> {
     for (let retries = 0; retries < this.options.maxRetries; retries++) {
       let result: Awaited<ReturnType<typeof callOpenAI>>;
       try {
@@ -138,15 +138,24 @@ export class LLMPlayer implements InputOutput {
         this.emitEvent("response", result.message.content as string);
       }
 
-      if (result.toolUse) {
-        return result.toolUse;
-      } else {
-        const noAction = 'Your inner monologue has been noted, but no in-game action was taken.';
+      const [toolUse, ...rest] = result.toolUse;
+
+      if (toolUse === undefined) {
+        const noAction = 'Your inner monologue has been noted, but no in-game action was taken. Proceed with your next action.';
         this.chatHistory.push({
           role: "system",
           content: noAction
         })
         this.emitEvent("system", noAction);
+      } else if (rest.length > 0) {
+        const multipleActions = `Error: using multiple tools at once is not allowed. Proceed to select a single action.`;
+        this.chatHistory.push({
+          role: "system",
+          content: multipleActions
+        })
+        this.emitEvent("system", multipleActions);
+      } else {
+        return toolUse;
       }
     }
 
@@ -206,6 +215,27 @@ export class LLMPlayer implements InputOutput {
       this.emitEvent("error", `Error selecting action: ${errorMessage}`);
       throw error;
     }
+  }
+
+  async askForFeedback(result: GameResult): Promise<string> {
+    this.chatHistory.push({
+      role: "system",
+      content: `Game result:\n\n${result.description}`,
+    })
+    this.chatHistory.push({
+      role: "system",
+      content: "Please provide feedback on the game.",
+    });
+
+    const feedback = await callOpenAI({
+      model: this.options.model,
+      messages: this.chatHistory,
+    });
+
+    this.chatHistory.push(feedback.message);
+    this.emitEvent("response", feedback.message.content as string);
+
+    return feedback.message.content as string;
   }
 
   outputResult(text: string): void {

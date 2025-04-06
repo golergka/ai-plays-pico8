@@ -1,91 +1,95 @@
-import 'dotenv/config'
-import { z } from 'zod'
-import { toJsonSchema } from '../../schema/utils'
-import type { JsonSchema7Type } from 'zod-to-json-schema'
-import OpenAI from 'openai';
-
+import "dotenv/config";
+import { z } from "zod";
+import { toJsonSchema } from "../../schema/utils";
+import type { JsonSchema7Type } from "zod-to-json-schema";
+import OpenAI from "openai";
 
 /**
  * Tool definition with Zod schema
  */
 export interface ToolDefinition<T extends z.ZodType> {
-  name: string
-  description: string
-  schema: T
+  name: string;
+  description: string;
+  schema: T;
 }
 
 /**
  * Tool choice for OpenAI API (internal format)
- * 
+ *
  * @internal This is the format expected by the OpenAI API, not to be used directly
  */
-export type OpenAIToolChoice = 
-  | 'auto' 
-  | 'none' 
-  | { type: 'function'; function: { name: string } }
+export type OpenAIToolChoice =
+  | "auto"
+  | "none"
+  | { type: "function"; function: { name: string } };
 
-export type Message = OpenAI.ChatCompletionMessageParam
+export type Message = OpenAI.ChatCompletionMessageParam;
 
 /**
  * Input parameters for OpenAI API call
  */
 export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
-  model: string
-  messages: OpenAI.ChatCompletionMessageParam[]
-  tools: {
-    definitions: ToolDefinition<z.ZodType>[]
-    schemas: T
-    choice?: 'auto' | 'none' | keyof T
-  }
-  temperature?: number
+  model: string;
+  messages: OpenAI.ChatCompletionMessageParam[];
+  tools?: {
+    definitions: ToolDefinition<z.ZodType>[];
+    schemas: T;
+    choice?: "auto" | "none" | keyof T;
+  };
+  temperature?: number;
 }
+
+export interface ToolUse<T = unknown> {
+    callId: string;
+    call: T;
+    name: string;
+  }
 
 /**
  * Simplified OpenAI response for easier consumption
  */
 export interface OpenAIResult<T = unknown> {
-  message: Message
-  toolUse?: {
-    callId: string;
-    call: T
-    name: string
-  };
+  message: Message;
+  toolUse: ToolUse<T>[];
   usage?: {
-    promptTokens: number
-    completionTokens: number
-    totalTokens: number
-  }
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 /**
  * Create a tool object for OpenAI API from a ToolDefinition
- * 
+ *
  * @param toolDef The tool definition with Zod schema
  * @returns Tool object formatted for OpenAI API
  */
-function createOpenAITool(toolDef: ToolDefinition<z.ZodType>): { type: 'function'; function: { name: string; description: string; parameters: JsonSchema7Type } } {
+function createOpenAITool(toolDef: ToolDefinition<z.ZodType>): {
+  type: "function";
+  function: { name: string; description: string; parameters: JsonSchema7Type };
+} {
   return {
-    type: 'function',
+    type: "function",
     function: {
       name: toolDef.name,
       description: toolDef.description,
-      parameters: toJsonSchema(toolDef.schema)
-    }
-  }
+      parameters: toJsonSchema(toolDef.schema),
+    },
+  };
 }
 
 function outputMessageToInputMessage(
   message: OpenAI.Chat.Completions.ChatCompletionMessage
 ): Message {
   return {
-    name: 'player',
+    name: "player",
     ...message,
-  }
+  };
 }
 
 /**
  * Create a discriminated union schema from tool definitions
- * 
+ *
  * @param toolSchemas Record of tool schemas by name
  * @returns Zod schema that can parse any of the tools
  */
@@ -96,29 +100,31 @@ function createToolCallSchema<T extends Record<string, z.ZodType>>(
   const schemaArray = Object.entries(toolSchemas).map(([name, schema]) => {
     return z.object({
       name: z.literal(name),
-      arguments: schema
-    })
-  })
-  
+      arguments: schema,
+    });
+  });
+
   // Union them together
   // Handle the case when there are 0 or 1 schemas
   if (schemaArray.length === 0) {
     // Make a dummy schema that will never actually match but satisfies the type
     return z.object({
-      name: z.literal('__never__'),
-      arguments: z.object({})
-    }) as any
+      name: z.literal("__never__"),
+      arguments: z.object({}),
+    }) as any;
   } else if (schemaArray.length === 1) {
-    return schemaArray[0] as any
+    return schemaArray[0] as any;
   }
-  
+
   // Cast to unknown first to avoid TS error with the array spread
-  return z.union(schemaArray as unknown as [z.ZodType, z.ZodType, ...z.ZodType[]])
+  return z.union(
+    schemaArray as unknown as [z.ZodType, z.ZodType, ...z.ZodType[]]
+  );
 }
 
 /**
  * Call the OpenAI API with structured parameters
- * 
+ *
  * @param params Structured parameters for the API call
  * @returns A simplified response object with extracted and typed tool call
  */
@@ -130,22 +136,21 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
     model: params.model,
     messages: params.messages,
     // temperature: params.temperature ?? 0.7,
-    tools: params.tools.definitions.map(createOpenAITool),
-    tool_choice: params.tools.choice === "auto" || params.tools.choice === "none" 
-      ? params.tools.choice
-      : {
-          type: "function",
-          function: {
-            name: params.tools.choice as string,
-          },
-      },
     temperature: 0.2,
-  }
+  };
 
-  // Create tool parsing schema from the provided schemas
-  const toolCallSchema = params.tools.choice 
-    ? createToolCallSchema(params.tools.schemas)
-    : null;
+  if (params.tools) {
+    requestParams.tools = params.tools.definitions.map(createOpenAITool);
+    requestParams.tool_choice =
+      params.tools.choice === "auto" || params.tools.choice === "none"
+        ? params.tools.choice
+        : {
+            type: "function",
+            function: {
+              name: params.tools.choice as string,
+            },
+          };
+  }
 
   // Initialize OpenAI client
   const client = new OpenAI({
@@ -164,12 +169,14 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   }
 
   if (!rawResponse.choices) {
-    console.log('response', rawResponse);
+    console.log("response", rawResponse);
     throw new Error("No choices in the response");
   }
 
-  const message = rawResponse.choices.map(c => c.message).filter(m => m !== undefined)[0];
-  
+  const message = rawResponse.choices
+    .map((c) => c.message)
+    .filter((m) => m !== undefined)[0];
+
   if (!message) {
     throw new Error("No valid message in the response");
   }
@@ -177,6 +184,7 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   // Create the simplified result object
   const result: OpenAIResult<z.infer<T[keyof T]>> = {
     message: outputMessageToInputMessage(message),
+    toolUse: [],
   };
 
   // Add usage if available
@@ -188,10 +196,13 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
     };
   }
 
-  // Extract tool call if present
-  if (message?.tool_calls?.[0]) {
-    const toolCall = message.tool_calls[0];
+  // Create tool parsing schema from the provided schemas
+  const toolCallSchema = params.tools?.choice
+    ? createToolCallSchema(params.tools.schemas)
+    : null;
 
+  // Extract tool call if present
+  for (const toolCall of message.tool_calls ?? []) {
     // Parse arguments if schema is available
     if (toolCallSchema && params.tools?.schemas) {
       const parsedArgs = JSON.parse(toolCall.function.arguments);
@@ -212,28 +223,28 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
       // Parse the args with the specific schema
       try {
         const validArgs = schema.parse(parsedArgs);
-        result.toolUse = {
+        result.toolUse.push({
           call: validArgs,
           name: toolName,
           callId: toolCall.id,
-        };
+        });
       } catch (error) {
         // Error will be thrown with details
         throw new Error(
           `Invalid tool arguments: ${
             error instanceof Error ? error.message : String(error)
           }`,
-          { cause: error, }
+          { cause: error }
         );
       }
     } else {
       // No schema available, just parse the JSON
       try {
-        result.toolUse = {
+        result.toolUse.push({
           call: JSON.parse(toolCall.function.arguments),
           name: toolCall.function.name,
           callId: toolCall.id,
-        };
+        });
       } catch (error) {
         // Error will be thrown with details
         throw new Error(
@@ -244,6 +255,6 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
       }
     }
   }
-  
-  return result
+
+  return result;
 }
