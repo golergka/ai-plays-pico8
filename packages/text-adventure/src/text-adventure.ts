@@ -31,7 +31,7 @@ const actions = {
 export class TextAdventure implements SaveableGame {
   private gameMap: GameMap = gameMap;
   private currentRoomId: string = "";
-  private inventory: ItemMap = {};
+  private inventory: Record<string, Item> = {};
   private visitedRooms: Set<string> = new Set();
   private score: number = 0;
 
@@ -182,7 +182,7 @@ export class TextAdventure implements SaveableGame {
     const { item: targetItem } = actions.take.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
-    if (!this.gameMap.items || !currentRoom.items) {
+    if (!currentRoom.items) {
       return {
         type: "state",
         state: {
@@ -193,7 +193,7 @@ export class TextAdventure implements SaveableGame {
       };
     }
 
-    const itemResult = findEntity(targetItem, this.gameMap.items);
+    const itemResult = findEntity(targetItem, currentRoom.items);
     switch (itemResult.type) {
       case 'notFound':
         return {
@@ -205,49 +205,40 @@ export class TextAdventure implements SaveableGame {
           }
         };
 
-      case 'ambiguous': {
-        const roomMatches = itemResult.matches
-          .filter(m => currentRoom.items?.includes(m.entity.id));
-        if (roomMatches.length === 0) {
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: `You don't see any ${targetItem} here.`,
-              actions
-            }
-          };
-        }
+      case 'ambiguous':
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `Which ${targetItem} do you mean? Available: ${roomMatches.map(m => m.entity.name).join(', ')}`,
+            feedback: `Which ${targetItem} do you mean? Available: ${itemResult.matches.map(m => m.entity.name).join(', ')}`,
             actions
           }
         };
-      }
 
       case 'found': {
-        if (!currentRoom.items.includes(itemResult.entity.id)) {
+        const takenItem = itemResult.entity;
+        
+        if (!takenItem.takeable) {
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `You don't see any ${itemResult.entity.name} here.`,
+              feedback: `You can't take the ${takenItem.name}.`,
               actions
             }
           };
         }
 
-        // Remove item from room and add to inventory
-        const { [item.id]: takenItem, ...remainingItems } = currentRoom.items;
+        // Remove from room items
+        const { [takenItem.id]: _, ...remainingItems } = currentRoom.items;
         currentRoom.items = remainingItems;
-        this.inventory[item.id] = item;
+        
+        // Add to inventory
+        this.inventory[takenItem.id] = takenItem;
 
         // Score based on item value
         let scoreMessage = "";
-        if (itemResult.entity.id === "golden_chalice") {
+        if (takenItem.id === "golden_chalice") {
           scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
           return {
             type: "result",
@@ -259,7 +250,7 @@ export class TextAdventure implements SaveableGame {
               }
             }
           };
-        } else if (itemResult.entity.id === "sacred_gem") {
+        } else if (takenItem.id === "sacred_gem") {
           scoreMessage = this.addScore(20, "found a rare sacred gem");
         } else {
           scoreMessage = this.addScore(5, "collected a treasure");
@@ -269,7 +260,7 @@ export class TextAdventure implements SaveableGame {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `You carefully take the ${itemResult.entity.name}. ${scoreMessage}`,
+            feedback: `You carefully take the ${takenItem.name}. ${scoreMessage}`,
             actions
           }
         };
