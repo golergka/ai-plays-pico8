@@ -113,58 +113,52 @@ export class TextAdventure implements SaveableGame {
     }
 
     // Check room items
-    if (this.gameMap.items && currentRoom.items) {
-      const itemResult = findEntity(target, this.gameMap.items);
-      if (itemResult.type === 'found' && currentRoom.items.includes(itemResult.entity.id)) {
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: itemResult.entity.description,
-            actions
-          }
-        };
-      } else if (itemResult.type === 'ambiguous') {
-        const roomMatches = itemResult.matches
-          .filter(m => currentRoom.items?.includes(m.entity.id));
-        if (roomMatches.length > 0) {
+    if (currentRoom.items) {
+      const itemResult = findEntity(target, currentRoom.items);
+      switch (itemResult.type) {
+        case 'found':
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? In the room: ${roomMatches.map(m => m.entity.name).join(', ')}`,
+              feedback: itemResult.entity.description,
               actions
             }
           };
-        }
+        case 'ambiguous':
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: `Which ${target} do you mean? In the room: ${itemResult.matches.map(m => m.entity.name).join(', ')}`,
+              actions
+            }
+          };
       }
     }
 
     // Check characters
-    if (this.gameMap.characters && currentRoom.characters) {
-      const characterResult = findEntity(target, this.gameMap.characters);
-      if (characterResult.type === 'found' && currentRoom.characters.includes(characterResult.entity.id)) {
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: characterResult.entity.description,
-            actions
-          }
-        };
-      } else if (characterResult.type === 'ambiguous') {
-        const roomMatches = characterResult.matches
-          .filter(m => currentRoom.characters?.includes(m.entity.id));
-        if (roomMatches.length > 0) {
+    if (currentRoom.characters) {
+      const characterResult = findEntity(target, currentRoom.characters);
+      switch (characterResult.type) {
+        case 'found':
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? Characters here: ${roomMatches.map(m => m.entity.name).join(', ')}`,
+              feedback: characterResult.entity.description,
               actions
             }
           };
-        }
+        case 'ambiguous':
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: `Which ${target} do you mean? Characters here: ${characterResult.matches.map(m => m.entity.name).join(', ')}`,
+              actions
+            }
+          };
       }
     }
 
