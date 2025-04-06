@@ -381,20 +381,6 @@ export class TextAdventure implements SaveableGame {
       throw new Error("Current room not found");
     }
 
-    // Random chance of immediate game over
-    if (Math.random() < 0.2) { // 20% chance
-      const result = this.gameOver(
-        "As you approach the temple entrance, you trigger an ancient trap. " +
-        "A massive stone block falls from above, crushing you instantly. " +
-        "Perhaps there's a safer approach..."
-      );
-      return {
-        gameState: this.formatGameState(),
-        feedback: result.result.description,
-        actions,
-      };
-    }
-
     return {
       gameState: this.formatGameState(),
       feedback: "Welcome to the Ancient Maze Temple. Your adventure begins...",
