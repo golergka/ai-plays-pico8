@@ -86,7 +86,6 @@ export class TextAdventure implements SaveableGame {
     }
     
     if (output.exits && output.exits.length > 0) {
-      console.log('debug exits', { exits: output.exits })
       parts.push(`\nExits: ${output.exits.join(', ')}`)
     }
     

@@ -156,11 +156,10 @@ export class LLMPlayer implements InputOutput {
             role: 'assistant',
             content: result.content
           })
-          
-          throw new Error(`LLM returned text response instead of selecting an action: ${result.content}`)
+          return;
         }
         
-        throw new Error('LLM returned empty response without selecting an action')
+        throw new Error('LLM returned empty response without selecting an action or emitting content')
       } catch (e: unknown) {
         // Just throw the error to be handled by the caller
         
