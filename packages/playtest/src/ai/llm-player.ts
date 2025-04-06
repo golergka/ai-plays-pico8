@@ -23,6 +23,19 @@ You can assume a role of a qualified QA and game designer to steer developers in
 the right direction.
 `.trim();
 
+const IGNORED_TOOL_MESSAGE = `
+Please only use one tool at a time. This tool call has been ignored.
+`.trim();
+
+const NO_ACTION_MESSAGE = `
+Assistant inner monologue has been noted, but no in-game action was taken. 
+Proceed with your next action.
+`.trim();
+
+const MAX_RETRIES_MESSAGE = (retries: number) => `
+No valid tool use found after ${retries} retries
+`.trim();
+
 /**
  * Event emitted during LLM player operation
  */
@@ -45,7 +58,6 @@ export interface LLMPlayerOptions {
    * Maximum number of retries for getting a valid action
    */
   maxRetries?: number;
-
 
   /**
    * Model to use
@@ -109,7 +121,7 @@ export class LLMPlayer implements InputOutput {
     return [
       {
         role: "system",
-        content: SYSTEM_PROMPT
+        content: SYSTEM_PROMPT,
       },
       ...this.chatHistory,
     ];
@@ -148,7 +160,7 @@ export class LLMPlayer implements InputOutput {
       const [toolUse, ...rest] = result.toolUse;
 
       for (const failed of rest) {
-        const ignoredMessage = `Please only use one tool at a time. This tool call has been ignored.`;
+        const ignoredMessage = IGNORED_TOOL_MESSAGE;
         this.addMessage(
           {
             role: "tool",
@@ -163,14 +175,11 @@ export class LLMPlayer implements InputOutput {
         return toolUse;
       }
 
-      const noAction =
-        "Assistant inner monologue has been noted, but no in-game action was taken. Proceed with your next action.";
+      const noAction = NO_ACTION_MESSAGE;
       this.addMessage({ role: "system", content: noAction }, "system");
     }
 
-    throw new Error(
-      `No valid tool use found after ${this.options.maxRetries} retries`
-    );
+    throw new Error(MAX_RETRIES_MESSAGE(this.options.maxRetries));
   }
 
   /**
@@ -185,7 +194,6 @@ export class LLMPlayer implements InputOutput {
     feedback: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-
     // Add feedback to chat history
     this.addMessage(
       this.lastToolCallId
@@ -199,10 +207,7 @@ export class LLMPlayer implements InputOutput {
     );
 
     // Add latest game state to chat history
-    this.addMessage(
-      { role: "system", content: gameState },
-      "system"
-    );
+    this.addMessage({ role: "system", content: gameState }, "system");
 
     const { definitions, schemas } = convertActionSchemas(actionSchemas);
 
@@ -228,10 +233,7 @@ export class LLMPlayer implements InputOutput {
   }
 
   async askForFeedback(): Promise<string> {
-    this.addMessage(
-      { role: "system", content: FEEDBACK_PROMPT },
-      "system"
-    );
+    this.addMessage({ role: "system", content: FEEDBACK_PROMPT }, "system");
 
     const feedback = await callOpenAI({
       model: this.options.model,
