@@ -67,15 +67,17 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
   return (event: LLMPlayerEvent) => {
     switch (event.type) {
       case LLMPlayerEventType.gameAction:
-        ui.displayHeader("Game action response");
+        ui.displayHeader("Game output");
         ui.display(ui.color(event.message.content as string, "green"));
         break;
+
       case LLMPlayerEventType.error:
         ui.displayHeader("Error");
         ui.display(ui.color(event.message.content as string, "red"));
         break;
+
       case LLMPlayerEventType.playerAction:
-        ui.displayHeader("Action");
+        ui.displayHeader("LLM Player action");
         ui.display(ui.color(event.message.content as string, "yellow"));
         if (event.data) {
           const { action, args } = event.data;
@@ -83,6 +85,7 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
           ui.display(`  Arguments: ${JSON.stringify(args, null, 2)}`);
         }
         break;
+
       case LLMPlayerEventType.prompt:
         ui.displayHeader("System prompt");
         ui.display(ui.color(event.message.content as string, "cyan"));
@@ -91,25 +94,38 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
           ui.display(`  Prompt: ${ui.color(String(prompt), "bold")}`);
         }
         break;
+
       case LLMPlayerEventType.gameState:
         ui.displayHeader("Game state");
         ui.display(ui.color(event.message.content as string, "blue"));
         break;
+
       case LLMPlayerEventType.playtesterFeedback:
         ui.displayHeader("Playtester feedback");
         ui.display(ui.color(event.message.content as string, "yellow"));
+        break;
+
+      case LLMPlayerEventType.summary:
+        ui.displayHeader("Summarised game log");
+        ui.display(ui.color(event.message.content as string, "red"));
         break;
 
       default:
         ui.displayHeader("Unknown Event");
         ui.display(ui.color(`Unknown event type: ${event.type}`, "red"));
         if (event.message.content) {
-          ui.display(`  Content: ${ui.color(event.message.content as string, "gray")}`);
+          ui.display(
+            `  Content: ${ui.color(event.message.content as string, "gray")}`
+          );
         }
         if (event.data) {
           ui.display(`  Data: ${JSON.stringify(event.data, null, 2)}`);
         }
         break;
+    }
+
+    if (event.data) {
+      ui.display(ui.color(JSON.stringify(event.data, null, 2), "gray"));
     }
   };
 }

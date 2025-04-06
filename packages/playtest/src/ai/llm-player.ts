@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   callOpenAI,
   type Message,
+  type OpenAIResult,
   type ToolDefinition,
   type ToolUse,
 } from "./api";
@@ -22,6 +23,11 @@ const FEEDBACK_PROMPT = `
 As a play-tester, please provide feedback on the game that you have just played. 
 You can assume a role of a qualified QA and game designer to steer developers in 
 the right direction.
+`.trim();
+
+const SUMMARIZE_PROMPT = `
+Condense the following play‑log so a future agent can keep playing flawlessly.
+Omit fluff, keep essential game state and internal monologue.
 `.trim();
 
 const IGNORED_TOOL_MESSAGE = `
@@ -45,6 +51,7 @@ export enum LLMPlayerEventType {
   gameAction = "gameAction",
   gameState = "gameState",
   playtesterFeedback = "playtesterFeedback",
+  summary = "summary",
 }
 
 /**
@@ -127,7 +134,7 @@ export class LLMPlayer implements InputOutput {
       maxRetries: options.maxRetries || 3,
       model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
-      sessionId: randomUUID()
+      sessionId: randomUUID(),
     };
   }
 
@@ -140,21 +147,25 @@ export class LLMPlayer implements InputOutput {
   }
 
   private constructRequestHistory(): Message[] {
-    const lastGameState = this.eventHistory.findLastIndex(
+    const lastGameStateIndex = this.eventHistory.findLastIndex(
       (event) => event.type === LLMPlayerEventType.gameState
+    );
+    const lastSummaryIndex = this.eventHistory.findLastIndex(
+      (event) => event.type === LLMPlayerEventType.summary
     );
     const messageHistory: Message[] = [
       {
         role: "system",
         content: SYSTEM_PROMPT,
-      }
-    ]
-    this.eventHistory.forEach((entry, index) => {
+      },
+    ];
+
+    // Start at the last summary, we don't need any messages before that
+    this.eventHistory.slice(lastSummaryIndex).forEach((entry, index) => {
       switch (entry.type) {
-        // Skip all errors and game state messages before the last game state
+        // Skip all errors messages before the last game state
         case LLMPlayerEventType.error:
-        case LLMPlayerEventType.gameState:
-          if (index >= lastGameState) {
+          if (index >= lastGameStateIndex) {
             messageHistory.push(entry.message);
           }
           break;
@@ -163,9 +174,42 @@ export class LLMPlayer implements InputOutput {
           messageHistory.push(entry.message);
           break;
       }
-    })
+    });
 
     return messageHistory;
+  }
+
+  private async summariseIfNeccessary(usage: OpenAIResult["usage"]) {
+    if (!usage || usage.total_tokens < 2000) {
+      return;
+    }
+
+    const lastSummaryIndex = this.eventHistory.findLastIndex(
+      (e) => e.type === LLMPlayerEventType.summary
+    );
+
+    const messages: Message[] = [
+      {
+        role: "system",
+        content: SUMMARIZE_PROMPT
+      },
+      ...this.eventHistory.slice(lastSummaryIndex + 1).map((entry) => entry.message),
+    ]
+
+    const summaryRes = await callOpenAI({
+      messages,
+      langfuseSessionId: this.options.sessionId,
+      model: this.options.model,
+    });
+
+    this.addMessage({
+      type: LLMPlayerEventType.summary,
+      message: summaryRes.message,
+      data: {
+        oldUsage: usage,
+        newUsage: summaryRes.usage,
+      }
+    });
   }
 
   private async getToolUse(
@@ -186,20 +230,22 @@ export class LLMPlayer implements InputOutput {
           },
           langfuseSessionId: this.options.sessionId,
         });
+
+        this.summariseIfNeccessary(result.usage);
+
+        // Add assistant response to chat history
+        this.addMessage({
+          type: LLMPlayerEventType.playerAction,
+          message: result.message,
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         this.addMessage({
           type: LLMPlayerEventType.error,
-          message: { role: "system", content: `Error:\n\n${message}` }
+          message: { role: "system", content: `Error:\n\n${message}` },
         });
         continue;
       }
-
-      // Add assistant response to chat history
-      this.addMessage({
-        type: LLMPlayerEventType.playerAction,
-        message: result.message
-      });
 
       const [toolUse, ...rest] = result.toolUse;
 
@@ -211,7 +257,7 @@ export class LLMPlayer implements InputOutput {
             role: "tool",
             content: ignoredMessage,
             tool_call_id: failed.callId,
-          }
+          },
         });
       }
 
@@ -222,7 +268,7 @@ export class LLMPlayer implements InputOutput {
       const noAction = NO_ACTION_MESSAGE;
       this.addMessage({
         type: LLMPlayerEventType.error,
-        message: { role: "system", content: noAction }
+        message: { role: "system", content: noAction },
       });
     }
 
@@ -251,14 +297,14 @@ export class LLMPlayer implements InputOutput {
               content: feedback,
               tool_call_id: this.lastToolCallId,
             }
-          : { role: "system", content: feedback }
+          : { role: "system", content: feedback },
       });
     }
 
     // Add latest game state to chat history
     this.addMessage({
       type: LLMPlayerEventType.gameState,
-      message: { role: "system", content: gameState }
+      message: { role: "system", content: gameState },
     });
 
     const { definitions, schemas } = convertActionSchemas(actionSchemas);
@@ -279,7 +325,7 @@ export class LLMPlayer implements InputOutput {
       this.addMessage({
         type: LLMPlayerEventType.error,
         message: { role: "system", content: `Error:\n\n${errorMessage}` },
-        data: { error }
+        data: { error },
       });
       throw error;
     }
@@ -288,7 +334,7 @@ export class LLMPlayer implements InputOutput {
   async askForFeedback(): Promise<string> {
     this.addMessage({
       type: LLMPlayerEventType.prompt,
-      message: { role: "system", content: FEEDBACK_PROMPT }
+      message: { role: "system", content: FEEDBACK_PROMPT },
     });
 
     const feedback = await callOpenAI({
@@ -297,9 +343,11 @@ export class LLMPlayer implements InputOutput {
       langfuseSessionId: this.options.sessionId,
     });
 
+    this.summariseIfNeccessary(feedback.usage);
+
     this.addMessage({
       type: LLMPlayerEventType.playtesterFeedback,
-      message: feedback.message
+      message: feedback.message,
     });
 
     return feedback.message.content as string;

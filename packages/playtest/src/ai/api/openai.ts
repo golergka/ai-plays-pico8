@@ -55,11 +55,7 @@ export interface ToolUse<T = unknown> {
 export interface OpenAIResult<T = unknown> {
   message: Message;
   toolUse: ToolUse<T>[];
-  usage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
+  usage?: OpenAI.CompletionUsage | undefined;
 }
 
 /**
@@ -194,16 +190,8 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   const result: OpenAIResult<z.infer<T[keyof T]>> = {
     message: outputMessageToInputMessage(message),
     toolUse: [],
+    usage: rawResponse.usage
   };
-
-  // Add usage if available
-  if (rawResponse.usage) {
-    result.usage = {
-      promptTokens: rawResponse.usage.prompt_tokens,
-      completionTokens: rawResponse.usage.completion_tokens,
-      totalTokens: rawResponse.usage.total_tokens,
-    };
-  }
 
   // Create tool parsing schema from the provided schemas
   const toolCallSchema = params.tools?.choice
