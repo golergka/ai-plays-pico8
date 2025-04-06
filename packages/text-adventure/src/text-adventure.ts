@@ -39,6 +39,99 @@ export class TextAdventure implements SaveableGame {
     return `(+${points} points: ${reason})`;
   }
 
+  private handleLook(): StepResult {
+    return {
+      type: "state",
+      state: {
+        gameState: this.formatGameState(),
+        feedback: "You see nothing special.",
+        actions
+      }
+    };
+  }
+
+  private handleTake(actionData: unknown): StepResult {
+    const { item } = actions.take.parse(actionData);
+    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
+    const itemIndex = currentRoom.items?.indexOf(item) ?? -1;
+
+    if (itemIndex === -1) {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `You search for the ${item}, but it's not here.`,
+          actions
+        }
+      };
+    }
+
+    // Remove item from room and add to inventory
+    currentRoom.items = currentRoom.items?.filter((i) => i !== item);
+    this.inventory.push(item);
+
+    // Score based on item value
+    let scoreMessage = "";
+    if (item === "golden_chalice") {
+      scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
+      return {
+        type: "result",
+        result: {
+          description: `Congratulations! You've found the Golden Chalice and won the game! Final score: ${this.score}`,
+          metadata: {
+            score: this.score,
+            inventory: this.inventory,
+          }
+        }
+      };
+    } else if (item === "sacred_gem") {
+      scoreMessage = this.addScore(20, "found a rare sacred gem");
+    } else {
+      scoreMessage = this.addScore(5, "collected a treasure");
+    }
+
+    return {
+      type: "state",
+      state: {
+        gameState: this.formatGameState(),
+        feedback: `You carefully take the ${item}. ${scoreMessage}`,
+        actions
+      }
+    };
+  }
+
+  private handleMove(actionData: unknown): StepResult {
+    const { direction } = actions.move.parse(actionData);
+    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
+
+    if (currentRoom.exits?.[direction]) {
+      const newRoomId = currentRoom.exits[direction];
+      if (!newRoomId) {
+        throw new Error("New room not found");
+      }
+      this.currentRoomId = newRoomId;
+      this.visitedRooms.add(newRoomId);
+
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `You move ${direction}.`,
+          actions
+        }
+      };
+    } else {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `You cannot move ${direction} from here.`,
+          actions
+        }
+      };
+    }
+  }
+
   /**
    * Initialize the game
    */
@@ -103,108 +196,32 @@ export class TextAdventure implements SaveableGame {
    */
   async step(action: [string, unknown]): Promise<StepResult> {
     const [actionType, actionData] = action;
-    let currentRoom = this.gameMap!.rooms[this.currentRoomId];
+    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
     
     if (!currentRoom) {
       throw new Error("Current room not found");
     }
 
-    if (actionType === "look") {
-      return {
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: "You see nothing special.",
-          actions
-        }
-      };
-    } else if (actionType === "take") {
-      const { item } = actions.take.parse(actionData);
-      const itemIndex = currentRoom.items?.indexOf(item) ?? -1;
-
-      if (itemIndex === -1) {
+    switch (actionType) {
+      case "look":
+        return this.handleLook();
+      
+      case "take":
+        return this.handleTake(actionData);
+      
+      case "move":
+        return this.handleMove(actionData);
+      
+      default:
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `You search for the ${item}, but it's not here.`,
+            feedback: "Action not recognized. Please try a different action.",
             actions
           }
         };
-      }
-
-      // Remove item from room and add to inventory
-      currentRoom.items = currentRoom.items?.filter((i) => i !== item);
-      this.inventory.push(item);
-
-      // Score based on item value
-      let scoreMessage = "";
-      if (item === "golden_chalice") {
-        scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
-        return {
-          type: "result",
-          result: {
-            description: `Congratulations! You've found the Golden Chalice and won the game! Final score: ${this.score}`,
-            metadata: {
-              score: this.score,
-              inventory: this.inventory,
-            }
-          }
-        };
-      } else if (item === "sacred_gem") {
-        scoreMessage = this.addScore(20, "found a rare sacred gem");
-      } else {
-        scoreMessage = this.addScore(5, "collected a treasure");
-      }
-
-      return {
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: `You carefully take the ${item}. ${scoreMessage}`,
-          actions
-        }
-      };
-    } else if (actionType === "move") {
-      const { direction } = actions.move.parse(actionData);
-
-      if (currentRoom.exits?.[direction]) {
-        const newRoomId = currentRoom.exits[direction];
-        if (!newRoomId) {
-          throw new Error("New room not found");
-        }
-        this.currentRoomId = newRoomId;
-        this.visitedRooms.add(newRoomId);
-
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `You move ${direction}.`,
-            actions
-          }
-        };
-      } else {
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `You cannot move ${direction} from here.`,
-            actions
-          }
-        };
-      }
     }
-
-    // Default return for unrecognized actions
-    return {
-      type: "state",
-      state: {
-        gameState: this.formatGameState(),
-        feedback: "Action not recognized. Please try a different action.",
-        actions
-      }
-    };
   }
 
   /**
