@@ -147,12 +147,19 @@ export class LLMPlayer implements InputOutput {
   }
 
   private constructRequestHistory(): Message[] {
-    const lastGameStateIndex = this.eventHistory.findLastIndex(
+    let lastGameStateIndex = this.eventHistory.findLastIndex(
       (event) => event.type === LLMPlayerEventType.gameState
     );
-    const lastSummaryIndex = this.eventHistory.findLastIndex(
+    if (lastGameStateIndex === -1) {
+      lastGameStateIndex = 0;
+    }
+    // Find the last summary index
+    let lastSummaryIndex = this.eventHistory.findLastIndex(
       (event) => event.type === LLMPlayerEventType.summary
     );
+    if (lastSummaryIndex === -1) {
+      lastSummaryIndex = 0;
+    }
     const messageHistory: Message[] = [
       {
         role: "system",
@@ -184,9 +191,12 @@ export class LLMPlayer implements InputOutput {
       return;
     }
 
-    const lastSummaryIndex = this.eventHistory.findLastIndex(
+    let lastSummaryIndex = this.eventHistory.findLastIndex(
       (e) => e.type === LLMPlayerEventType.summary
     );
+    if (lastSummaryIndex === -1) {
+      lastSummaryIndex = 0;
+    }
 
     const messages: Message[] = [
       {
