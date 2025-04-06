@@ -258,7 +258,7 @@ export class TextAdventure implements SaveableGame {
 
     switch (actionType) {
       case "look":
-        return this.handleLook();
+        return this.handleLook(actionData);
       
       case "take":
         return this.handleTake(actionData);
