@@ -1,40 +1,54 @@
 /**
  * Utility functions for text adventure games
  */
-import { TextAdventure } from './text-adventure'
-import { TextAdventureSaveSchema, type EntityMapData, type EntityLookupResult } from './types'
+import { TextAdventure } from "./text-adventure";
+import {
+  TextAdventureSaveSchema,
+  type Entity,
+} from "./types";
+
+export type EntityLookupResult = 
+  | { type: 'found'; entity: Entity; matchedTag: string }
+  | { type: 'ambiguous'; matches: Array<{ entity: Entity; matchedTag: string }> }
+  | { type: 'notFound' };
 
 /**
  * Find an entity in a collection based on user input
  * Matches against entity tags and handles partial matches
  */
-export function findEntity<T extends EntityMapData>(
+export function findEntity(
   searchText: string,
-  entities: Record<string, T>
-): EntityLookupResult<T> {
-  const searchWords = searchText.toLowerCase().split(/\s+/)
-  
-  const matches = Object.values(entities)
-    .flatMap(entity => {
-      const matchingTags = entity.tags
-        .filter(tag => searchWords.some(word => tag.toLowerCase().includes(word.toLowerCase())))
-        .map(matchedTag => ({ entity, matchedTag }))
-      return matchingTags
-    })
+  entities: EntityMap
+): EntityLookupResult {
+  const searchWords = searchText.toLowerCase().split(/\s+/);
 
-  if (matches.length === 0) {
-    return { type: 'notFound' }
+  const [match, ...rest] = Object.values(entities).flatMap((entity) => {
+    const matchingTags = entity.tags
+      .filter((tag) =>
+        searchWords.some((word) =>
+          tag.toLowerCase().includes(word.toLowerCase())
+        )
+      )
+      .map((matchedTag) => ({ entity, matchedTag }));
+    return matchingTags;
+  });
+
+  if (!match) {
+    return { type: "notFound" };
   }
-  
-  if (matches.length === 1) {
-    return { 
-      type: 'found', 
-      entity: matches[0].entity, 
-      matchedTag: matches[0].matchedTag 
-    }
+
+  if (rest.length > 0) {
+    return {
+      type: "ambiguous",
+      matches: [match, ...rest],
+    };
   }
-  
-  return { type: 'ambiguous', matches }
+
+  return {
+    type: "found",
+    entity: match.entity,
+    matchedTag: match.matchedTag,
+  };
 }
 
 /**
@@ -43,23 +57,25 @@ export function findEntity<T extends EntityMapData>(
  * @param saveData The save data to load (must match TextAdventureSaveSchema)
  * @returns A new TextAdventure instance initialized with the save data
  */
-export async function createTextAdventureFromSave(saveData: unknown): Promise<TextAdventure> {
+export async function createTextAdventureFromSave(
+  saveData: unknown
+): Promise<TextAdventure> {
   // Validate the save data against the schema
-  const validatedData = TextAdventureSaveSchema.parse(saveData)
-  
+  const validatedData = TextAdventureSaveSchema.parse(saveData);
+
   // Create a new TextAdventure instance
-  const game = new TextAdventure()
-  
+  const game = new TextAdventure();
+
   // Initialize the game
-  await game.initialize()
-  
+  await game.initialize();
+
   // Apply the save data to the game instance (using private property access)
   Object.assign(game, {
     currentRoomId: validatedData.currentRoomId,
     inventory: [...validatedData.inventory],
     visitedRooms: new Set(validatedData.visitedRooms),
-    gameMap: validatedData.gameMap
-  })
-  
-  return game
+    gameMap: validatedData.gameMap,
+  });
+
+  return game;
 }
