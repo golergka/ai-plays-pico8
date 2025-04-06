@@ -193,125 +193,143 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   
   // Convert tools to OpenAI format
   body['tools'] = params.tools.definitions.map(createOpenAITool)
-    
+
   // Add tool_choice if specified
   if (params.tools.choice) {
-    if (params.tools.choice === 'auto' || params.tools.choice === 'none') {
-      body['tool_choice'] = params.tools.choice
+    if (params.tools.choice === "auto" || params.tools.choice === "none") {
+      body["tool_choice"] = params.tools.choice;
     } else {
       // Convert string tool name to OpenAI tool choice format
-      body['tool_choice'] = {
-        type: 'function',
+      body["tool_choice"] = {
+        type: "function",
         function: {
-          name: params.tools.choice as string
-        }
-      }
+          name: params.tools.choice as string,
+        },
+      };
     }
-    
+
     // Create tool parsing schema from the provided schemas
-    toolCallSchema = createToolCallSchema(params.tools.schemas)
+    toolCallSchema = createToolCallSchema(params.tools.schemas);
   }
-  
+
   // Call the API
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env['OPENAI_API_KEY']}`,
-      "OpenAI-Organization": process.env['OPENAI_ORG_ID'] || ""
+      Authorization: `Bearer ${process.env["OPENAI_API_KEY"]}`,
+      "OpenAI-Organization": process.env["OPENAI_ORG_ID"] || "",
     },
-    body: JSON.stringify(body)
-  })
-  
+    body: JSON.stringify(body),
+  });
+
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } })) as { error?: { message?: string } }
-    throw new Error(`OpenAI API error (${response.status}): ${errorData?.error?.message || 'Unknown error'}`)
+    const errorData = (await response
+      .json()
+      .catch(() => ({ error: { message: "Unknown error" } }))) as {
+      error?: { message?: string };
+    };
+    throw new Error(
+      `OpenAI API error (${response.status}): ${
+        errorData?.error?.message || "Unknown error"
+      }`
+    );
   }
-  
-  const rawResponse = await response.json()
-  
+
+  const rawResponse = await response.json();
+
   // Parse and validate the response structure with Zod
-  let parsedResponse: RawOpenAIResponse
-  
+  let parsedResponse: RawOpenAIResponse;
+
   try {
-    parsedResponse = OpenAIResponseSchema.parse(rawResponse)
+    parsedResponse = OpenAIResponseSchema.parse(rawResponse);
   } catch (error) {
     // Error will be thrown with a clear message
-    throw new Error(`Invalid response from OpenAI API: ${error instanceof Error ? error.message : String(error)}`)
+    throw new Error(
+      `Invalid response from OpenAI API: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
-  
+
   // Extract the content and tool calls from the response
-  const message = parsedResponse.choices[0]?.message
-  
+  const message = parsedResponse.choices[0]?.message;
+
   // Create the simplified result object
   const result: OpenAIResult<z.infer<T[keyof T]>> = {
     content: message?.content ?? null,
     toolCall: null,
-    toolName: null
-  }
-  
+    toolName: null,
+  };
+
   // Add usage if available
   if (parsedResponse.usage) {
     result.usage = {
       promptTokens: parsedResponse.usage.prompt_tokens,
       completionTokens: parsedResponse.usage.completion_tokens,
-      totalTokens: parsedResponse.usage.total_tokens
-    }
+      totalTokens: parsedResponse.usage.total_tokens,
+    };
   }
-  
+
   // Extract tool call if present
   if (message?.tool_calls && message.tool_calls.length > 0) {
     if (message.tool_calls.length > 1) {
-      console.warn(`OpenAI returned ${message.tool_calls.length} tool calls, but we only support one. Using the first.`)
+      console.warn(
+        `OpenAI returned ${message.tool_calls.length} tool calls, but we only support one. Using the first.`
+      );
     }
-    
-    const toolCall = message.tool_calls[0]
-    
+
+    const toolCall = message.tool_calls[0];
+
     // Safety check - this should never happen due to the array check above
     if (!toolCall) {
-      console.warn("Tool call was undefined when it shouldn't be")
-      return result
+      console.warn("Tool call was undefined when it shouldn't be");
+      return result;
     }
-    
-    result.toolName = toolCall.function.name
-    
+
+    result.toolName = toolCall.function.name;
+
     // Parse arguments if schema is available
     if (toolCallSchema && params.tools?.schemas) {
+      const parsedArgs = JSON.parse(toolCall.function.arguments);
+
+      // Check if the tool exists in our schemas
+      const toolName = toolCall.function.name;
+      if (!Object.keys(params.tools.schemas).includes(toolName)) {
+        throw new Error(`Unknown tool called: ${toolName}`);
+      }
+
+      const schema = params.tools.schemas[toolName];
+
+      // Safety check - this should never happen due to the includes check above
+      if (!schema) {
+        throw new Error(`Schema for tool ${toolName} is undefined`);
+      }
+
+      // Parse the args with the specific schema
       try {
-        const parsedArgs = JSON.parse(toolCall.function.arguments)
-        
-        // Check if the tool exists in our schemas
-        const toolName = toolCall.function.name
-        if (Object.keys(params.tools.schemas).includes(toolName)) {
-          const schema = params.tools.schemas[toolName]
-          
-          // Safety check - this should never happen due to the includes check above
-          if (!schema) {
-            throw new Error(`Schema for tool ${toolName} is undefined`)
-          }
-          
-          // Parse the args with the specific schema
-          try {
-            const validArgs = schema.parse(parsedArgs)
-            result.toolCall = validArgs
-          } catch (error) {
-            // Error will be thrown with details
-            throw new Error(`Invalid tool arguments: ${error instanceof Error ? error.message : String(error)}`)
-          }
-        } else {
-          throw new Error(`Unknown tool called: ${toolName}`)
-        }
+        const validArgs = schema.parse(parsedArgs);
+        result.toolCall = validArgs;
       } catch (error) {
         // Error will be thrown with details
-        throw new Error(`Invalid tool call arguments: ${error instanceof Error ? error.message : String(error)}`)
+        throw new Error(
+          `Invalid tool arguments: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          { cause: error, }
+        );
       }
     } else {
       // No schema available, just parse the JSON
       try {
-        result.toolCall = JSON.parse(toolCall.function.arguments) as any
+        result.toolCall = JSON.parse(toolCall.function.arguments) as any;
       } catch (error) {
         // Error will be thrown with details
-        throw new Error(`Invalid tool call arguments: ${error instanceof Error ? error.message : String(error)}`)
+        throw new Error(
+          `Invalid tool call arguments: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
       }
     }
   }

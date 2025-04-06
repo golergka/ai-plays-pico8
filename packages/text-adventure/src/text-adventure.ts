@@ -194,7 +194,7 @@ export class TextAdventure implements SaveableGame {
           characters: newRoom.characters ?? []
         };
         
-        return {
+        const result: StepResult = {
           type: 'state',
           state: {
             output: this.formatOutput(output),
@@ -202,13 +202,18 @@ export class TextAdventure implements SaveableGame {
               look: z.object({
                 target: z.string().describe('What to look at')
               }).describe('Look at something in the environment'),
-              move: z.object({
-                direction: z.enum(Object.keys(newRoom.name) as [string, ...string[]])
-                  .describe('Direction to move')
-              }).describe('Move in a direction')
             }
           }
         };
+
+        if (newRoom.exits) {
+          result.state.actions['move'] = z.object({
+            direction: z.enum(Object.keys(newRoom.exits) as [string, ...string[]])
+              .describe('Direction to move')
+          }).describe('Move in a direction');
+        }
+
+        return result;
       } else {
         const exits = currentRoom.exits ? Object.keys(currentRoom.exits) : [];
         return {
