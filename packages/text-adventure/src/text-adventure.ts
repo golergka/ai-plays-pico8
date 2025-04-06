@@ -37,7 +37,7 @@ export class TextAdventure implements SaveableGame {
       entrance: {
         id: "entrance",
         name: "Temple Entrance",
-        description: "A grand entranceway with weathered stone columns. Ancient inscriptions cover the walls.",
+        description: "A grand entranceway with weathered stone columns. Ancient inscriptions cover the walls. The musty air carries the weight of centuries, and your footsteps echo ominously through the chamber.",
         exits: {
           north: "mainHall",
         },
@@ -47,7 +47,7 @@ export class TextAdventure implements SaveableGame {
       mainHall: {
         id: "mainHall",
         name: "Main Hall",
-        description: "A vast ceremonial hall with high ceilings. Faded murals depict forgotten rituals.",
+        description: "A vast ceremonial hall with high ceilings. Faded murals depict forgotten rituals. The air is thick with dust, and your torch casts dancing shadows on the crumbling walls.",
         exits: {
           south: "entrance",
           east: "eastWing",
@@ -142,6 +142,12 @@ export class TextAdventure implements SaveableGame {
   private currentRoomId: string = "";
   private inventory: string[] = [];
   private visitedRooms: Set<string> = new Set();
+  private score: number = 0;
+
+  private addScore(points: number, reason: string): string {
+    this.score += points;
+    return `(+${points} points: ${reason})`;
+  }
 
   /**
    * Initialize the game
@@ -165,20 +171,22 @@ export class TextAdventure implements SaveableGame {
     parts.push(currentRoom.description);
 
     if (currentRoom.items && currentRoom.items.length > 0) {
-      parts.push(`Items: ${currentRoom.items.join(", ")}`);
+      parts.push(`You see: ${currentRoom.items.join(", ")}`);
     }
 
     if (currentRoom.exits) {
-      parts.push(`Exits: ${Object.keys(currentRoom.exits).join(", ")}`);
+      parts.push(`Visible exits: ${Object.keys(currentRoom.exits).join(", ")}`);
     }
 
     if (currentRoom.characters && currentRoom.characters.length > 0) {
-      parts.push(`Characters: ${currentRoom.characters.join(", ")}`);
+      parts.push(`Characters present: ${currentRoom.characters.join(", ")}`);
     }
 
     if (this.inventory.length > 0) {
-      parts.push(`Inventory: ${this.inventory.join(", ")}`);
+      parts.push(`You are carrying: ${this.inventory.join(", ")}`);
     }
+
+    parts.push(`Score: ${this.score}`);
 
     return parts.join("\n\n");
   }
@@ -230,7 +238,7 @@ export class TextAdventure implements SaveableGame {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `There is no ${item} here to take.`,
+            feedback: `You search for the ${item}, but it's not here.`,
             actions
           }
         };
@@ -240,25 +248,31 @@ export class TextAdventure implements SaveableGame {
       currentRoom.items = currentRoom.items?.filter((i) => i !== item);
       this.inventory.push(item);
 
-      // Check win condition
+      // Score based on item value
+      let scoreMessage = "";
       if (item === "golden_chalice") {
+        scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
         return {
           type: "result",
           result: {
-            description: "Congratulations! You've found the Golden Chalice and won the game!",
+            description: `Congratulations! You've found the Golden Chalice and won the game! Final score: ${this.score}`,
             metadata: {
-              score: 100,
+              score: this.score,
               inventory: this.inventory,
             }
           }
         };
+      } else if (item === "sacred_gem") {
+        scoreMessage = this.addScore(20, "found a rare sacred gem");
+      } else {
+        scoreMessage = this.addScore(5, "collected a treasure");
       }
 
       return {
         type: "state",
         state: {
           gameState: this.formatGameState(),
-          feedback: `You take the ${item}.`,
+          feedback: `You carefully take the ${item}. ${scoreMessage}`,
           actions
         }
       };
