@@ -8,7 +8,7 @@ import 'dotenv/config'
  * Event emitted during LLM player operation
  */
 export interface LLMPlayerEvent {
-  type: 'thinking' | 'response' | 'error' | 'action'
+  type: 'thinking' | 'response' | 'error' | 'action' | 'prompt'
   content: string
   data?: Record<string, unknown> | undefined
 }
@@ -93,7 +93,8 @@ export class LLMPlayer implements InputOutput {
         role: 'user',
         content: gameOutput
       })
-      
+
+      this.emitEvent('prompt', gameOutput);
       this.emitEvent('thinking', 'Analyzing game state...')
       
       // Convert each action schema into a separate tool definition

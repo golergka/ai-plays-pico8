@@ -79,6 +79,24 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
           ui.display(`  Arguments: ${JSON.stringify(args, null, 2)}`)
         }
         break
+      case 'prompt':
+        ui.displayHeader('Prompt')
+        ui.display(ui.color(event.content, 'cyan'))
+        if (event.data) {
+          const { prompt } = event.data
+          ui.display(`  Prompt: ${ui.color(String(prompt), 'bold')}`)
+        }
+        break
+      default:
+        ui.displayHeader('Unknown Event')
+        ui.display(ui.color(`Unknown event type: ${event.type}`, 'red'))
+        if (event.content) {
+          ui.display(`  Content: ${ui.color(event.content, 'gray')}`)
+        }
+        if (event.data) {
+          ui.display(`  Data: ${JSON.stringify(event.data, null, 2)}`)
+        }
+        break
     }
   }
 }
