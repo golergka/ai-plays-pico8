@@ -48,8 +48,10 @@ export class TextAdventure implements SaveableGame {
   private inventory: Record<string, Item> = {};
   private visitedRooms: Set<string> = new Set();
   private score: number = 0;
-  private hasTorch: boolean = false;
-  
+  private get hasTorch(): boolean {
+    return ItemIds.torch in this.inventory;
+  }
+
   private gameOver(reason: string): StepResult {
     return {
       type: "result",
@@ -232,11 +234,6 @@ export class TextAdventure implements SaveableGame {
 
         // Add to inventory
         this.inventory[item.id] = item;
-        
-        // Track special items
-        if (item.id === ItemIds.torch) {
-          this.hasTorch = true;
-        }
 
         // Score based on item value
         let scoreMessage = "";
