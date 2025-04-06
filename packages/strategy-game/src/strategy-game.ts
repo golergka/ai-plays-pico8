@@ -28,6 +28,7 @@ const actions = {
     })
     .describe("Build shelters to improve living conditions"),
   rest: z.object({}).describe("Rest for the day, consuming food"),
+  endTurn: z.object({}).describe("End the current day and process results"),
 } as const;
 
 export class StrategyGame implements Game {
@@ -37,7 +38,8 @@ export class StrategyGame implements Game {
     population: 5,
     shelters: 1,
     day: 1,
-    score: 0
+    score: 0,
+    freeWorkers: 5
   };
 
   async initialize(): Promise<void> {
@@ -47,7 +49,8 @@ export class StrategyGame implements Game {
       population: 5,
       shelters: 1,
       day: 1,
-      score: 0
+      score: 0,
+      freeWorkers: 5
     };
   }
 
@@ -61,7 +64,7 @@ export class StrategyGame implements Game {
       "",
       output.status,
       `Score: ${output.resources.score}`,
-      `Population: ${output.resources.population}`,
+      `Population: ${output.resources.population} (${this.state.freeWorkers} available)`,
       `Shelters: ${output.resources.shelters}`,
       `Food: ${output.resources.food}`,
       `Wood: ${output.resources.wood}`,
@@ -70,6 +73,7 @@ export class StrategyGame implements Game {
 
   private simulateDay(baseFeedback: string): StepResult {
     this.state.day += 1;
+    this.state.freeWorkers = this.state.population; // Reset free workers
     
     // Calculate food consumption (less with proper shelter)
     const shelterEffect = Math.min(this.state.shelters * 2, this.state.population);
@@ -172,11 +176,15 @@ export class StrategyGame implements Game {
   async step(action: [string, unknown]): Promise<StepResult> {
     const [actionType, actionData] = action;
 
+    if (actionType === 'endTurn') {
+      return this.simulateDay("Day ended.");
+    }
+
     switch (actionType) {
       case 'gather': {
         const { workers } = actions.gather.parse(actionData);
 
-        if (workers > this.state.population) {
+        if (workers > this.state.freeWorkers) {
           return {
             type: "state",
             state: {
@@ -193,13 +201,23 @@ export class StrategyGame implements Game {
         const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
         this.state.food += foodGathered;
 
-        return this.simulateDay(`Your gatherers collected ${foodGathered} food!`);
+        this.state.freeWorkers -= workers;
+
+        return {
+          type: "state",
+          state: {
+            output: this.formatOutput(
+              this.getGameState(`Your gatherers collected ${foodGathered} food! (${this.state.freeWorkers} workers remaining)`)
+            ),
+            actions,
+          },
+        };
       }
       
       case 'chop': {
         const { workers } = actions.chop.parse(actionData);
 
-        if (workers > this.state.population) {
+        if (workers > this.state.freeWorkers) {
           return {
             type: "state",
             state: {
@@ -216,7 +234,17 @@ export class StrategyGame implements Game {
         const woodChopped = workers * (1 + Math.floor(Math.random() * 2));
         this.state.wood += woodChopped;
 
-        return this.simulateDay(`Your workers chopped ${woodChopped} wood!`);
+        this.state.freeWorkers -= workers;
+
+        return {
+          type: "state",
+          state: {
+            output: this.formatOutput(
+              this.getGameState(`Your workers chopped ${woodChopped} wood! (${this.state.freeWorkers} workers remaining)`)
+            ),
+            actions,
+          },
+        };
       }
 
       case 'build': {
@@ -240,12 +268,17 @@ export class StrategyGame implements Game {
         this.state.wood -= woodNeeded;
         this.state.shelters += shelters;
 
-        return this.simulateDay(`Built ${shelters} new shelter${shelters > 1 ? 's' : ''}!`);
+        return {
+          type: "state",
+          state: {
+            output: this.formatOutput(
+              this.getGameState(`Built ${shelters} new shelter${shelters > 1 ? 's' : ''}! (${this.state.freeWorkers} workers remaining)`)
+            ),
+            actions,
+          },
+        };
       }
 
-      case 'rest': {
-        return this.simulateDay("Your tribe rests for the day.");
-      }
 
       default: {
         return {

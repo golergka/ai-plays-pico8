@@ -7,6 +7,7 @@ export interface StrategyGameState {
   shelters: number;
   day: number;
   score: number;
+  freeWorkers: number;
 }
 
 export interface StrategyGameOutput {
@@ -27,7 +28,8 @@ export const StrategyGameSaveSchema = z.object({
   population: z.number(),
   shelters: z.number(),
   day: z.number(),
-  score: z.number()
+  score: z.number(),
+  freeWorkers: z.number()
 });
 
 export type StrategyGameSaveData = z.infer<typeof StrategyGameSaveSchema>;
