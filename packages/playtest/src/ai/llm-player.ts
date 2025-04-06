@@ -127,8 +127,11 @@ export class LLMPlayer implements InputOutput {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.chatHistory.push( { role: "system", content: `Error:\n\n${message}`, });
-        this.emitEvent('error', (error as Error).message);
+        this.chatHistory.push({
+          role: "system",
+          content: `Error:\n\n${message}`,
+        });
+        this.emitEvent("error", (error as Error).message);
         continue;
       }
 
@@ -140,23 +143,27 @@ export class LLMPlayer implements InputOutput {
 
       const [toolUse, ...rest] = result.toolUse;
 
-      if (toolUse === undefined) {
-        const noAction = 'Your inner monologue has been noted, but no in-game action was taken. Proceed with your next action.';
+      for (const failed of rest) {
+        const ignoredMessage = `Please only use one tool at a time. This tool call has been ignored.`;
         this.chatHistory.push({
-          role: "system",
-          content: noAction
-        })
-        this.emitEvent("system", noAction);
-      } else if (rest.length > 0) {
-        const multipleActions = `Error: using multiple tools at once is not allowed. Proceed to select a single action.`;
-        this.chatHistory.push({
-          role: "system",
-          content: multipleActions
-        })
-        this.emitEvent("system", multipleActions);
-      } else {
+          role: "tool",
+          content: ignoredMessage,
+          tool_call_id: failed.callId,
+        });
+        this.emitEvent("system", ignoredMessage);
+      }
+
+      if (toolUse) {
         return toolUse;
       }
+
+      const noAction =
+        "Assistant inner monologue has been noted, but no in-game action was taken. Proceed with your next action.";
+      this.chatHistory.push({
+        role: "system",
+        content: noAction,
+      });
+      this.emitEvent("system", noAction);
     }
 
     throw new Error(
@@ -221,7 +228,7 @@ export class LLMPlayer implements InputOutput {
     this.chatHistory.push({
       role: "system",
       content: `Game result:\n\n${result.description}`,
-    })
+    });
     this.chatHistory.push({
       role: "system",
       content: "Please provide feedback on the game.",
