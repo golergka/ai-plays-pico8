@@ -124,6 +124,8 @@ export class StrategyGame implements Game {
       resources: {
         food: this.state.food,
         population: this.state.population,
+        shelters: this.state.shelters,
+        wood: this.state.wood,
       },
       day: this.state.day,
     };
