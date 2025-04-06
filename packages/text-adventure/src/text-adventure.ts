@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import type { SaveableGame, GameState, StepResult, TextAdventureSaveData, Room } from "./types";
+import { findEntity } from './utils';
 import { DirectionSchema, type GameMap, TextAdventureSaveSchema } from "./types";
 import { gameMap } from "./map";
 
@@ -284,13 +285,10 @@ export class TextAdventure implements SaveableGame {
     const { direction } = actions.move.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
-    if (currentRoom.exits?.[direction]) {
-      const newRoomId = currentRoom.exits[direction];
-      if (!newRoomId) {
-        throw new Error("New room not found");
-      }
-      this.currentRoomId = newRoomId;
-      this.visitedRooms.add(newRoomId);
+    const exit = currentRoom.exits?.[direction];
+    if (exit) {
+      this.currentRoomId = exit.targetRoom;
+      this.visitedRooms.add(exit.targetRoom);
 
       return {
         type: "state",
@@ -328,21 +326,38 @@ export class TextAdventure implements SaveableGame {
     parts.push(`# ${currentRoom.name}`);
     parts.push(currentRoom.description);
 
-    if (currentRoom.items && currentRoom.items.length > 0) {
-      parts.push(`You see: ${currentRoom.items.join(", ")}`);
+    if (currentRoom.items) {
+      const itemNames = Object.values(currentRoom.items).map(item => item.name);
+      if (itemNames.length > 0) {
+        parts.push(`You see: ${itemNames.join(", ")}`);
+      }
     }
-
 
     if (currentRoom.exits) {
-      parts.push(`Visible exits: ${Object.keys(currentRoom.exits).join(", ")}`);
+      const exitDirections = Object.keys(currentRoom.exits);
+      if (exitDirections.length > 0) {
+        parts.push(`Visible exits: ${exitDirections.join(", ")}`);
+      }
     }
 
-    if (currentRoom.characters && currentRoom.characters.length > 0) {
-      parts.push(`Characters present: ${currentRoom.characters.join(", ")}`);
+    if (currentRoom.characters) {
+      const characterNames = Object.values(currentRoom.characters).map(char => char.name);
+      if (characterNames.length > 0) {
+        parts.push(`Characters present: ${characterNames.join(", ")}`);
+      }
     }
 
     if (this.inventory.length > 0) {
-      parts.push(`You are carrying: ${this.inventory.join(", ")}`);
+      const inventoryItems = this.inventory
+        .map(id => {
+          for (const room of Object.values(this.gameMap.rooms)) {
+            const item = room.items?.[id];
+            if (item) return item.name;
+          }
+          return id;
+        })
+        .filter(Boolean);
+      parts.push(`You are carrying: ${inventoryItems.join(", ")}`);
     }
 
     parts.push(`Score: ${this.score}`);
