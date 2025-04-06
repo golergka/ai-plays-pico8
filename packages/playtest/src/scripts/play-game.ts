@@ -48,59 +48,54 @@ export async function playGame(
   try {
     let gameState = await game.start();
 
-    // Main game loop
-    try {
-      for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
-        // Check and add quit action
-        if ('quit' in gameState.actions) {
-          throw new Error('Game already has a quit action defined');
-        }
-
-        const actionsWithQuit = {
-          ...gameState.actions,
-          quit: z.object({}).describe('Quit the current game')
-        };
-
-        // Get action from player
-        const [actionType, actionData] = await io.askForAction(
-          gameState.gameState,
-          gameState.feedback,
-          actionsWithQuit
-        );
-
-        // Handle quit action
-        if (actionType === 'quit') {
-          io.outputResult('Game ended by player');
-          return;
-        }
-
-        // Process step
-        const stepResult = await game.step([actionType as string, actionData]);
-
-        if (stepResult.type === "result") {
-          io.outputResult(`Game completed: ${stepResult.result.description}`)
-          game = await initializeGame(gameType);
-          if (!game) {
-            throw new Error(`Unknown game type: ${gameType}`);
-          }
-          gameState = await game.start();
-        } else {
-          gameState = stepResult.state;
-        }
+    for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
+      // Check and add quit action
+      if ("quit" in gameState.actions) {
+        throw new Error("Game already has a quit action defined");
       }
 
-      io.outputResult(`Maximum number of LLM play-through steps (${maxSteps}) reached`);
-    } catch (error) {
-      io.outputResult(
-        `Game terminated due to an internal error: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+      const actionsWithQuit = {
+        ...gameState.actions,
+        quit: z.object({}).describe("Quit the current game"),
+      };
+
+      // Get action from player
+      const [actionType, actionData] = await io.askForAction(
+        gameState.gameState,
+        gameState.feedback,
+        actionsWithQuit
       );
+
+      // Handle quit action
+      if (actionType === "quit") {
+        io.outputResult("Game ended by player");
+        return;
+      }
+
+      // Process step
+      const stepResult = await game.step([actionType as string, actionData]);
+
+      if (stepResult.type === "result") {
+        io.outputResult(`Game completed: ${stepResult.result.description}`);
+        game = await initializeGame(gameType);
+        if (!game) {
+          throw new Error(`Unknown game type: ${gameType}`);
+        }
+        gameState = await game.start();
+      } else {
+        gameState = stepResult.state;
+      }
     }
-  } finally {
-    // Clean up resources
-    await io.cleanup();
-    await game?.cleanup();
+
+    io.outputResult(
+      `Maximum number of LLM play-through steps (${maxSteps}) reached`
+    );
+  } catch (error) {
+    io.outputResult(
+      `Game terminated due to an internal error: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 }
 
@@ -117,18 +112,16 @@ export async function initializeGame(gameType: string): Promise<Game | null> {
       await game.initialize();
       return game;
     }
-    case 'compact-adventure':
-      {
-        const game = new CompactTextAdventure();
-        await game.initialize();
-        return game;
-      }
-    case 'strategy-game':
-      {
-        const game = new StrategyGame();
-        await game.initialize();
-        return game;
-      }
+    case "compact-adventure": {
+      const game = new CompactTextAdventure();
+      await game.initialize();
+      return game;
+    }
+    case "strategy-game": {
+      const game = new StrategyGame();
+      await game.initialize();
+      return game;
+    }
   }
 
   throw new Error(`Unknown game type: ${gameType}`);
