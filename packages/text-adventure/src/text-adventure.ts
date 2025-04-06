@@ -3,7 +3,7 @@
  */
 import { z } from "zod";
 import type { SaveableGame, GameState, StepResult } from "./types";
-import type { TextAdventureOutput, TextAdventureSaveData } from "./types";
+import type { TextAdventureSaveData } from "./types";
 import { DirectionSchema, type GameMap, } from "./schema";
 import { TextAdventureSaveSchema } from "./types";
 
@@ -153,51 +153,34 @@ export class TextAdventure implements SaveableGame {
     this.visitedRooms = new Set([this.currentRoomId]);
   }
 
-  /**
-   * Format the game state output
-   */
-  private formatOutput(output: TextAdventureOutput): string {
-    const parts: string[] = [];
-
-    if (output.feedback) {
-      parts.push(output.feedback);
-    }
-
-    if (output.title) {
-      parts.push(`# ${output.title}`);
-    }
-
-    parts.push(output.description);
-
-
-    if (output.items && output.items.length > 0) {
-      parts.push(`Items: ${output.items.join(", ")}`);
-    }
-
-    if (output.exits && output.exits.length > 0) {
-      parts.push(`Exits: ${output.exits.join(", ")}`);
-    }
-
-    if (output.characters && output.characters.length > 0) {
-      parts.push(`Characters: ${output.characters.join(", ")}`);
-    }
-
-    return parts.join("\n\n");
-  }
-
-  private getGameState(feedback: string): TextAdventureOutput {
+  private formatGameState(): string {
     const currentRoom = this.gameMap!.rooms[this.currentRoomId];
     if (!currentRoom) {
       throw new Error("Current room not found");
     }
-    return {
-      title: currentRoom.name,
-      description: currentRoom.description,
-      feedback,
-      exits: currentRoom.exits ? Object.keys(currentRoom.exits) : [],
-      items: currentRoom.items ?? [],
-      characters: currentRoom.characters ?? [],
-    };
+
+    const parts: string[] = [];
+
+    parts.push(`# ${currentRoom.name}`);
+    parts.push(currentRoom.description);
+
+    if (currentRoom.items && currentRoom.items.length > 0) {
+      parts.push(`Items: ${currentRoom.items.join(", ")}`);
+    }
+
+    if (currentRoom.exits) {
+      parts.push(`Exits: ${Object.keys(currentRoom.exits).join(", ")}`);
+    }
+
+    if (currentRoom.characters && currentRoom.characters.length > 0) {
+      parts.push(`Characters: ${currentRoom.characters.join(", ")}`);
+    }
+
+    if (this.inventory.length > 0) {
+      parts.push(`Inventory: ${this.inventory.join(", ")}`);
+    }
+
+    return parts.join("\n\n");
   }
 
   /**
@@ -210,41 +193,11 @@ export class TextAdventure implements SaveableGame {
     if (!currentRoom) {
       throw new Error("Current room not found");
     }
-    const availableExits = currentRoom.exits
-      ? Object.keys(currentRoom.exits)
-      : [];
-
-    const output: TextAdventureOutput = {
-      title: currentRoom.name,
-      description: currentRoom.description,
-      exits: availableExits,
-      items: currentRoom.items ?? [],
-      characters: currentRoom.characters ?? [],
-    };
 
     return {
-      output: this.formatOutput(output),
-      actions: {
-        look: z
-          .object({
-            target: z.string().describe("What to look at"),
-          })
-          .describe("Look at something in the environment"),
-        move: z
-          .object({
-            direction: z
-              .enum(availableExits as [string, ...string[]])
-              .describe("Direction to move"),
-          })
-          .describe("Move in a direction"),
-        take: z
-          .object({
-            item: z
-              .enum(currentRoom.items as [string, ...string[]])
-              .describe("Item to pick up"),
-          })
-          .describe("Take an item"),
-      },
+      gameState: this.formatGameState(),
+      feedback: "Welcome to the Ancient Maze Temple. Your adventure begins...",
+      actions
     };
   }
 
@@ -252,25 +205,21 @@ export class TextAdventure implements SaveableGame {
    * Process a game step
    */
   async step(action: [string, unknown]): Promise<StepResult> {
-    // TODO: actually process action data
     const [actionType, actionData] = action;
-
     let currentRoom = this.gameMap!.rooms[this.currentRoomId];
-
+    
     if (!currentRoom) {
       throw new Error("Current room not found");
     }
 
-    // Simple action handling
     if (actionType === "look") {
       return {
         type: "state",
         state: {
-          output: this.formatOutput(
-            this.getGameState("You see nothing special.")
-          ),
-          actions,
-        },
+          gameState: this.formatGameState(),
+          feedback: "You see nothing special.",
+          actions
+        }
       };
     } else if (actionType === "take") {
       const { item } = actions.take.parse(actionData);
@@ -280,17 +229,15 @@ export class TextAdventure implements SaveableGame {
         return {
           type: "state",
           state: {
-            output: this.formatOutput(
-              this.getGameState(`There is no ${item} here to take.`)
-            ),
-            actions,
-          },
+            gameState: this.formatGameState(),
+            feedback: `There is no ${item} here to take.`,
+            actions
+          }
         };
       }
 
-      // Remove item from room
+      // Remove item from room and add to inventory
       currentRoom.items = currentRoom.items?.filter((i) => i !== item);
-      // Add to inventory
       this.inventory.push(item);
 
       // Check win condition
@@ -298,84 +245,62 @@ export class TextAdventure implements SaveableGame {
         return {
           type: "result",
           result: {
-            description:
-              "Congratulations! You've found the Golden Chalice and won the game!",
+            description: "Congratulations! You've found the Golden Chalice and won the game!",
             metadata: {
               score: 100,
               inventory: this.inventory,
-            },
-          },
+            }
+          }
         };
       }
 
       return {
         type: "state",
         state: {
-          output: this.formatOutput(
-            this.getGameState(`You take the ${item}.`)
-          ),
-          actions,
-        },
+          gameState: this.formatGameState(),
+          feedback: `You take the ${item}.`,
+          actions
+        }
       };
     } else if (actionType === "move") {
       const { direction } = actions.move.parse(actionData);
 
       if (currentRoom.exits?.[direction]) {
-        const newRoomId = currentRoom.exits?.[direction];
+        const newRoomId = currentRoom.exits[direction];
         if (!newRoomId) {
           throw new Error("New room not found");
         }
         this.currentRoomId = newRoomId;
         this.visitedRooms.add(newRoomId);
 
-        currentRoom = this.gameMap!.rooms[this.currentRoomId];
-        if (!currentRoom) {
-          throw new Error("New room not found");
-        }
-
-        const result: StepResult = {
-          type: "state",
-          state: {
-            output: this.formatOutput(
-              this.getGameState(`You move ${direction}.`)
-            ),
-            actions,
-          },
-        };
-
-        return result;
-      } else {
-        const exits = currentRoom.exits ? Object.keys(currentRoom.exits) : [];
         return {
           type: "state",
           state: {
-            output: this.formatOutput({
-              title: currentRoom.name,
-              description: currentRoom.description,
-              feedback: `You cannot move ${direction} from here.`,
-              exits,
-              items: currentRoom.items ?? [],
-              characters: currentRoom.characters ?? [],
-            }),
-            actions,
-          },
+            gameState: this.formatGameState(),
+            feedback: `You move ${direction}.`,
+            actions
+          }
+        };
+      } else {
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: `You cannot move ${direction} from here.`,
+            actions
+          }
         };
       }
     }
 
     // Default return for unrecognized actions
-    const output: TextAdventureOutput = {
-      title: "Error",
-      description: "Action not recognized.",
-      feedback: "Please try a different action.",
-    };
-
     return {
       type: "state",
       state: {
-        output: this.formatOutput(output),
-        actions,
-      },
+        gameState: this.formatGameState(),
+        feedback: "Action not recognized. Please try a different action.",
+        actions
+      }
     };
   }
 

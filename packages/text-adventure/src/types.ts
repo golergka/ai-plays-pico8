@@ -15,16 +15,6 @@ import { GameMapSchema } from './schema'
 // Re-export types from playtest
 export type { Game, GameState, GameResult, StepResult, ActionSchemas, SaveableGame }
 
-// Game-specific types for text adventure
-export type TextAdventureOutput = {
-  title?: string
-  description: string
-  feedback?: string
-  items?: string[]
-  exits?: string[]
-  characters?: string[]
-}
-
 // Save data schema for text adventure
 export const TextAdventureSaveSchema = z.object({
   currentRoomId: z.string(),
