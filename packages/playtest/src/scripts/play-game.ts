@@ -49,7 +49,7 @@ export async function playGame(
     const initialState = await game.start();
     let gameState = initialState;
     let stepCount = 0;
-    let result: GameResult | null = null;
+    let result: GameResult = { description: 'Game not started' }
 
     // Main game loop
     try {
@@ -91,8 +91,6 @@ export async function playGame(
           description: `Game terminated due to maximum number of steps (${maxSteps}) reached`,
           metadata,
         };
-
-        throw new Error(`Maximum number of steps (${maxSteps}) reached`);
       }
     } catch (error) {
       io.outputResult(
@@ -116,6 +114,8 @@ export async function playGame(
     // Display game result if we have one
     if (result) {
       io.outputResult(result.description);
+    } else {
+      io.outputResult("Game completed without a result");
     }
 
     return result;

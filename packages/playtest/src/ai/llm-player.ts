@@ -8,7 +8,7 @@ import 'dotenv/config'
  * Event emitted during LLM player operation
  */
 export interface LLMPlayerEvent {
-  type: 'thinking' | 'response' | 'error' | 'action' | 'prompt'
+  type: 'thinking' | 'response' | 'error' | 'action' | 'prompt' | 'system'
   content: string
   data?: Record<string, unknown> | undefined
 }
@@ -186,6 +186,7 @@ export class LLMPlayer implements InputOutput {
       role: 'system',
       content: text
     });
+    this.emitEvent('system', text);
   }
   
   /**

@@ -88,6 +88,14 @@ function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
           ui.display(`  Prompt: ${ui.color(String(prompt), 'bold')}`)
         }
         break
+      case 'system':
+        ui.displayHeader('System Message')
+        ui.display(ui.color(event.content, 'blue'))
+        if (event.data) {
+          const { systemMessage } = event.data
+          ui.display(`  System Message: ${ui.color(String(systemMessage), 'bold')}`)
+        }
+        break;
       default:
         ui.displayHeader('Unknown Event')
         ui.display(ui.color(`Unknown event type: ${event.type}`, 'red'))
