@@ -49,37 +49,12 @@ export async function playGame(
     let gameState = await game.start();
 
     for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
-      // Add finish and restart actions
-      if ("finish" in gameState.actions || "restart" in gameState.actions) {
-        throw new Error("Game already has finish/restart actions defined");
-      }
-
-      const actionsWithMeta = {
-        ...gameState.actions,
-        finish: z.object({}).describe("End the play-test completely and proceed to final feedback"),
-        restart: z.object({}).describe("Start a new game from the beginning while continuing the play-test"),
-      };
-
       // Get action from player
       const [actionType, actionData] = await io.askForAction(
         gameState.gameState,
         gameState.feedback,
-        actionsWithMeta
+        gameState.actions,
       );
-
-      // Handle meta actions
-      if (actionType === "finish") {
-        io.outputResult("Play-test ended by player");
-        return;
-      }
-      if (actionType === "restart") {
-        game = await initializeGame(gameType);
-        if (!game) {
-          throw new Error(`Unknown game type: ${gameType}`);
-        }
-        gameState = await game.start();
-        continue;
-      }
 
       // Process step
       const stepResult = await game.step([actionType as string, actionData]);
