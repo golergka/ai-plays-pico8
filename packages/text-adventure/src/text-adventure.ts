@@ -2,10 +2,8 @@
  * Text Adventure game implementation
  */
 import { z } from "zod";
-import type { SaveableGame, GameState, StepResult } from "./types";
-import type { TextAdventureSaveData } from "./types";
-import { DirectionSchema, type GameMap, } from "./schema";
-import { TextAdventureSaveSchema } from "./types";
+import type { SaveableGame, GameState, StepResult, TextAdventureSaveData } from "./types";
+import { DirectionSchema, type GameMap, TextAdventureSaveSchema } from "./types";
 
 const actions = {
   look: z
