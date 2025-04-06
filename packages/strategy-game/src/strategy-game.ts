@@ -27,7 +27,6 @@ const actions = {
         .describe("Number of shelters to build (costs 5 wood each)"),
     })
     .describe("Build shelters to improve living conditions"),
-  rest: z.object({}).describe("Rest for the day, consuming food"),
   endTurn: z.object({}).describe("End the current day and process results"),
 } as const;
 
