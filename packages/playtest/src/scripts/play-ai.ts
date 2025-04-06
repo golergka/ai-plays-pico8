@@ -44,14 +44,12 @@ async function main() {
     });
 
     // Play the game with the LLM player
-    const result = await playGame(player, {
+    await playGame(player, {
       gameType,
       maxSteps,
     });
 
-    if (result) {
-      await player.askForFeedback(result);
-    }
+    await player.askForFeedback();
   } catch (error) {
     ui.displayError(
       `Error: ${error instanceof Error ? error.message : String(error)}`

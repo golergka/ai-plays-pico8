@@ -1,4 +1,4 @@
-import type { InputOutput, ActionSchemas, GameResult } from "../types";
+import type { InputOutput, ActionSchemas } from "../types";
 import type { Schema } from "../schema/utils";
 import { z } from "zod";
 import {
@@ -226,11 +226,7 @@ export class LLMPlayer implements InputOutput {
     }
   }
 
-  async askForFeedback(result: GameResult): Promise<string> {
-    this.addMessage(
-      { role: "system", content: `Game result:\n\n${result.description}` },
-      "system"
-    );
+  async askForFeedback(): Promise<string> {
     this.addMessage(
       {
         role: "system",

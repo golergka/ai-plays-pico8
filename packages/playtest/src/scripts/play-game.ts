@@ -4,7 +4,7 @@
 import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
 import { StrategyGame } from "@ai-gamedev/strategy-game";
-import type { Game, InputOutput, GameResult } from "../types";
+import type { Game, InputOutput } from "../types";
 
 export interface PlayGameOptions {
   /**
@@ -33,12 +33,12 @@ export interface PlayGameOptions {
 export async function playGame(
   io: InputOutput,
   options: PlayGameOptions = {}
-): Promise<GameResult | null> {
+): Promise<void> {
   const gameType = options.gameType || "compact-adventure";
   const maxSteps = options.maxSteps || Infinity;
 
   // Initialize the appropriate game
-  const game = await initializeGame(gameType);
+  let game = await initializeGame(gameType);
   if (!game) {
     io.outputResult(`Unknown game type: ${gameType}`);
     throw new Error(`Unknown game type: ${gameType}`);
@@ -46,15 +46,11 @@ export async function playGame(
 
   // Run the game with the provided player
   try {
-    // Get initial state
-    const initialState = await game.start();
-    let gameState = initialState;
-    let stepCount = 0;
-    let result: GameResult = { description: 'Game not started' }
+    let gameState = await game.start();
 
     // Main game loop
     try {
-      while (stepCount < maxSteps) {
+      for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
         // Get action from player
         const [actionType, actionData] = await io.askForAction(
           gameState.gameState,
@@ -64,67 +60,37 @@ export async function playGame(
 
         // Process step
         const stepResult = await game.step([actionType as string, actionData]);
-        stepCount++;
 
         // If game is over, return result
         if (stepResult.type === "result") {
-          result = stepResult.result;
+          io.outputResult(`Game completed: ${stepResult.result.description}`)
+          game = await initializeGame(gameType);
+          if (!game) {
+            io.outputResult(`Unknown game type: ${gameType}`);
+            throw new Error(`Unknown game type: ${gameType}`);
+          }
+          gameState = await game.start();
           break;
         }
 
         // Otherwise, update game state
         gameState = stepResult.state;
+
       }
 
-      // Handle max steps reached
-      if (stepCount >= maxSteps && maxSteps !== Infinity) {
-        // Create a forced termination result
-        // Include any metadata provided by the game via the GameState._metadata
-        const metadata: Record<string, unknown> = {
-          terminationReason: "Max steps reached",
-        };
+      io.outputResult(`Maximum number of LLM play-through steps (${maxSteps}) reached`);
 
-        // Preserve any game-specific metadata from the last game state
-        if (gameState._metadata) {
-          Object.assign(metadata, gameState._metadata);
-        }
-
-        result = {
-          description: `Game terminated due to maximum number of steps (${maxSteps}) reached`,
-          metadata,
-        };
-      }
     } catch (error) {
       io.outputResult(
-        `Game terminated: ${
+        `Game terminated due to an internal error: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
-
-      // If we don't have a result yet, create one for the error case
-      if (!result) {
-        result = {
-          description: "Game terminated with an error",
-          metadata: {
-            terminationReason: "Error",
-            error: error instanceof Error ? error.message : String(error),
-          },
-        };
-      }
     }
-
-    // Display game result if we have one
-    if (result) {
-      io.outputResult(result.description);
-    } else {
-      io.outputResult("Game completed without a result");
-    }
-
-    return result;
   } finally {
     // Clean up resources
     await io.cleanup();
-    await game.cleanup();
+    await game?.cleanup();
   }
 }
 
