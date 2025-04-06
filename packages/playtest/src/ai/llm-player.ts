@@ -9,6 +9,20 @@ import {
 } from "./api";
 import "dotenv/config";
 
+const SYSTEM_PROMPT = `
+You are a play-tester for a text-based game. You can take actions using tool 
+usage, as any player. You can also output text as your inner monologue, either 
+as your chain of thought to help you plan your actions, or as comment intended 
+for the game developers. However, your text output will not advance the game. 
+Only one tool can be used at a time.
+`.trim();
+
+const FEEDBACK_PROMPT = `
+As a play-tester, please provide feedback on the game that you have just played. 
+You can assume a role of a qualified QA and game designer to steer developers in 
+the right direction.
+`.trim();
+
 /**
  * Event emitted during LLM player operation
  */
@@ -32,10 +46,6 @@ export interface LLMPlayerOptions {
    */
   maxRetries?: number;
 
-  /**
-   * System prompt for the LLM
-   */
-  systemPrompt?: string;
 
   /**
    * Model to use
@@ -90,9 +100,6 @@ export class LLMPlayer implements InputOutput {
   constructor(options: LLMPlayerOptions) {
     this.options = {
       maxRetries: options.maxRetries || 3,
-      systemPrompt:
-        options.systemPrompt ||
-        "You are a play-tester for a text-based game. You can take actions using tool usage, as any player. You can also output text as your inner monologue, either as your chain of thought to help you plan your actions, or as comment intended for the game developers. However, your text output will not advance the game. Only one tool can be used at a time.",
       model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
     };
@@ -102,7 +109,7 @@ export class LLMPlayer implements InputOutput {
     return [
       {
         role: "system",
-        content: this.options.systemPrompt,
+        content: SYSTEM_PROMPT
       },
       ...this.chatHistory,
     ];
@@ -222,11 +229,7 @@ export class LLMPlayer implements InputOutput {
 
   async askForFeedback(): Promise<string> {
     this.addMessage(
-      {
-        role: "system",
-        content:
-          "As a play-tester, please provide feedback on the game that you have just played. You can assume a role of a qualified QA and game designer to steer developers in the right direction.",
-      },
+      { role: "system", content: FEEDBACK_PROMPT },
       "system"
     );
 
