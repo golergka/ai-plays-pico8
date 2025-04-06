@@ -249,6 +249,15 @@ export class TextAdventure implements SaveableGame {
         const { [item.id]: _, ...remainingItems } = currentRoom.items!;
         currentRoom.items = remainingItems;
 
+        // Check for cursed coin
+        if (item.id === ItemIds.oldCoin && !this.inventory[ItemIds.sacredGem]?.id) {
+          return this.gameOver(
+            "As your fingers touch the coin, the ominous symbols flare with dark energy. " +
+            "Ancient magic courses through your body, turning your blood to ice. " +
+            "You should have found protection against dark magic before touching cursed artifacts."
+          );
+        }
+
         // Add to inventory
         this.inventory[item.id] = item;
 
