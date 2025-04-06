@@ -2,7 +2,7 @@
  * Text Adventure game implementation
  */
 import { z } from "zod";
-import type { SaveableGame, GameState, StepResult, TextAdventureSaveData } from "./types";
+import type { SaveableGame, GameState, StepResult, TextAdventureSaveData, Room } from "./types";
 import { DirectionSchema, type GameMap, TextAdventureSaveSchema } from "./types";
 import { gameMap } from "./map";
 
