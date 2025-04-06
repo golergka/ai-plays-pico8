@@ -68,6 +68,33 @@ export class TextAdventure implements SaveableGame {
   /**
    * Format the game state output
    */
+  /**
+   * Get available actions for the current room
+   */
+  private getAvailableActions(room: Room) {
+    const actions: Record<string, z.ZodType> = {
+      look: z.object({
+        target: z.string().describe('What to look at')
+      }).describe('Look at something in the environment'),
+    };
+
+    if (room.exits && Object.keys(room.exits).length > 0) {
+      actions.move = z.object({
+        direction: z.enum(Object.keys(room.exits) as [string, ...string[]])
+          .describe('Direction to move')
+      }).describe('Move in a direction');
+    }
+
+    if (room.items && room.items.length > 0) {
+      actions.take = z.object({
+        item: z.enum(room.items as [string, ...string[]])
+          .describe('Item to pick up')
+      }).describe('Take an item');
+    }
+
+    return actions;
+  }
+
   private formatOutput(output: TextAdventureOutput): string {
     const parts: string[] = []
     
@@ -125,7 +152,11 @@ export class TextAdventure implements SaveableGame {
         move: z.object({
           direction: z.enum(availableExits as [string, ...string[]])
             .describe('Direction to move')
-        }).describe('Move in a direction')
+        }).describe('Move in a direction'),
+        take: z.object({
+          item: z.enum(currentRoom.items as [string, ...string[]])
+            .describe('Item to pick up')
+        }).describe('Take an item')
       }
     };
   }
@@ -164,6 +195,65 @@ export class TextAdventure implements SaveableGame {
           }
         }
       }
+    } else if (actionType === 'take') {
+      const takeData = actionData as { item: string };
+      const currentRoom = this.gameMap!.rooms[this.currentRoomId];
+      
+      if (!currentRoom) {
+        throw new Error("Current room not found");
+      }
+
+      const itemIndex = currentRoom.items?.indexOf(takeData.item) ?? -1;
+      if (itemIndex === -1) {
+        return {
+          type: 'state',
+          state: {
+            output: this.formatOutput({
+              title: currentRoom.name,
+              description: currentRoom.description,
+              feedback: `There is no ${takeData.item} here to take.`,
+              exits: currentRoom.exits ? Object.keys(currentRoom.exits) : [],
+              items: currentRoom.items ?? [],
+              characters: currentRoom.characters ?? []
+            }),
+            actions: this.getAvailableActions(currentRoom)
+          }
+        };
+      }
+
+      // Remove item from room
+      currentRoom.items = currentRoom.items?.filter(i => i !== takeData.item);
+      // Add to inventory
+      this.inventory.push(takeData.item);
+
+      // Check win condition
+      if (takeData.item === 'golden_chalice') {
+        return {
+          type: 'end',
+          result: {
+            description: "Congratulations! You've found the Golden Chalice and won the game!",
+            metadata: {
+              score: 100,
+              inventory: this.inventory
+            }
+          }
+        };
+      }
+
+      return {
+        type: 'state',
+        state: {
+          output: this.formatOutput({
+            title: currentRoom.name,
+            description: currentRoom.description,
+            feedback: `You take the ${takeData.item}.`,
+            exits: currentRoom.exits ? Object.keys(currentRoom.exits) : [],
+            items: currentRoom.items ?? [],
+            characters: currentRoom.characters ?? []
+          }),
+          actions: this.getAvailableActions(currentRoom)
+        }
+      };
     } else if (actionType === 'move') {
       const moveData = actionData as { direction: string };
       const currentRoom = this.gameMap!.rooms[this.currentRoomId];
