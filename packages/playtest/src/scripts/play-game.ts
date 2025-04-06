@@ -5,6 +5,7 @@ import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
 import { StrategyGame } from "@ai-gamedev/strategy-game";
 import type { Game, InputOutput } from "../types";
+import { z } from "zod";
 
 export interface PlayGameOptions {
   /**
@@ -50,12 +51,28 @@ export async function playGame(
     // Main game loop
     try {
       for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
+        // Check and add quit action
+        if ('quit' in gameState.actions) {
+          throw new Error('Game already has a quit action defined');
+        }
+
+        const actionsWithQuit = {
+          ...gameState.actions,
+          quit: z.object({}).describe('Quit the current game')
+        };
+
         // Get action from player
         const [actionType, actionData] = await io.askForAction(
           gameState.gameState,
           gameState.feedback,
-          gameState.actions
+          actionsWithQuit
         );
+
+        // Handle quit action
+        if (actionType === 'quit') {
+          io.outputResult('Game ended by player');
+          return;
+        }
 
         // Process step
         const stepResult = await game.step([actionType as string, actionData]);
