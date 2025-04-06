@@ -2,6 +2,8 @@ import 'dotenv/config'
 import { z } from 'zod'
 import { toJsonSchema } from '../../schema/utils'
 import type { JsonSchema7Type } from 'zod-to-json-schema'
+import OpenAI from 'openai';
+
 
 // ======== Input Types ========
 
@@ -16,6 +18,10 @@ export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
 const MessageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant', 'tool']),
   content: z.string().nullable(),
+  toolCall: z.object({
+    name: z.string(),
+    arguments: z.record(z.unknown())
+  }).optional(),
   name: z.string().optional()
 })
 
