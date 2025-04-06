@@ -37,6 +37,12 @@ const actions = {
       item: z.string().describe("Item to pick up"),
     })
     .describe("Take an item"),
+  use: z
+    .object({
+      item: z.string().describe("Item to use"),
+      target: z.string().describe("Target to use item on"),
+    })
+    .describe("Use an item on something"),
 } as const;
 
 /**
@@ -250,28 +256,42 @@ export class TextAdventure implements SaveableGame {
         currentRoom.items = remainingItems;
 
         // Check for cursed coin
-        if (item.id === ItemIds.oldCoin && !this.inventory[ItemIds.sacredGem]?.id) {
-          return this.gameOver(
-            "As your fingers touch the coin, the ominous symbols flare with dark energy. " +
-            "Ancient magic courses through your body, turning your blood to ice. " +
-            "You should have found protection against dark magic before touching cursed artifacts."
-          );
+        if (item.id === ItemIds.oldCoin) {
+          if (!this.inventory[ItemIds.sacredGem]?.id) {
+            return {
+              type: "state",
+              state: {
+                gameState: this.formatGameState(),
+                feedback: "The coin's dark symbols pulse ominously. Perhaps you need some protection against dark magic before touching it.",
+                actions,
+              },
+            };
+          }
+          scoreMessage = this.addScore(15, "safely retrieved the cursed coin");
         }
 
-        // Add to inventory
-        this.inventory[item.id] = item;
-
-        // Score based on item value
-        let scoreMessage = "";
+        // Check for golden chalice
         if (item.id === ItemIds.goldenChalice) {
-          scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
+          if (!this.inventory[ItemIds.guardBadge]?.id || !this.inventory[ItemIds.oldCoin]?.id) {
+            return this.gameOver(
+              "As you reach for the chalice, ancient wards flare to life. " +
+              "Without both a guard's authority and the temple's sacred coin, " +
+              "the magical defenses reduce you to ash."
+            );
+          }
+          scoreMessage = this.addScore(50, "claimed the legendary Golden Chalice");
           return {
             type: "result",
             result: {
-              description: `Congratulations! You've found the Golden Chalice and won the game! Final score: ${this.score}`,
+              description: 
+                "The guard's badge glows in recognition of your authority, " +
+                "while the ancient coin resonates with the temple's magic. " +
+                "The wards surrounding the chalice fade, allowing you to claim your prize.\n\n" +
+                `Congratulations! You've won the game! Final score: ${this.score}`,
               metadata: {
                 score: this.score,
                 inventory: this.inventory,
+                gameOver: true
               },
             },
           };
@@ -291,6 +311,51 @@ export class TextAdventure implements SaveableGame {
         };
       }
     ) ?? this.createNotFoundState(targetItem);
+  }
+
+  private handleUse(actionData: unknown): StepResult {
+    const { item: itemName, target: targetName } = actions.use.parse(actionData);
+    
+    // Check if item is in inventory
+    const itemResult = this.findEntityWithFeedback(
+      itemName,
+      this.inventory,
+      "In inventory",
+      (item) => {
+        // Handle specific item uses
+        if (item.id === ItemIds.sacredGem) {
+          if (targetName.toLowerCase().includes("coin") || 
+              targetName.toLowerCase().includes("symbol")) {
+            return {
+              type: "state",
+              state: {
+                gameState: this.formatGameState(),
+                feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic.",
+                actions,
+              },
+            };
+          }
+        }
+        
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: `You can't figure out how to use the ${item.name} on that.`,
+            actions,
+          },
+        };
+      }
+    );
+    
+    return itemResult ?? {
+      type: "state",
+      state: {
+        gameState: this.formatGameState(),
+        feedback: `You don't have a ${itemName} to use.`,
+        actions,
+      },
+    };
   }
 
   private handleMove(actionData: unknown): StepResult {
@@ -430,6 +495,9 @@ export class TextAdventure implements SaveableGame {
 
       case "move":
         return this.handleMove(actionData);
+        
+      case "use":
+        return this.handleUse(actionData);
 
       default:
         return {
