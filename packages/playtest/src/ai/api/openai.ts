@@ -182,41 +182,27 @@ function createToolCallSchema<T extends Record<string, z.ZodType>>(
 export async function callOpenAI<T extends Record<string, z.ZodType>>(
   params: OpenAICallParams<T>
 ): Promise<OpenAIResult<z.infer<T[keyof T]>>> {
-  // Convert params to the format expected by the API
-  const body: Record<string, any> = {
+  // Create properly typed request parameters
+  const requestParams: OpenAI.ChatCompletionCreateParamsNonStreaming = {
     model: params.model,
     messages: params.messages,
     temperature: params.temperature ?? 0.7,
+    max_tokens: params.maxTokens,
+    tools: params.tools.definitions.map(createOpenAITool),
+    tool_choice: params.tools.choice === "auto" || params.tools.choice === "none" 
+      ? params.tools.choice
+      : {
+          type: "function",
+          function: {
+            name: params.tools.choice as string,
+          },
+        }
   }
-  
-  // Add max_tokens if specified
-  if (params.maxTokens) {
-    body['max_tokens'] = params.maxTokens
-  }
-  
-  // Add tools if specified
-  let toolCallSchema: z.ZodType | null = null
-  
-  // Convert tools to OpenAI format
-  body['tools'] = params.tools.definitions.map(createOpenAITool)
 
-  // Add tool_choice if specified
-  if (params.tools.choice) {
-    if (params.tools.choice === "auto" || params.tools.choice === "none") {
-      body["tool_choice"] = params.tools.choice;
-    } else {
-      // Convert string tool name to OpenAI tool choice format
-      body["tool_choice"] = {
-        type: "function",
-        function: {
-          name: params.tools.choice as string,
-        },
-      };
-    }
-
-    // Create tool parsing schema from the provided schemas
-    toolCallSchema = createToolCallSchema(params.tools.schemas);
-  }
+  // Create tool parsing schema from the provided schemas
+  const toolCallSchema = params.tools.choice 
+    ? createToolCallSchema(params.tools.schemas)
+    : null;
 
   // Initialize OpenAI client
   const client = new OpenAI({
@@ -225,7 +211,7 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   });
 
   // Call the API
-  const rawResponse = await client.chat.completions.create(body);
+  const rawResponse = await client.chat.completions.create(requestParams);
 
   // Parse and validate the response structure with Zod
   // Extract the content and tool calls from the response
