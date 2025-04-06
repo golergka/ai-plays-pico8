@@ -37,6 +37,57 @@ export class StrategyGame implements Game {
     ].join("\n\n");
   }
 
+  private simulateDay(baseMessage: string): StepResult | null {
+    this.state.day += 1;
+    const foodConsumed = this.state.population;
+    this.state.food -= foodConsumed;
+
+    // Check loss condition
+    if (this.state.food < 0) {
+      return {
+        type: "result",
+        result: {
+          description: "Your tribe has run out of food and perished.",
+          metadata: {
+            survived_days: this.state.day,
+            final_population: this.state.population
+          }
+        }
+      };
+    }
+
+    // Check win condition
+    if (this.state.population >= 20) {
+      return {
+        type: "result",
+        result: {
+          description: "Your tribe has grown strong and prosperous! You've won!",
+          metadata: {
+            survived_days: this.state.day,
+            final_population: this.state.population,
+            food_stored: this.state.food
+          }
+        }
+      };
+    }
+
+    // Check population growth
+    if (this.state.food > this.state.population * 2) {
+      this.state.population += 1;
+      return {
+        type: "state",
+        state: {
+          output: this.formatOutput(
+            this.getGameState(`${baseMessage} A new member has joined your tribe!`)
+          ),
+          actions
+        }
+      };
+    }
+
+    return null;
+  }
+
   private getGameState(status: string): StrategyGameOutput {
     return {
       status,
@@ -77,43 +128,11 @@ export class StrategyGame implements Game {
         };
       }
 
-      // Each worker gathers 2-4 food
       const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
       this.state.food += foodGathered;
       
-      // Advance day and consume food
-      this.state.day += 1;
-      const foodConsumed = this.state.population;
-      this.state.food -= foodConsumed;
-
-      if (this.state.food < 0) {
-        return {
-          type: "result",
-          result: {
-            description: "Your tribe has run out of food and perished.",
-            metadata: {
-              survived_days: this.state.day,
-              final_population: this.state.population
-            }
-          }
-        };
-      }
-
-      // Population grows if there's excess food
-      if (this.state.food > this.state.population * 2) {
-        this.state.population += 1;
-        return {
-          type: "state",
-          state: {
-            output: this.formatOutput(
-              this.getGameState(
-                `Your gatherers collected ${foodGathered} food! A new member has joined your tribe!`
-              )
-            ),
-            actions
-          }
-        };
-      }
+      const simResult = this.simulateDay(`Your gatherers collected ${foodGathered} food!`);
+      if (simResult) return simResult;
 
       return {
         type: "state",
@@ -126,22 +145,8 @@ export class StrategyGame implements Game {
       };
 
     } else if (actionType === "rest") {
-      this.state.day += 1;
-      const foodConsumed = this.state.population;
-      this.state.food -= foodConsumed;
-
-      if (this.state.food < 0) {
-        return {
-          type: "result",
-          result: {
-            description: "Your tribe has run out of food and perished.",
-            metadata: {
-              survived_days: this.state.day,
-              final_population: this.state.population
-            }
-          }
-        };
-      }
+      const simResult = this.simulateDay("Your tribe rests for the day.");
+      if (simResult) return simResult;
 
       return {
         type: "state",
