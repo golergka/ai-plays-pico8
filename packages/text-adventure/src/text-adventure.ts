@@ -31,7 +31,7 @@ const actions = {
 export class TextAdventure implements SaveableGame {
   private gameMap: GameMap = gameMap;
   private currentRoomId: string = "";
-  private inventory: string[] = [];
+  private inventory: ItemMap = {};
   private visitedRooms: Set<string> = new Set();
   private score: number = 0;
 
@@ -90,31 +90,26 @@ export class TextAdventure implements SaveableGame {
     }
 
     // Check inventory items
-    if (this.gameMap.items) {
-      const itemResult = findEntity(target, this.gameMap.items);
-      if (itemResult.type === 'found' && this.inventory.includes(itemResult.entity.id)) {
+    const inventoryResult = findEntity(target, this.inventory);
+    switch (inventoryResult.type) {
+      case 'found':
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: itemResult.entity.description,
+            feedback: inventoryResult.entity.description,
             actions
           }
         };
-      } else if (itemResult.type === 'ambiguous') {
-        const inventoryMatches = itemResult.matches
-          .filter(m => this.inventory.includes(m.entity.id));
-        if (inventoryMatches.length > 0) {
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? In your inventory: ${inventoryMatches.map(m => m.entity.name).join(', ')}`,
-              actions
-            }
-          };
-        }
-      }
+      case 'ambiguous':
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: `Which ${target} do you mean? In your inventory: ${inventoryResult.matches.map(m => m.entity.name).join(', ')}`,
+            actions
+          }
+        };
     }
 
     // Check room items
@@ -246,8 +241,9 @@ export class TextAdventure implements SaveableGame {
         }
 
         // Remove item from room and add to inventory
-        currentRoom.items = currentRoom.items.filter(id => id !== itemResult.entity.id);
-        this.inventory.push(itemResult.entity.id);
+        const { [item.id]: takenItem, ...remainingItems } = currentRoom.items;
+        currentRoom.items = remainingItems;
+        this.inventory[item.id] = item;
 
         // Score based on item value
         let scoreMessage = "";
@@ -347,16 +343,8 @@ export class TextAdventure implements SaveableGame {
       }
     }
 
-    if (this.inventory.length > 0) {
-      const inventoryItems = this.inventory
-        .map(id => {
-          for (const room of Object.values(this.gameMap.rooms)) {
-            const item = room.items?.[id];
-            if (item) return item.name;
-          }
-          return id;
-        })
-        .filter(Boolean);
+    const inventoryItems = Object.values(this.inventory).map(item => item.name);
+    if (inventoryItems.length > 0) {
       parts.push(`You are carrying: ${inventoryItems.join(", ")}`);
     }
 
