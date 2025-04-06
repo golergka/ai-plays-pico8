@@ -21,7 +21,7 @@ export const DirectionSchema = z.enum([
   'west',
 ]);
 
-export const EntityMap = z.object({
+export const EntitySchema = z.object({
   id: z.string(),
   /** One-word descriptions of the item, to match against vague human input */
   tags: z.array(z.string()),
@@ -31,7 +31,8 @@ export const EntityMap = z.object({
   description: z.string(),
 })
 
-// Room schema
+export const EntityMapSchema = z.record(z.string(), EntitySchema)
+
 export const RoomSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -42,7 +43,6 @@ export const RoomSchema = z.object({
   features: z.record(z.string(), z.string()).optional(), // Map of feature ID to description
 })
 
-// Item schema
 export const ItemSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -51,7 +51,6 @@ export const ItemSchema = z.object({
   usableWith: z.array(z.string()).optional()
 })
 
-// Character schema
 export const CharacterSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -59,7 +58,6 @@ export const CharacterSchema = z.object({
   dialogue: z.record(z.string(), z.string()).optional()
 })
 
-// Game map schema
 export const GameMapSchema = z.object({
   title: z.string(),
   description: z.string(),
@@ -69,7 +67,6 @@ export const GameMapSchema = z.object({
   characters: z.record(z.string(), CharacterSchema).optional()
 })
 
-// Save data schema for text adventure
 export const TextAdventureSaveSchema = z.object({
   currentRoomId: z.string(),
   inventory: z.array(z.string()),
@@ -77,23 +74,11 @@ export const TextAdventureSaveSchema = z.object({
   gameMap: GameMapSchema
 })
 
-// Base interface for mappable entities
-export interface EntityMapData {
-  id: string;
-  tags: string[];
-  name: string;
-  description: string;
-}
-
-// Result type for entity lookups
-export type EntityLookupResult<T extends EntityMapData> = 
-  | { type: 'found'; entity: T; matchedTag: string }
-  | { type: 'ambiguous'; matches: Array<{ entity: T; matchedTag: string }> }
-  | { type: 'notFound' };
-
 export type Direction = z.infer<typeof DirectionSchema>
 export type Room = z.infer<typeof RoomSchema>
 export type Item = z.infer<typeof ItemSchema>
 export type Character = z.infer<typeof CharacterSchema>
 export type GameMap = z.infer<typeof GameMapSchema>
 export type TextAdventureSaveData = z.infer<typeof TextAdventureSaveSchema>
+export type Entity = z.infer<typeof EntitySchema>
+export type EntityMap = z.infer<typeof EntityMapSchema>
