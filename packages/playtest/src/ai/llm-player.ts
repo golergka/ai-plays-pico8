@@ -93,7 +93,7 @@ export class LLMPlayer implements InputOutput {
       maxRetries: options.maxRetries || 3,
       systemPrompt:
         options.systemPrompt ||
-        "You are playing a game. Analyze the game state and take the most appropriate action.",
+        "You are a play-tester for a text-based game. You can take actions using tool usage, as any player. You can also output text as your inner monologue, either as your chain of thought to help you plan your actions, or as comment intended for the game developers. However, your text output will not advance the game.",
       model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
     };
