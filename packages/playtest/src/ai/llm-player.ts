@@ -84,7 +84,6 @@ function convertActionSchemas<T extends ActionSchemas>(
 export class LLMPlayer implements InputOutput {
   private chatHistory: Message[] = [];
   private readonly options: Required<LLMPlayerOptions>;
-  private readonly onEvent: LLMPlayerEventHandler;
 
   private lastToolCallId: string | null = null;
 
@@ -97,18 +96,16 @@ export class LLMPlayer implements InputOutput {
       model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
     };
-
-    this.onEvent = this.options.onEvent;
   }
 
   private getChatHistory(): Message[] {
     return [
-{
+      {
         role: "system",
         content: this.options.systemPrompt,
       },
       ...this.chatHistory,
-    ]
+    ];
   }
 
   private async getToolUse(
@@ -131,30 +128,28 @@ export class LLMPlayer implements InputOutput {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        callChatHistory.push({
-          role: "system",
-          content: `Error:\n\n${message}`,
-        });
-        this.emitEvent("error", (error as Error).message);
+        this.addMessage(
+          { role: "system", content: `Error:\n\n${message}` },
+          "error"
+        );
         continue;
       }
 
       // Add assistant response to chat history
-      this.chatHistory.push(result.message);
-      if (result.message.content) {
-        this.emitEvent("response", result.message.content as string);
-      }
+      this.addMessage(result.message, "response");
 
       const [toolUse, ...rest] = result.toolUse;
 
       for (const failed of rest) {
         const ignoredMessage = `Please only use one tool at a time. This tool call has been ignored.`;
-        this.chatHistory.push({
-          role: "tool",
-          content: ignoredMessage,
-          tool_call_id: failed.callId,
-        });
-        this.emitEvent("system", ignoredMessage);
+        this.addMessage(
+          {
+            role: "tool",
+            content: ignoredMessage,
+            tool_call_id: failed.callId,
+          },
+          "system"
+        );
       }
 
       if (toolUse) {
@@ -163,11 +158,7 @@ export class LLMPlayer implements InputOutput {
 
       const noAction =
         "Assistant inner monologue has been noted, but no in-game action was taken. Proceed with your next action.";
-      this.chatHistory.push({
-        role: "system",
-        content: noAction,
-      });
-      this.emitEvent("system", noAction);
+      this.addMessage({ role: "system", content: noAction }, "system");
     }
 
     throw new Error(
@@ -187,21 +178,20 @@ export class LLMPlayer implements InputOutput {
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
     // Add game output to chat history
-    this.chatHistory.push(
+    this.addMessage(
       this.lastToolCallId
         ? {
             role: "tool",
             content: gameOutput,
             tool_call_id: this.lastToolCallId,
           }
-        : {
-            role: "system",
-            content: gameOutput,
-          }
+        : { role: "system", content: gameOutput },
+      "prompt"
     );
-
-    this.emitEvent("prompt", gameOutput);
-    this.emitEvent("thinking", "Analyzing game state...");
+    this.addMessage(
+      { role: "system", content: "Analyzing game state..." },
+      "thinking"
+    );
 
     const { definitions, schemas } = convertActionSchemas(actionSchemas);
 
@@ -211,10 +201,11 @@ export class LLMPlayer implements InputOutput {
       const actionData = toolUse.call;
       this.lastToolCallId = toolUse.callId;
 
-      this.emitEvent("action", `Selected action: ${String(actionName)}`, {
-        action: actionName,
-        args: actionData,
-      });
+      this.addMessage(
+        { role: "system", content: `Selected action: ${String(actionName)}` },
+        "action",
+        { action: actionName, args: actionData }
+      );
 
       return [
         actionName,
@@ -223,49 +214,56 @@ export class LLMPlayer implements InputOutput {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.emitEvent("error", `Error selecting action: ${errorMessage}`);
+      this.addMessage(
+        { role: "system", content: `Error:\n\n${errorMessage}` },
+        "error"
+      );
       throw error;
     }
   }
 
   async askForFeedback(result: GameResult): Promise<string> {
-    this.chatHistory.push({
-      role: "system",
-      content: `Game result:\n\n${result.description}`,
-    });
-    this.chatHistory.push({
-      role: "system",
-      content: "As a play-tester, please provide feedback on the game that you have just played. You can assume a role of a qualified QA and game designer to steer developers in the right direction.",
-    });
+    this.addMessage(
+      { role: "system", content: `Game result:\n\n${result.description}` },
+      "system"
+    );
+    this.addMessage(
+      {
+        role: "system",
+        content:
+          "As a play-tester, please provide feedback on the game that you have just played. You can assume a role of a qualified QA and game designer to steer developers in the right direction.",
+      },
+      "system"
+    );
 
     const feedback = await callOpenAI({
       model: this.options.model,
       messages: this.chatHistory,
     });
 
-    this.chatHistory.push(feedback.message);
-    this.emitEvent("response", feedback.message.content as string);
+    this.addMessage(feedback.message, "response");
 
     return feedback.message.content as string;
   }
 
   outputResult(text: string): void {
-    this.chatHistory.push({
-      role: "system",
-      content: text,
-    });
-    this.emitEvent("system", text);
+    this.addMessage({ role: "system", content: text }, "system");
   }
 
   /**
-   * Emit an event to the registered handler
+   * Add a message to chat history and emit corresponding event
    */
-  private emitEvent(
-    type: LLMPlayerEvent["type"],
-    content: string,
-    data?: Record<string, unknown>
-  ): void {
-    this.onEvent({ type, content, data });
+  private addMessage(
+    message: Message,
+    eventType: LLMPlayerEvent["type"],
+    eventData?: Record<string, unknown>
+  ) {
+    this.chatHistory.push(message);
+    this.options.onEvent({
+      type: eventType,
+      content: message.content as string,
+      data: eventData,
+    });
   }
 
   /**
