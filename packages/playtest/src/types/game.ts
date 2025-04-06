@@ -31,12 +31,14 @@ export interface InputOutput {
   /**
    * Get an action from the input source based on provided text and available actions
    * 
-   * @param text Description text to display/process before getting input
+   * @param gameState description of the current game state, fully
+   * @param feedback feedback over the last player action
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
   askForAction<T extends ActionSchemas>(
-    text: string, 
+    gameState: string, 
+    feedback: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]>
   
@@ -52,14 +54,13 @@ export interface InputOutput {
  * Represents the current state of a game during execution
  */
 export interface GameState {
-  /**
-   * Current game output text to display
-   */
-  output: string
+  /** Description of the current game state */
+  gameState: string
+
+  /** Response to the latest player action */
+  feedback: string
   
-  /**
-   * Map of possible actions at this step
-   */
+  /** Map of possible actions at this step */
   actions: ActionSchemas
   
   /**

@@ -57,7 +57,8 @@ export async function playGame(
       while (stepCount < maxSteps) {
         // Get action from player
         const [actionType, actionData] = await io.askForAction(
-          gameState.output,
+          gameState.gameState,
+          gameState.feedback,
           gameState.actions
         );
 

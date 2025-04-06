@@ -13,7 +13,7 @@ import "dotenv/config";
  * Event emitted during LLM player operation
  */
 export interface LLMPlayerEvent {
-  type: "thinking" | "response" | "error" | "action" | "prompt" | "system";
+  type: "response" | "error" | "action" | "prompt" | "system";
   content: string;
   data?: Record<string, unknown> | undefined;
 }
@@ -174,23 +174,27 @@ export class LLMPlayer implements InputOutput {
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
   async askForAction<T extends ActionSchemas>(
-    gameOutput: string,
+    gameState: string,
+    feedback: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-    // Add game output to chat history
+
+    // Add feedback to chat history
     this.addMessage(
       this.lastToolCallId
         ? {
             role: "tool",
-            content: gameOutput,
+            content: feedback,
             tool_call_id: this.lastToolCallId,
           }
-        : { role: "system", content: gameOutput },
+        : { role: "system", content: feedback },
       "prompt"
     );
+
+    // Add latest game state to chat history
     this.addMessage(
-      { role: "system", content: "Analyzing game state..." },
-      "thinking"
+      { role: "system", content: gameState },
+      "system"
     );
 
     const { definitions, schemas } = convertActionSchemas(actionSchemas);

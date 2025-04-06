@@ -68,11 +68,6 @@ async function main() {
 function handleLLMEvent(ui: TerminalUI): (event: LLMPlayerEvent) => void {
   return (event: LLMPlayerEvent) => {
     switch (event.type) {
-      case "thinking":
-        ui.display("");
-        ui.display("...");
-        ui.display("");
-        break;
       case "response":
         ui.displayHeader("LLM Response");
         ui.display(ui.color(event.content, "green"));

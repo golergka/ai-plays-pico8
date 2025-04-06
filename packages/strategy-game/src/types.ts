@@ -10,18 +10,6 @@ export interface StrategyGameState {
   freeWorkers: number;
 }
 
-export interface StrategyGameOutput {
-  status: string;
-  resources: {
-    food: number;
-    wood: number;
-    population: number;
-    shelters: number;
-    score: number;
-  };
-  day: number;
-}
-
 export const StrategyGameSaveSchema = z.object({
   food: z.number(),
   wood: z.number(),

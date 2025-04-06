@@ -44,9 +44,11 @@ export class HumanPlayer implements InputOutput {
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
   async askForAction<T extends Record<string, Schema<any>>>(
-    gameOutput: string,
+    gameState: string,
+    feedback: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
+    const gameOutput = `${gameState}\n\n${feedback}`
     this.terminalUI.displayHeader('Game State')
 
     // Display game output
