@@ -47,12 +47,66 @@ export class TextAdventure implements SaveableGame {
     return `(+${points} points: ${reason})`;
   }
 
-  private handleLook(): StepResult {
+  private handleLook(actionData: unknown): StepResult {
+    const { target } = actions.look.parse(actionData);
+    const currentRoom = this.getCurrentRoom();
+    
+    // Looking at the room/around
+    if (target === "room" || target === "around") {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: currentRoom.description,
+          actions
+        }
+      };
+    }
+
+    // Looking at inventory items
+    const inventoryItem = this.gameMap.items?.[target];
+    if (inventoryItem && this.inventory.includes(target)) {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: inventoryItem.description,
+          actions
+        }
+      };
+    }
+
+    // Looking at room items
+    if (inventoryItem && currentRoom.items?.includes(target)) {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: inventoryItem.description,
+          actions
+        }
+      };
+    }
+
+    // Looking at characters
+    const character = this.gameMap.characters?.[target];
+    if (character && currentRoom.characters?.includes(target)) {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: character.description,
+          actions
+        }
+      };
+    }
+
+    // Target not found
     return {
       type: "state",
       state: {
         gameState: this.formatGameState(),
-        feedback: "You see nothing special.",
+        feedback: `You don't see any ${target} here.`,
         actions
       }
     };
