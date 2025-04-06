@@ -61,7 +61,6 @@ export async function playGame(
         // Process step
         const stepResult = await game.step([actionType as string, actionData]);
 
-        // If game is over, return result
         if (stepResult.type === "result") {
           io.outputResult(`Game completed: ${stepResult.result.description}`)
           game = await initializeGame(gameType);
@@ -70,12 +69,9 @@ export async function playGame(
             throw new Error(`Unknown game type: ${gameType}`);
           }
           gameState = await game.start();
-          break;
+        } else {
+          gameState = stepResult.state;
         }
-
-        // Otherwise, update game state
-        gameState = stepResult.state;
-
       }
 
       io.outputResult(`Maximum number of LLM play-through steps (${maxSteps}) reached`);
