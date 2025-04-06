@@ -14,9 +14,9 @@ export const gameMap: GameMap = {
       },
       items: ["torch"],
       features: {
-        "stone columns": "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
-        "wall inscriptions": "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
-        "grand doorway": "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements."
+        "columns": "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
+        "inscriptions": "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
+        "doorway": "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements."
       }
     },
     mainHall: {

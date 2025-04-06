@@ -63,17 +63,24 @@ export class TextAdventure implements SaveableGame {
       };
     }
 
-    // Looking at room features
-    if (currentRoom.features && target in currentRoom.features) {
-      const targetFeature = currentRoom.features[target];
-      return {
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: targetFeature ?? `You don't see any ${target} here.`,
-          actions
-        }
-      };
+    // Looking at room features - split target into words and try to match any word
+    if (currentRoom.features) {
+      const targetWords = target.toLowerCase().split(/\s+/);
+      const featureMatch = Object.entries(currentRoom.features)
+        .find(([featureKey]) => 
+          targetWords.some(word => featureKey.toLowerCase() === word.toLowerCase())
+        );
+      
+      if (featureMatch) {
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: featureMatch[1],
+            actions
+          }
+        };
+      }
     }
 
     // Looking at inventory items
@@ -227,12 +234,6 @@ export class TextAdventure implements SaveableGame {
       parts.push(`You see: ${currentRoom.items.join(", ")}`);
     }
 
-    if (currentRoom.features) {
-      const features = Object.keys(currentRoom.features);
-      if (features.length > 0) {
-        parts.push(`Notable features: ${features.join(", ")}`);
-      }
-    }
 
     if (currentRoom.exits) {
       parts.push(`Visible exits: ${Object.keys(currentRoom.exits).join(", ")}`);
