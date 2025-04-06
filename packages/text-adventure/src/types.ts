@@ -69,13 +69,11 @@ export const GameMapSchema = z.object({
   description: z.string(),
   startRoom: z.string(),
   rooms: z.record(z.string(), RoomSchema),
-  items: ItemMapSchema.optional(),
-  characters: CharacterMapSchema.optional()
 })
 
 export const TextAdventureSaveSchema = z.object({
   currentRoomId: z.string(),
-  inventory: z.array(z.string()),
+  inventory: z.record(z.string(), ItemSchema),
   visitedRooms: z.array(z.string()),
   gameMap: GameMapSchema
 })
@@ -93,4 +91,3 @@ export type FeatureMap = z.infer<typeof FeatureMapSchema>
 export type GameMap = z.infer<typeof GameMapSchema>
 export type TextAdventureSaveData = z.infer<typeof TextAdventureSaveSchema>
 export type Entity = z.infer<typeof EntitySchema>
-export type EntityMap = z.infer<typeof EntityMapSchema>

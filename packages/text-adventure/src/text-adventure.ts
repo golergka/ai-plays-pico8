@@ -2,10 +2,22 @@
  * Text Adventure game implementation
  */
 import { z } from "zod";
-import type { SaveableGame, GameState, StepResult, TextAdventureSaveData, Room } from "./types";
-import { findEntity } from './utils';
-import { DirectionSchema, type GameMap, TextAdventureSaveSchema } from "./types";
+import type {
+  SaveableGame,
+  GameState,
+  StepResult,
+  TextAdventureSaveData,
+  Room,
+  Item,
+} from "./types";
+import { findEntity } from "./utils";
+import {
+  DirectionSchema,
+  type GameMap,
+  TextAdventureSaveSchema,
+} from "./types";
 import { gameMap } from "./map";
+import _ from 'lodash'
 
 const actions = {
   look: z
@@ -29,7 +41,7 @@ const actions = {
  * Game that implements the Text Adventure mechanics with save/load functionality
  */
 export class TextAdventure implements SaveableGame {
-  private gameMap: GameMap = gameMap;
+  private gameMap: GameMap = _.cloneDeep(gameMap);
   private currentRoomId: string = "";
   private inventory: Record<string, Item> = {};
   private visitedRooms: Set<string> = new Set();
@@ -51,7 +63,7 @@ export class TextAdventure implements SaveableGame {
   private handleLook(actionData: unknown): StepResult {
     const { target } = actions.look.parse(actionData);
     const currentRoom = this.getCurrentRoom();
-    
+
     // Looking at the room/around
     if (target === "room" || target === "around") {
       return {
@@ -59,8 +71,8 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: currentRoom.description,
-          actions
-        }
+          actions,
+        },
       };
     }
 
@@ -68,23 +80,25 @@ export class TextAdventure implements SaveableGame {
     if (currentRoom.features) {
       const featureResult = findEntity(target, currentRoom.features);
       switch (featureResult.type) {
-        case 'found':
+        case "found":
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
               feedback: featureResult.entity.description,
-              actions
-            }
+              actions,
+            },
           };
-        case 'ambiguous':
+        case "ambiguous":
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? I can see: ${featureResult.matches.map(m => m.entity.name).join(', ')}`,
-              actions
-            }
+              feedback: `Which ${target} do you mean? I can see: ${featureResult.matches
+                .map((m) => m.entity.name)
+                .join(", ")}`,
+              actions,
+            },
           };
       }
     }
@@ -92,23 +106,25 @@ export class TextAdventure implements SaveableGame {
     // Check inventory items
     const inventoryResult = findEntity(target, this.inventory);
     switch (inventoryResult.type) {
-      case 'found':
+      case "found":
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
             feedback: inventoryResult.entity.description,
-            actions
-          }
+            actions,
+          },
         };
-      case 'ambiguous':
+      case "ambiguous":
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `Which ${target} do you mean? In your inventory: ${inventoryResult.matches.map(m => m.entity.name).join(', ')}`,
-            actions
-          }
+            feedback: `Which ${target} do you mean? In your inventory: ${inventoryResult.matches
+              .map((m) => m.entity.name)
+              .join(", ")}`,
+            actions,
+          },
         };
     }
 
@@ -116,23 +132,25 @@ export class TextAdventure implements SaveableGame {
     if (currentRoom.items) {
       const itemResult = findEntity(target, currentRoom.items);
       switch (itemResult.type) {
-        case 'found':
+        case "found":
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
               feedback: itemResult.entity.description,
-              actions
-            }
+              actions,
+            },
           };
-        case 'ambiguous':
+        case "ambiguous":
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? In the room: ${itemResult.matches.map(m => m.entity.name).join(', ')}`,
-              actions
-            }
+              feedback: `Which ${target} do you mean? In the room: ${itemResult.matches
+                .map((m) => m.entity.name)
+                .join(", ")}`,
+              actions,
+            },
           };
       }
     }
@@ -141,23 +159,25 @@ export class TextAdventure implements SaveableGame {
     if (currentRoom.characters) {
       const characterResult = findEntity(target, currentRoom.characters);
       switch (characterResult.type) {
-        case 'found':
+        case "found":
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
               feedback: characterResult.entity.description,
-              actions
-            }
+              actions,
+            },
           };
-        case 'ambiguous':
+        case "ambiguous":
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `Which ${target} do you mean? Characters here: ${characterResult.matches.map(m => m.entity.name).join(', ')}`,
-              actions
-            }
+              feedback: `Which ${target} do you mean? Characters here: ${characterResult.matches
+                .map((m) => m.entity.name)
+                .join(", ")}`,
+              actions,
+            },
           };
       }
     }
@@ -167,8 +187,8 @@ export class TextAdventure implements SaveableGame {
       state: {
         gameState: this.formatGameState(),
         feedback: `You don't see any ${target} here.`,
-        actions
-      }
+        actions,
+      },
     };
   }
 
@@ -182,58 +202,63 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: `You don't see any ${targetItem} here.`,
-          actions
-        }
+          actions,
+        },
       };
     }
 
     const itemResult = findEntity(targetItem, currentRoom.items);
     switch (itemResult.type) {
-      case 'notFound':
+      case "notFound":
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
             feedback: `You don't see any ${targetItem} here.`,
-            actions
-          }
+            actions,
+          },
         };
 
-      case 'ambiguous':
+      case "ambiguous":
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: `Which ${targetItem} do you mean? Available: ${itemResult.matches.map(m => m.entity.name).join(', ')}`,
-            actions
-          }
+            feedback: `Which ${targetItem} do you mean? Available: ${itemResult.matches
+              .map((m) => m.entity.name)
+              .join(", ")}`,
+            actions,
+          },
         };
 
-      case 'found': {
+      case "found": {
         const takenItem = itemResult.entity;
-        
+
         if (!takenItem.takeable) {
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
               feedback: `You can't take the ${takenItem.name}.`,
-              actions
-            }
+              actions,
+            },
           };
         }
 
         // Remove from room items
         const { [takenItem.id]: _, ...remainingItems } = currentRoom.items;
         currentRoom.items = remainingItems;
-        
+
         // Add to inventory
         this.inventory[takenItem.id] = takenItem;
 
         // Score based on item value
         let scoreMessage = "";
         if (takenItem.id === "golden_chalice") {
-          scoreMessage = this.addScore(50, "found the legendary Golden Chalice");
+          scoreMessage = this.addScore(
+            50,
+            "found the legendary Golden Chalice"
+          );
           return {
             type: "result",
             result: {
@@ -241,8 +266,8 @@ export class TextAdventure implements SaveableGame {
               metadata: {
                 score: this.score,
                 inventory: this.inventory,
-              }
-            }
+              },
+            },
           };
         } else if (takenItem.id === "sacred_gem") {
           scoreMessage = this.addScore(20, "found a rare sacred gem");
@@ -255,8 +280,8 @@ export class TextAdventure implements SaveableGame {
           state: {
             gameState: this.formatGameState(),
             feedback: `You carefully take the ${takenItem.name}. ${scoreMessage}`,
-            actions
-          }
+            actions,
+          },
         };
       }
     }
@@ -276,8 +301,8 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: `You move ${direction}.`,
-          actions
-        }
+          actions,
+        },
       };
     } else {
       return {
@@ -285,8 +310,8 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: `You cannot move ${direction} from here.`,
-          actions
-        }
+          actions,
+        },
       };
     }
   }
@@ -296,7 +321,7 @@ export class TextAdventure implements SaveableGame {
    */
   async initialize(): Promise<void> {
     this.currentRoomId = this.gameMap.startRoom;
-    this.inventory = [];
+    this.inventory = {};
     this.visitedRooms = new Set([this.currentRoomId]);
   }
 
@@ -308,7 +333,9 @@ export class TextAdventure implements SaveableGame {
     parts.push(currentRoom.description);
 
     if (currentRoom.items) {
-      const itemNames = Object.values(currentRoom.items).map(item => item.name);
+      const itemNames = Object.values(currentRoom.items).map(
+        (item) => item.name
+      );
       if (itemNames.length > 0) {
         parts.push(`You see: ${itemNames.join(", ")}`);
       }
@@ -322,13 +349,17 @@ export class TextAdventure implements SaveableGame {
     }
 
     if (currentRoom.characters) {
-      const characterNames = Object.values(currentRoom.characters).map(char => char.name);
+      const characterNames = Object.values(currentRoom.characters).map(
+        (char) => char.name
+      );
       if (characterNames.length > 0) {
         parts.push(`Characters present: ${characterNames.join(", ")}`);
       }
     }
 
-    const inventoryItems = Object.values(this.inventory).map(item => item.name);
+    const inventoryItems = Object.values(this.inventory).map(
+      (item) => item.name
+    );
     if (inventoryItems.length > 0) {
       parts.push(`You are carrying: ${inventoryItems.join(", ")}`);
     }
@@ -352,7 +383,7 @@ export class TextAdventure implements SaveableGame {
     return {
       gameState: this.formatGameState(),
       feedback: "Welcome to the Ancient Maze Temple. Your adventure begins...",
-      actions
+      actions,
     };
   }
 
@@ -366,21 +397,21 @@ export class TextAdventure implements SaveableGame {
     switch (actionType) {
       case "look":
         return this.handleLook(actionData);
-      
+
       case "take":
         return this.handleTake(actionData);
-      
+
       case "move":
         return this.handleMove(actionData);
-      
+
       default:
         return {
           type: "state",
           state: {
             gameState: this.formatGameState(),
             feedback: "Action not recognized. Please try a different action.",
-            actions
-          }
+            actions,
+          },
         };
     }
   }
@@ -411,7 +442,7 @@ export class TextAdventure implements SaveableGame {
   getSaveData(): TextAdventureSaveData {
     return {
       currentRoomId: this.currentRoomId,
-      inventory: [...this.inventory],
+      inventory: Object.fromEntries(Object.entries(this.inventory)),
       visitedRooms: [...this.visitedRooms],
       gameMap: this.gameMap || {
         title: "Empty Game",
