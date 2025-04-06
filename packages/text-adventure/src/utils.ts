@@ -22,16 +22,19 @@ export function findEntity<T extends Entity>(
 ): EntityLookupResult<T> {
   const searchWords = searchText.toLowerCase().split(/\s+/);
 
-  const [match, ...rest] = Object.values(entities).flatMap((entity) => {
-    const matchingTags = entity.tags
-      .filter((tag) =>
+  // Get unique matching entities with their best matching tag
+  const matches = Object.values(entities)
+    .map((entity) => {
+      const matchingTag = entity.tags.find((tag) =>
         searchWords.some((word) =>
           tag.toLowerCase().includes(word.toLowerCase())
         )
-      )
-      .map((matchedTag) => ({ entity, matchedTag }));
-    return matchingTags;
-  });
+      );
+      return matchingTag ? { entity, matchedTag: matchingTag } : null;
+    })
+    .filter((match): match is { entity: T; matchedTag: string } => match !== null);
+
+  const [match, ...rest] = matches;
 
   if (!match) {
     return { type: "notFound" };
