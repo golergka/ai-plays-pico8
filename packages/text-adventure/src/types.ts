@@ -21,6 +21,16 @@ export const DirectionSchema = z.enum([
   'west',
 ]);
 
+export const EntityMap = z.object({
+  id: z.string(),
+  /** One-word descriptions of the item, to match against vague human input */
+  tags: z.array(z.string()),
+  /** Human-readable name of the item, usually one or two words */
+  name: z.string(),
+  /** Human-readable description of the item, a couple of sentences */
+  description: z.string(),
+})
+
 // Room schema
 export const RoomSchema = z.object({
   id: z.string(),
