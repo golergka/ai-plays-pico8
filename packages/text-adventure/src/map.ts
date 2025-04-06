@@ -11,8 +11,6 @@ export enum ItemIds {
   goldenChalice = "golden_chalice",
 }
 
-export type ItemId = (typeof ItemIds)[keyof typeof ItemIds];
-
 export enum RoomIds {
   entrance = "entrance",
   mainHall = "mainHall",
