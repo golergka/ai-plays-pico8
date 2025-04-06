@@ -7,16 +7,45 @@ export const gameMap: GameMap = {
   rooms: {
     entrance: {
       id: "entrance",
-      name: "Temple Entrance",
+      name: "Temple Entrance", 
       description: "A grand entranceway with weathered stone columns. Ancient inscriptions cover the walls. The musty air carries the weight of centuries, and your footsteps echo ominously through the chamber.",
       exits: {
-        north: "mainHall",
+        north: {
+          id: "north",
+          name: "Northern Passage",
+          description: "A passage leading north into the main hall",
+          tags: ["north", "passage", "doorway"],
+          targetRoom: "mainHall"
+        }
       },
-      items: ["torch"],
+      items: {
+        torch: {
+          id: "torch",
+          name: "Ancient Torch",
+          description: "A weathered torch that still burns with an eternal flame",
+          tags: ["torch", "light", "fire"],
+          takeable: true
+        }
+      },
       features: {
-        "columns": "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
-        "inscriptions": "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
-        "doorway": "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements."
+        columns: {
+          id: "columns",
+          name: "Stone Columns",
+          description: "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
+          tags: ["column", "pillar", "stone"]
+        },
+        inscriptions: {
+          id: "inscriptions", 
+          name: "Ancient Inscriptions",
+          description: "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
+          tags: ["writing", "inscription", "wall", "text"]
+        },
+        doorway: {
+          id: "doorway",
+          name: "Grand Doorway",
+          description: "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements.",
+          tags: ["door", "doorway", "entrance", "serpent"]
+        }
       }
     },
     mainHall: {
