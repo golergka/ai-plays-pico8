@@ -34,6 +34,14 @@ export class TextAdventure implements SaveableGame {
   private visitedRooms: Set<string> = new Set();
   private score: number = 0;
 
+  private getCurrentRoom(): Room {
+    const currentRoom = this.gameMap.rooms[this.currentRoomId];
+    if (!currentRoom) {
+      throw new Error("Current room not found");
+    }
+    return currentRoom;
+  }
+
   private addScore(points: number, reason: string): string {
     this.score += points;
     return `(+${points} points: ${reason})`;
@@ -52,7 +60,7 @@ export class TextAdventure implements SaveableGame {
 
   private handleTake(actionData: unknown): StepResult {
     const { item } = actions.take.parse(actionData);
-    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
+    const currentRoom = this.getCurrentRoom();
     const itemIndex = currentRoom.items?.indexOf(item) ?? -1;
 
     if (itemIndex === -1) {
@@ -102,7 +110,7 @@ export class TextAdventure implements SaveableGame {
 
   private handleMove(actionData: unknown): StepResult {
     const { direction } = actions.move.parse(actionData);
-    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
+    const currentRoom = this.getCurrentRoom();
 
     if (currentRoom.exits?.[direction]) {
       const newRoomId = currentRoom.exits[direction];
@@ -142,11 +150,7 @@ export class TextAdventure implements SaveableGame {
   }
 
   private formatGameState(): string {
-    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
-    if (!currentRoom) {
-      throw new Error("Current room not found");
-    }
-
+    const currentRoom = this.getCurrentRoom();
     const parts: string[] = [];
 
     parts.push(`# ${currentRoom.name}`);
@@ -196,11 +200,7 @@ export class TextAdventure implements SaveableGame {
    */
   async step(action: [string, unknown]): Promise<StepResult> {
     const [actionType, actionData] = action;
-    const currentRoom = this.gameMap!.rooms[this.currentRoomId];
-    
-    if (!currentRoom) {
-      throw new Error("Current room not found");
-    }
+    this.getCurrentRoom(); // Validate current room exists before proceeding
 
     switch (actionType) {
       case "look":
