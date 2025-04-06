@@ -14,8 +14,8 @@ export function findEntity<T extends EntityMapData>(
 ): EntityLookupResult<T> {
   const searchWords = searchText.toLowerCase().split(/\s+/)
   
-  const matches = Object.entries(entities)
-    .flatMap(([id, entity]) => {
+  const matches = Object.values(entities)
+    .flatMap(entity => {
       const matchingTags = entity.tags
         .filter(tag => searchWords.some(word => tag.toLowerCase().includes(word.toLowerCase())))
         .map(matchedTag => ({ entity, matchedTag }))
@@ -27,7 +27,11 @@ export function findEntity<T extends EntityMapData>(
   }
   
   if (matches.length === 1) {
-    return { type: 'found', ...matches[0] }
+    return { 
+      type: 'found', 
+      entity: matches[0].entity, 
+      matchedTag: matches[0].matchedTag 
+    }
   }
   
   return { type: 'ambiguous', matches }
