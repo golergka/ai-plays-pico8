@@ -1,5 +1,171 @@
-import type { Game } from "@ai-gamedev/playtest";
+import { z } from "zod";
+import type { Game, GameState, StepResult } from "@ai-gamedev/playtest";
+import type { StrategyGameOutput, StrategyGameState } from "./types";
+
+const actions = {
+  gather: z
+    .object({
+      workers: z.number().min(1).describe("Number of people to send gathering food")
+    })
+    .describe("Send people to gather food"),
+  rest: z
+    .object({})
+    .describe("Rest for the day, consuming food")
+} as const;
 
 export class StrategyGame implements Game {
+  private state: StrategyGameState = {
+    food: 10,
+    population: 5,
+    day: 1
+  };
 
+  async initialize(): Promise<void> {
+    this.state = {
+      food: 10,
+      population: 5,
+      day: 1
+    };
+  }
+
+  private formatOutput(output: StrategyGameOutput): string {
+    return [
+      `Day ${output.day}`,
+      output.status,
+      `Population: ${output.resources.population}`,
+      `Food: ${output.resources.food}`,
+    ].join("\n\n");
+  }
+
+  private getGameState(status: string): StrategyGameOutput {
+    return {
+      status,
+      resources: {
+        food: this.state.food,
+        population: this.state.population
+      },
+      day: this.state.day
+    };
+  }
+
+  async start(): Promise<GameState> {
+    const output = this.getGameState(
+      "Your tribe awaits your guidance. You must manage food and population to survive."
+    );
+
+    return {
+      output: this.formatOutput(output),
+      actions
+    };
+  }
+
+  async step(action: [string, unknown]): Promise<StepResult> {
+    const [actionType, actionData] = action;
+
+    if (actionType === "gather") {
+      const { workers } = actions.gather.parse(actionData);
+      
+      if (workers > this.state.population) {
+        return {
+          type: "state",
+          state: {
+            output: this.formatOutput(
+              this.getGameState(`You only have ${this.state.population} people available!`)
+            ),
+            actions
+          }
+        };
+      }
+
+      // Each worker gathers 2-4 food
+      const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
+      this.state.food += foodGathered;
+      
+      // Advance day and consume food
+      this.state.day += 1;
+      const foodConsumed = this.state.population;
+      this.state.food -= foodConsumed;
+
+      if (this.state.food < 0) {
+        return {
+          type: "result",
+          result: {
+            description: "Your tribe has run out of food and perished.",
+            metadata: {
+              survived_days: this.state.day,
+              final_population: this.state.population
+            }
+          }
+        };
+      }
+
+      // Population grows if there's excess food
+      if (this.state.food > this.state.population * 2) {
+        this.state.population += 1;
+        return {
+          type: "state",
+          state: {
+            output: this.formatOutput(
+              this.getGameState(
+                `Your gatherers collected ${foodGathered} food! A new member has joined your tribe!`
+              )
+            ),
+            actions
+          }
+        };
+      }
+
+      return {
+        type: "state",
+        state: {
+          output: this.formatOutput(
+            this.getGameState(`Your gatherers collected ${foodGathered} food!`)
+          ),
+          actions
+        }
+      };
+
+    } else if (actionType === "rest") {
+      this.state.day += 1;
+      const foodConsumed = this.state.population;
+      this.state.food -= foodConsumed;
+
+      if (this.state.food < 0) {
+        return {
+          type: "result",
+          result: {
+            description: "Your tribe has run out of food and perished.",
+            metadata: {
+              survived_days: this.state.day,
+              final_population: this.state.population
+            }
+          }
+        };
+      }
+
+      return {
+        type: "state",
+        state: {
+          output: this.formatOutput(
+            this.getGameState("Your tribe rests for the day.")
+          ),
+          actions
+        }
+      };
+    }
+
+    return {
+      type: "state",
+      state: {
+        output: this.formatOutput(
+          this.getGameState("Action not recognized.")
+        ),
+        actions
+      }
+    };
+  }
+
+  async cleanup(): Promise<void> {
+    // No cleanup needed
+  }
 }
