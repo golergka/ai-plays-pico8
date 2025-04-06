@@ -37,6 +37,7 @@ export class StrategyGame implements Game {
     population: 5,
     shelters: 1,
     day: 1,
+    score: 0
   };
 
   async initialize(): Promise<void> {
@@ -46,13 +47,20 @@ export class StrategyGame implements Game {
       population: 5,
       shelters: 1,
       day: 1,
+      score: 0
     };
   }
 
   private formatOutput(output: StrategyGameOutput): string {
     return [
       `Day ${output.day}`,
+      "Objectives:",
+      "- Grow your population to 20",
+      "- Build at least 10 shelters",
+      "- Don't run out of food!",
+      "",
       output.status,
+      `Score: ${output.resources.score}`,
       `Population: ${output.resources.population}`,
       `Shelters: ${output.resources.shelters}`,
       `Food: ${output.resources.food}`,
@@ -69,15 +77,26 @@ export class StrategyGame implements Game {
     const foodConsumed = shelterEffect + unsheltered * 2; // Unsheltered people consume double food
     this.state.food -= foodConsumed;
 
+    // Calculate score changes
+    const shelterBonus = Math.min(this.state.shelters * 2, this.state.population);
+    const foodSurplus = Math.max(0, this.state.food - foodConsumed);
+    this.state.score += shelterBonus + Math.floor(foodSurplus / 2);
+
     // Check loss condition
     if (this.state.food < 0) {
       return {
         type: "result",
         result: {
-          description: "Your tribe has run out of food and perished.",
+          description: [
+            "Your tribe has run out of food and perished.",
+            `Final Score: ${this.state.score}`,
+            `Survived ${this.state.day} days`,
+            `Peak Population: ${this.state.population}`,
+          ].join("\n\n"),
           metadata: {
             survived_days: this.state.day,
             final_population: this.state.population,
+            final_score: this.state.score
           },
         },
       };
@@ -88,14 +107,21 @@ export class StrategyGame implements Game {
       return {
         type: "result",
         result: {
-          description:
-            "Your tribe has grown strong and prosperous with proper housing! You've won!",
+          description: [
+            "Victory! Your tribe has grown strong and prosperous with proper housing!",
+            `Final Score: ${this.state.score}`,
+            `Completed in ${this.state.day} days`,
+            `Final Population: ${this.state.population}`,
+            `Shelters Built: ${this.state.shelters}`,
+            `Resources Remaining: ${this.state.food} food, ${this.state.wood} wood`,
+          ].join("\n\n"),
           metadata: {
             survived_days: this.state.day,
             final_population: this.state.population,
             shelters: this.state.shelters,
             food_stored: this.state.food,
             wood_stored: this.state.wood,
+            final_score: this.state.score
           },
         },
       };
@@ -126,6 +152,7 @@ export class StrategyGame implements Game {
         population: this.state.population,
         shelters: this.state.shelters,
         wood: this.state.wood,
+        score: this.state.score,
       },
       day: this.state.day,
     };
