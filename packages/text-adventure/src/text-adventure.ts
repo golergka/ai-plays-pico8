@@ -48,6 +48,21 @@ export class TextAdventure implements SaveableGame {
   private inventory: Record<string, Item> = {};
   private visitedRooms: Set<string> = new Set();
   private score: number = 0;
+  private hasTorch: boolean = false;
+  
+  private gameOver(reason: string): StepResult {
+    return {
+      type: "result",
+      result: {
+        description: `Game Over: ${reason}\n\nFinal score: ${this.score}`,
+        metadata: {
+          score: this.score,
+          inventory: this.inventory,
+          gameOver: true
+        },
+      },
+    };
+  }
 
   private getCurrentRoom(): Room {
     const currentRoom = this.gameMap.rooms[this.currentRoomId];
@@ -217,6 +232,11 @@ export class TextAdventure implements SaveableGame {
 
         // Add to inventory
         this.inventory[item.id] = item;
+        
+        // Track special items
+        if (item.id === ItemIds.torch) {
+          this.hasTorch = true;
+        }
 
         // Score based on item value
         let scoreMessage = "";
@@ -256,6 +276,27 @@ export class TextAdventure implements SaveableGame {
 
     const exit = currentRoom.exits?.[direction];
     if (exit) {
+      // Check if player has light before allowing movement
+      if (!this.hasTorch && 
+          this.currentRoomId === RoomIds.entrance && 
+          direction === "north") {
+        return this.gameOver(
+          "You stumble in the dark and fall into a deep pit. " +
+          "Perhaps you should find a light source before venturing deeper into the temple."
+        );
+      }
+      
+      // Check for trap in meditation room
+      if (this.currentRoomId === RoomIds.meditation && 
+          direction === "west" &&
+          !this.inventory[ItemIds.crystalShard]?.id) {
+        return this.gameOver(
+          "As you step into the corridor, ancient magic detects your presence. " +
+          "Without the crystal's protective aura, the temple's defenses activate, " +
+          "and magical energy reduces you to ash."
+        );
+      }
+
       this.currentRoomId = exit.targetRoom;
       this.visitedRooms.add(exit.targetRoom);
 
@@ -341,6 +382,20 @@ export class TextAdventure implements SaveableGame {
     const currentRoom = this.gameMap.rooms[this.currentRoomId];
     if (!currentRoom) {
       throw new Error("Current room not found");
+    }
+
+    // Random chance of immediate game over
+    if (Math.random() < 0.2) { // 20% chance
+      const result = this.gameOver(
+        "As you approach the temple entrance, you trigger an ancient trap. " +
+        "A massive stone block falls from above, crushing you instantly. " +
+        "Perhaps there's a safer approach..."
+      );
+      return {
+        gameState: this.formatGameState(),
+        feedback: result.result.description,
+        actions,
+      };
     }
 
     return {
