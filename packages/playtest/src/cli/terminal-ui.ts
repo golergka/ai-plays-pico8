@@ -57,10 +57,15 @@ export class TerminalUI implements ITerminalUI {
    *
    * @param text Header text
    */
-  displayHeader(text: string): void {
+  displayTitle(text: string): void {
     console.log("\n" + "=".repeat(text.length + 4));
     console.log(`= ${text} =`);
     console.log("=".repeat(text.length + 4) + "\n");
+  }
+
+  displayHeader(text: string, level: number = 1): void {
+    const header = `${"#".repeat(level)} ${text}`;
+    console.log(this.useColors ? chalk.blue(header) : header);
   }
 
   /**
