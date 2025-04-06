@@ -53,16 +53,63 @@ export const gameMap: GameMap = {
       name: "Main Hall",
       description: "A vast ceremonial hall with high ceilings. Faded murals depict forgotten rituals. The air is thick with dust, and your torch casts dancing shadows on the crumbling walls.",
       exits: {
-        south: "entrance",
-        east: "eastWing",
-        west: "westWing",
-        north: "northCorridor",
+        south: {
+          id: "south",
+          name: "Southern Passage",
+          description: "The passage back to the entrance",
+          tags: ["south", "passage", "entrance"],
+          targetRoom: "entrance"
+        },
+        east: {
+          id: "east",
+          name: "Eastern Passage", 
+          description: "A passage leading to the east wing",
+          tags: ["east", "passage"],
+          targetRoom: "eastWing"
+        },
+        west: {
+          id: "west",
+          name: "Western Passage",
+          description: "A passage leading to the west wing",
+          tags: ["west", "passage"],
+          targetRoom: "westWing"
+        },
+        north: {
+          id: "north",
+          name: "Northern Passage",
+          description: "A passage leading to the north corridor",
+          tags: ["north", "passage"],
+          targetRoom: "northCorridor"
+        }
       },
-      items: ["old_coin"],
+      items: {
+        old_coin: {
+          id: "old_coin",
+          name: "Ancient Gold Coin",
+          description: "A tarnished gold coin bearing unfamiliar markings",
+          tags: ["coin", "gold", "money"],
+          takeable: true
+        }
+      },
       features: {
-        "ancient murals": "The faded murals show robed figures performing complex ceremonies around a golden chalice.",
-        "vaulted ceiling": "The vaulted ceiling stretches high above, decorated with astronomical symbols.",
-        "stone altar": "A large stone altar dominates the center of the hall, its surface stained dark with age."
+        ancient_murals: {
+          id: "ancient_murals",
+          name: "Ancient Murals",
+          description: "The faded murals show robed figures performing complex ceremonies around a golden chalice.",
+          tags: ["mural", "art", "wall", "painting"]
+        },
+        vaulted_ceiling: {
+          id: "vaulted_ceiling",
+          name: "Vaulted Ceiling",
+          description: "The vaulted ceiling stretches high above, decorated with astronomical symbols.",
+          tags: ["ceiling", "roof", "astronomy"]
+        },
+        stone_altar: {
+          id: "stone_altar",
+          name: "Stone Altar",
+          description: "A large stone altar dominates the center of the hall, its surface stained dark with age.",
+          tags: ["altar", "stone", "table"]
+        }
       }
     },
     eastWing: {
