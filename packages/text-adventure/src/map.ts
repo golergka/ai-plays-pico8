@@ -272,14 +272,49 @@ export const gameMap: GameMap = {
       name: "Meditation Chamber",
       description: "A peaceful room with a small fountain. Crystal formations catch what little light there is.",
       exits: {
-        south: "eastWing",
-        west: "northCorridor",
+        south: {
+          id: "south",
+          name: "Southern Passage",
+          description: "The passage back to the east wing",
+          tags: ["south", "passage", "door"],
+          targetRoom: "eastWing"
+        },
+        west: {
+          id: "west",
+          name: "Western Passage",
+          description: "The passage to the north corridor",
+          tags: ["west", "passage", "door"],
+          targetRoom: "northCorridor"
+        }
       },
-      items: ["crystal_shard"],
+      items: {
+        crystal_shard: {
+          id: "crystal_shard",
+          name: "Crystal Shard",
+          description: "A piece of glowing crystal that thrums with magical energy",
+          tags: ["crystal", "magic", "light"],
+          takeable: true
+        }
+      },
       features: {
-        "stone fountain": "A small fountain trickles with surprisingly clear water, creating a peaceful atmosphere.",
-        "crystal formations": "Natural crystal formations grow from the walls, catching and refracting light beautifully.",
-        "meditation cushions": "Ancient meditation cushions, now mostly dust, are arranged in a circle."
+        stone_fountain: {
+          id: "stone_fountain",
+          name: "Stone Fountain",
+          description: "A small fountain trickles with surprisingly clear water, creating a peaceful atmosphere.",
+          tags: ["fountain", "water", "stone"]
+        },
+        crystal_formations: {
+          id: "crystal_formations",
+          name: "Crystal Formations",
+          description: "Natural crystal formations grow from the walls, catching and refracting light beautifully.",
+          tags: ["crystal", "formation", "light"]
+        },
+        meditation_cushions: {
+          id: "meditation_cushions",
+          name: "Meditation Cushions",
+          description: "Ancient meditation cushions, now mostly dust, are arranged in a circle.",
+          tags: ["cushion", "furniture", "circle"]
+        }
       }
     },
     guardRoom: {
@@ -287,14 +322,49 @@ export const gameMap: GameMap = {
       name: "Guard's Quarters",
       description: "Once a guard post, now abandoned. Old bedrolls and equipment lie scattered about.",
       exits: {
-        south: "westWing",
-        east: "northCorridor",
+        south: {
+          id: "south",
+          name: "Southern Passage",
+          description: "The passage back to the west wing",
+          tags: ["south", "passage", "door"],
+          targetRoom: "westWing"
+        },
+        east: {
+          id: "east",
+          name: "Eastern Passage",
+          description: "The passage to the north corridor",
+          tags: ["east", "passage", "door"],
+          targetRoom: "northCorridor"
+        }
       },
-      items: ["guard_badge"],
+      items: {
+        guard_badge: {
+          id: "guard_badge",
+          name: "Guard Badge",
+          description: "An ancient badge of office, still gleaming despite its age",
+          tags: ["badge", "metal", "guard"],
+          takeable: true
+        }
+      },
       features: {
-        "stone firepit": "A cold firepit contains the ashes of long-dead fires.",
-        "stone bunks": "Stone bunks line the walls, their old bedding reduced to dust.",
-        "fallen weapon rack": "A fallen weapon rack lies against the wall, its contents long since looted."
+        stone_firepit: {
+          id: "stone_firepit",
+          name: "Stone Firepit",
+          description: "A cold firepit contains the ashes of long-dead fires.",
+          tags: ["firepit", "stone", "ash"]
+        },
+        stone_bunks: {
+          id: "stone_bunks",
+          name: "Stone Bunks",
+          description: "Stone bunks line the walls, their old bedding reduced to dust.",
+          tags: ["bunk", "bed", "stone"]
+        },
+        fallen_weapon_rack: {
+          id: "fallen_weapon_rack",
+          name: "Fallen Weapon Rack",
+          description: "A fallen weapon rack lies against the wall, its contents long since looted.",
+          tags: ["rack", "weapon", "storage"]
+        }
       }
     },
     innerSanctum: {
@@ -302,14 +372,49 @@ export const gameMap: GameMap = {
       name: "Inner Sanctum",
       description: "A sacred chamber bathed in an otherworldly glow. Ancient treasures line ornate pedestals.",
       exits: {
-        south: "northCorridor",
-        east: "treasureVault",
+        south: {
+          id: "south",
+          name: "Southern Passage",
+          description: "The passage back to the north corridor",
+          tags: ["south", "passage", "door"],
+          targetRoom: "northCorridor"
+        },
+        east: {
+          id: "east",
+          name: "Eastern Passage",
+          description: "A passage leading to the treasure vault",
+          tags: ["east", "passage", "door"],
+          targetRoom: "treasureVault"
+        }
       },
-      items: ["sacred_gem"],
+      items: {
+        sacred_gem: {
+          id: "sacred_gem",
+          name: "Sacred Gem",
+          description: "A perfectly cut gem that seems to glow with inner light",
+          tags: ["gem", "crystal", "magic"],
+          takeable: true
+        }
+      },
       features: {
-        "ornate pedestals": "Ornate pedestals display various religious artifacts and offerings.",
-        "glowing symbols": "Glowing symbols on the floor form a complex magical pattern.",
-        "golden statues": "Golden statues of ancient deities stand in alcoves around the room."
+        ornate_pedestals: {
+          id: "ornate_pedestals",
+          name: "Ornate Pedestals",
+          description: "Ornate pedestals display various religious artifacts and offerings.",
+          tags: ["pedestal", "display", "ornate"]
+        },
+        glowing_symbols: {
+          id: "glowing_symbols",
+          name: "Glowing Symbols",
+          description: "Glowing symbols on the floor form a complex magical pattern.",
+          tags: ["symbol", "magic", "floor"]
+        },
+        golden_statues: {
+          id: "golden_statues",
+          name: "Golden Statues",
+          description: "Golden statues of ancient deities stand in alcoves around the room.",
+          tags: ["statue", "gold", "deity"]
+        }
       }
     },
     treasureVault: {
@@ -317,13 +422,42 @@ export const gameMap: GameMap = {
       name: "Treasure Vault",
       description: "The legendary vault of the temple. Golden artifacts catch the light of your torch.",
       exits: {
-        west: "innerSanctum",
+        west: {
+          id: "west",
+          name: "Western Passage",
+          description: "The passage back to the inner sanctum",
+          tags: ["west", "passage", "door"],
+          targetRoom: "innerSanctum"
+        }
       },
-      items: ["golden_chalice"],
+      items: {
+        golden_chalice: {
+          id: "golden_chalice",
+          name: "Golden Chalice",
+          description: "The legendary chalice of the temple, its surface etched with magical runes",
+          tags: ["chalice", "gold", "magic"],
+          takeable: true
+        }
+      },
       features: {
-        "treasure piles": "Piles of ancient coins and jewelry glitter in your torchlight.",
-        "golden altar": "A golden altar stands at the center, clearly meant for the legendary chalice.",
-        "treasure murals": "Rich murals depict the history of the temple's treasures and their guardians."
+        treasure_piles: {
+          id: "treasure_piles",
+          name: "Treasure Piles",
+          description: "Piles of ancient coins and jewelry glitter in your torchlight.",
+          tags: ["treasure", "gold", "coins"]
+        },
+        golden_altar: {
+          id: "golden_altar",
+          name: "Golden Altar",
+          description: "A golden altar stands at the center, clearly meant for the legendary chalice.",
+          tags: ["altar", "gold", "ritual"]
+        },
+        treasure_murals: {
+          id: "treasure_murals",
+          name: "Treasure Murals",
+          description: "Rich murals depict the history of the temple's treasures and their guardians.",
+          tags: ["mural", "art", "history"]
+        }
       }
     },
   },
