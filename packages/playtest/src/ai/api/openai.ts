@@ -155,13 +155,23 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
 
   // Call the API
   const rawResponse = await client.chat.completions.create(requestParams);
+  if (!rawResponse) {
+    throw new Error("No response from OpenAI API");
+  }
 
-  // Parse and validate the response structure with Zod
-  // Extract the content and tool calls from the response
-  const message = rawResponse.choices[0]?.message;
+  if ((rawResponse as any).error) {
+    throw new Error(`API error: ${(rawResponse as any).error.message}`);
+  }
 
+  if (!rawResponse.choices) {
+    console.log('response', rawResponse);
+    throw new Error("No choices in the response");
+  }
+
+  const message = rawResponse.choices.map(c => c.message).filter(m => m !== undefined)[0];
+  
   if (!message) {
-    throw new Error("No message in the response");
+    throw new Error("No valid message in the response");
   }
 
   // Create the simplified result object

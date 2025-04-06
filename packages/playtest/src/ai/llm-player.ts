@@ -126,6 +126,8 @@ export class LLMPlayer implements InputOutput {
           },
         });
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.chatHistory.push( { role: "system", content: `Error:\n\n${message}`, });
         this.emitEvent('error', (error as Error).message);
         continue;
       }
