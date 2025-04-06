@@ -3,6 +3,13 @@ import { z } from "zod";
 import { toJsonSchema } from "../../schema/utils";
 import type { JsonSchema7Type } from "zod-to-json-schema";
 import OpenAI from "openai";
+import { observeOpenAI } from "langfuse";
+
+// Initialize OpenAI client
+const client = observeOpenAI(new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env["OPEN_ROUTER_API_KEY"],
+}));
 
 /**
  * Tool definition with Zod schema
@@ -40,10 +47,10 @@ export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
 }
 
 export interface ToolUse<T = unknown> {
-    callId: string;
-    call: T;
-    name: string;
-  }
+  callId: string;
+  call: T;
+  name: string;
+}
 
 /**
  * Simplified OpenAI response for easier consumption
@@ -151,12 +158,6 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
             },
           };
   }
-
-  // Initialize OpenAI client
-  const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: process.env["OPEN_ROUTER_API_KEY"],
-  });
 
   // Call the API
   const rawResponse = await client.chat.completions.create(requestParams);
