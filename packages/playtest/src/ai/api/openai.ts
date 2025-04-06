@@ -138,10 +138,9 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
           function: {
             name: params.tools.choice as string,
           },
-        }
+      },
+    temperature: 0.2,
   }
-
-  console.log("Request params:", requestParams);
 
   // Create tool parsing schema from the provided schemas
   const toolCallSchema = params.tools.choice 
@@ -150,8 +149,8 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
 
   // Initialize OpenAI client
   const client = new OpenAI({
-    apiKey: process.env["OPENAI_API_KEY"],
-    organization: process.env["OPENAI_ORG_ID"],
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: process.env["OPEN_ROUTER_API_KEY"],
   });
 
   // Call the API

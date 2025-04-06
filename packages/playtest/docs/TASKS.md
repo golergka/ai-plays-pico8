@@ -298,7 +298,7 @@ These instructions must not be summarized or removed from this document.
 
 2. Test with the AI player to verify step limit handling:
    ```
-   bun run play:ai compact-adventure gpt-4 3 5
+   bun run play:ai compact-adventure openrouter/auto 3 5
    ```
    - Verify that the game terminates after 5 steps
    - Check that the metadata in the game result includes visited rooms and inventory

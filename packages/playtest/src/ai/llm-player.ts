@@ -40,7 +40,7 @@ export interface LLMPlayerOptions {
   /**
    * Model to use
    */
-  model?: string;
+  model: string;
 
   /**
    * Event handler for LLM player events
@@ -94,7 +94,7 @@ export class LLMPlayer implements InputOutput {
       systemPrompt:
         options.systemPrompt ||
         "You are playing a game. Analyze the game state and take the most appropriate action.",
-      model: options.model || "gpt-4o",
+      model: options.model || "openrouter/auto",
       onEvent: options.onEvent || (() => {}),
     };
 

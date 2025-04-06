@@ -8,7 +8,7 @@ import { playGame } from './play-game'
 async function main() {
   const args = process.argv.slice(2)
   const gameType = args[0] || 'text-adventure'
-  const model = args[1] || 'gpt-4'
+  const model = args[1] || "openrouter/auto";
   const maxRetries = parseInt(args[2] || '3', 10)
   const maxSteps = parseInt(args[3] || '10', 10)
 
@@ -20,7 +20,7 @@ async function main() {
   ui.display(`Usage: bun run play:ai [game-type] [model] [max-retries] [max-steps]`)
   ui.display(`  game-type: Game to play (default: text-adventure)`)
   ui.display(`            Options: text-adventure, compact-adventure`)
-  ui.display(`  model: LLM model to use (default: gpt-4)`)
+  ui.display(`  model: LLM model to use (default: openrouter/auto)`)
   ui.display(`  max-retries: Maximum retries for invalid actions (default: 3)`)
   ui.display(`  max-steps: Maximum steps to run (default: 10)`)
   ui.display(``)

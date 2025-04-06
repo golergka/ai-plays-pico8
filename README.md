@@ -35,7 +35,7 @@ bun install
 bun run play human text-adventure
 
 # Play a compact adventure with AI
-bun run play ai compact-adventure gpt-4 3 15
+bun run play ai compact-adventure openrouter/auto 3 15
 
 # Show help
 bun run play help
