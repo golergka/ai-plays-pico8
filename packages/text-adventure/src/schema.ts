@@ -4,13 +4,20 @@
 
 import { z } from 'zod'
 
+export const DirectionSchema = z.enum([
+  'north',
+  'south',
+  'east',
+  'west',
+]);
+
 // Room schema
 export const RoomSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
   items: z.array(z.string()).optional(),
-  exits: z.record(z.string(), z.string()).optional(),
+  exits: z.record(DirectionSchema, z.string()).optional(),
   characters: z.array(z.string()).optional()
 })
 
@@ -41,6 +48,7 @@ export const GameMapSchema = z.object({
   characters: z.record(z.string(), CharacterSchema).optional()
 })
 
+export type Direction = z.infer<typeof DirectionSchema>
 export type Room = z.infer<typeof RoomSchema>
 export type Item = z.infer<typeof ItemSchema>
 export type Character = z.infer<typeof CharacterSchema>

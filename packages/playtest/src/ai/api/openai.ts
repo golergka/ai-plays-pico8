@@ -38,7 +38,6 @@ export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
     choice?: 'auto' | 'none' | keyof T
   }
   temperature?: number
-  maxTokens?: number;
 }
 
 /**
@@ -127,13 +126,11 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   params: OpenAICallParams<T>
 ): Promise<OpenAIResult<z.infer<T[keyof T]>>> {
   // Create properly typed request parameters
-  const tools = params.tools.definitions.map(createOpenAITool)
   const requestParams: OpenAI.ChatCompletionCreateParamsNonStreaming = {
     model: params.model,
     messages: params.messages,
-    temperature: params.temperature ?? 0.7,
-    max_tokens: params.maxTokens ?? null,
-    tools,
+    // temperature: params.temperature ?? 0.7,
+    tools: params.tools.definitions.map(createOpenAITool),
     tool_choice: params.tools.choice === "auto" || params.tools.choice === "none" 
       ? params.tools.choice
       : {
@@ -143,6 +140,8 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
           },
         }
   }
+
+  console.log("Request params:", requestParams);
 
   // Create tool parsing schema from the provided schemas
   const toolCallSchema = params.tools.choice 

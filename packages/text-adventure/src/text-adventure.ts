@@ -4,43 +4,26 @@
 import { z } from "zod";
 import type { SaveableGame, GameState, StepResult } from "./types";
 import type { TextAdventureOutput, TextAdventureSaveData } from "./types";
-import type { GameMap, Room } from "./schema";
+import { DirectionSchema, type GameMap, } from "./schema";
 import { TextAdventureSaveSchema } from "./types";
 
-/**
- * Get available actions for the current room
- */
-function getAvailableActions(room: Room) {
-  const actions: Record<string, z.ZodType> = {
-    look: z
-      .object({
-        target: z.string().describe("What to look at"),
-      })
-      .describe("Look at something in the environment"),
-  };
-
-  if (room.exits && Object.keys(room.exits).length > 0) {
-    actions["move"] = z
-      .object({
-        direction: z
-          .enum(Object.keys(room.exits) as [string, ...string[]])
-          .describe("Direction to move"),
-      })
-      .describe("Move in a direction");
-  }
-
-  if (room.items && room.items.length > 0) {
-    actions["take"] = z
-      .object({
-        item: z
-          .enum(room.items as [string, ...string[]])
-          .describe("Item to pick up"),
-      })
-      .describe("Take an item");
-  }
-
-  return actions;
-}
+const actions = {
+  look: z
+    .object({
+      target: z.string().describe("What to look at"),
+    })
+    .describe("Look at something in the environment"),
+  move: z
+    .object({
+      direction: DirectionSchema.describe("Direction to move"),
+    })
+    .describe("Move in a direction"),
+  take: z
+    .object({
+      item: z.string().describe("Item to pick up"),
+    })
+    .describe("Take an item"),
+} as const;
 
 /**
  * Game that implements the Text Adventure mechanics with save/load functionality
@@ -109,29 +92,30 @@ export class TextAdventure implements SaveableGame {
   private formatOutput(output: TextAdventureOutput): string {
     const parts: string[] = [];
 
+    if (output.feedback) {
+      parts.push(output.feedback);
+    }
+
     if (output.title) {
       parts.push(`# ${output.title}`);
     }
 
     parts.push(output.description);
 
-    if (output.feedback) {
-      parts.push(`\n${output.feedback}`);
-    }
 
     if (output.items && output.items.length > 0) {
-      parts.push(`\nItems: ${output.items.join(", ")}`);
+      parts.push(`Items: ${output.items.join(", ")}`);
     }
 
     if (output.exits && output.exits.length > 0) {
-      parts.push(`\nExits: ${output.exits.join(", ")}`);
+      parts.push(`Exits: ${output.exits.join(", ")}`);
     }
 
     if (output.characters && output.characters.length > 0) {
-      parts.push(`\nCharacters: ${output.characters.join(", ")}`);
+      parts.push(`Characters: ${output.characters.join(", ")}`);
     }
 
-    return parts.join("\n");
+    return parts.join("\n\n");
   }
 
   private getGameState(feedback: string): TextAdventureOutput {
@@ -218,32 +202,32 @@ export class TextAdventure implements SaveableGame {
           output: this.formatOutput(
             this.getGameState("You see nothing special.")
           ),
-          actions: getAvailableActions(currentRoom),
+          actions,
         },
       };
     } else if (actionType === "take") {
-      const takeData = actionData as { item: string };
-      const itemIndex = currentRoom.items?.indexOf(takeData.item) ?? -1;
+      const { item } = actions.take.parse(actionData);
+      const itemIndex = currentRoom.items?.indexOf(item) ?? -1;
 
       if (itemIndex === -1) {
         return {
           type: "state",
           state: {
             output: this.formatOutput(
-              this.getGameState(`There is no ${takeData.item} here to take.`)
+              this.getGameState(`There is no ${item} here to take.`)
             ),
-            actions: getAvailableActions(currentRoom),
+            actions,
           },
         };
       }
 
       // Remove item from room
-      currentRoom.items = currentRoom.items?.filter((i) => i !== takeData.item);
+      currentRoom.items = currentRoom.items?.filter((i) => i !== item);
       // Add to inventory
-      this.inventory.push(takeData.item);
+      this.inventory.push(item);
 
       // Check win condition
-      if (takeData.item === "golden_chalice") {
+      if (item === "golden_chalice") {
         return {
           type: "result",
           result: {
@@ -261,16 +245,16 @@ export class TextAdventure implements SaveableGame {
         type: "state",
         state: {
           output: this.formatOutput(
-            this.getGameState(`You take the ${takeData.item}.`)
+            this.getGameState(`You take the ${item}.`)
           ),
-          actions: getAvailableActions(currentRoom),
+          actions,
         },
       };
     } else if (actionType === "move") {
-      const moveData = actionData as { direction: string };
+      const { direction } = actions.move.parse(actionData);
 
-      if (currentRoom.exits?.[moveData.direction]) {
-        const newRoomId = currentRoom.exits?.[moveData.direction];
+      if (currentRoom.exits?.[direction]) {
+        const newRoomId = currentRoom.exits?.[direction];
         if (!newRoomId) {
           throw new Error("New room not found");
         }
@@ -286,9 +270,9 @@ export class TextAdventure implements SaveableGame {
           type: "state",
           state: {
             output: this.formatOutput(
-              this.getGameState(`You move ${moveData.direction}.`)
+              this.getGameState(`You move ${direction}.`)
             ),
-            actions: getAvailableActions(currentRoom),
+            actions,
           },
         };
 
@@ -301,12 +285,12 @@ export class TextAdventure implements SaveableGame {
             output: this.formatOutput({
               title: currentRoom.name,
               description: currentRoom.description,
-              feedback: `You cannot move ${moveData.direction} from here.`,
+              feedback: `You cannot move ${direction} from here.`,
               exits,
               items: currentRoom.items ?? [],
               characters: currentRoom.characters ?? [],
             }),
-            actions: getAvailableActions(currentRoom),
+            actions,
           },
         };
       }
@@ -323,7 +307,7 @@ export class TextAdventure implements SaveableGame {
       type: "state",
       state: {
         output: this.formatOutput(output),
-        actions: getAvailableActions(currentRoom),
+        actions,
       },
     };
   }
