@@ -166,7 +166,7 @@ export class TextAdventure implements SaveableGame {
         type: "state",
         state: {
           gameState: this.formatGameState(),
-          feedback: item.description,
+          feedback: `${item.description} (In your inventory)`,
           actions,
         },
       })
@@ -182,7 +182,7 @@ export class TextAdventure implements SaveableGame {
         type: "state",
         state: {
           gameState: this.formatGameState(),
-          feedback: item.description,
+          feedback: `${item.description} (In this room)`,
           actions,
         },
       })
@@ -212,10 +212,27 @@ export class TextAdventure implements SaveableGame {
     const { item: targetItem } = actions.take.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
+    // First check if item is already in inventory
+    const inventoryResult = this.findEntityWithFeedback(
+      targetItem,
+      this.inventory,
+      "In inventory",
+      (item) => ({
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `You already have the ${item.name} in your inventory.`,
+          actions,
+        },
+      })
+    );
+    if (inventoryResult) return inventoryResult;
+
+    // Then check room items
     return this.findEntityWithFeedback(
       targetItem,
       currentRoom.items,
-      "Available",
+      "In room",
       (item) => {
         if (!item.takeable) {
           return {
