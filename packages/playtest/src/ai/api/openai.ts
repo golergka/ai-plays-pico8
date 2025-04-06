@@ -127,12 +127,13 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   params: OpenAICallParams<T>
 ): Promise<OpenAIResult<z.infer<T[keyof T]>>> {
   // Create properly typed request parameters
+  const tools = params.tools.definitions.map(createOpenAITool)
   const requestParams: OpenAI.ChatCompletionCreateParamsNonStreaming = {
     model: params.model,
     messages: params.messages,
     temperature: params.temperature ?? 0.7,
     max_tokens: params.maxTokens ?? null,
-    tools: params.tools.definitions.map(createOpenAITool),
+    tools,
     tool_choice: params.tools.choice === "auto" || params.tools.choice === "none" 
       ? params.tools.choice
       : {

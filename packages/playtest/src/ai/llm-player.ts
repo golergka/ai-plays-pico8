@@ -114,15 +114,21 @@ export class LLMPlayer implements InputOutput {
     schemas: Record<string, z.ZodType>
   ): Promise<NonNullable<OpenAIResult["toolUse"]>> {
     for (let retries = 0; retries < this.options.maxRetries; retries++) {
-      const result = await callOpenAI({
-        model: this.options.model,
-        messages: this.chatHistory,
-        tools: {
-          definitions,
-          schemas,
-          choice: "auto", // Let the AI choose which action to take
-        },
-      });
+      let result: Awaited<ReturnType<typeof callOpenAI>>;
+      try {
+        result = await callOpenAI({
+          model: this.options.model,
+          messages: this.chatHistory,
+          tools: {
+            definitions,
+            schemas,
+            choice: "auto", // Let the AI choose which action to take
+          },
+        });
+      } catch (error) {
+        this.emitEvent('error', (error as Error).message);
+        continue;
+      }
 
       // Add assistant response to chat history
       this.chatHistory.push(result.message);
