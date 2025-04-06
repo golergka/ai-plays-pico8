@@ -5,61 +5,6 @@ import type { JsonSchema7Type } from 'zod-to-json-schema'
 import OpenAI from 'openai';
 
 
-// ======== Input Types ========
-
-/**
- * Valid message roles for OpenAI API
- */
-export type MessageRole = 'system' | 'user' | 'assistant' | 'tool'
-
-/**
- * Message schemas for OpenAI API matching their types exactly
- */
-const SystemMessageSchema = z.object({
-  role: z.literal('system'),
-  content: z.string(),
-  name: z.string().optional()
-})
-
-const UserMessageSchema = z.object({
-  role: z.literal('user'),
-  content: z.string(),
-  name: z.string().optional()
-})
-
-const AssistantMessageSchema = z.object({
-  role: z.literal('assistant'),
-  content: z.string().nullable(),
-  tool_calls: z.array(z.object({
-    id: z.string(),
-    type: z.literal('function'),
-    function: z.object({
-      name: z.string(),
-      arguments: z.string()
-    })
-  })).optional(),
-  name: z.string().optional()
-})
-
-const ToolMessageSchema = z.object({
-  role: z.literal('tool'),
-  content: z.string(),
-  tool_call_id: z.string(),
-  name: z.string().optional()
-})
-
-const MessageSchema = z.discriminatedUnion('role', [
-  SystemMessageSchema,
-  UserMessageSchema,
-  AssistantMessageSchema,
-  ToolMessageSchema
-])
-
-/**
- * Message type for OpenAI API matching their ChatCompletionMessageParam type
- */
-export type Message = z.infer<typeof MessageSchema>
-
 /**
  * Tool definition with Zod schema
  */
@@ -79,73 +24,33 @@ export type OpenAIToolChoice =
   | 'none' 
   | { type: 'function'; function: { name: string } }
 
+export type Message = OpenAI.ChatCompletionMessageParam
+
 /**
  * Input parameters for OpenAI API call
  */
 export interface OpenAICallParams<T extends Record<string, z.ZodType>> {
   model: string
-  messages: Message[]
+  messages: OpenAI.ChatCompletionMessageParam[]
   tools: {
     definitions: ToolDefinition<z.ZodType>[]
     schemas: T
     choice?: 'auto' | 'none' | keyof T
   }
   temperature?: number
-  maxTokens?: number
+  maxTokens?: number;
 }
-
-// ======== Output Types ========
-
-/**
- * Base schema for OpenAI tool calls
- */
-const BaseToolCallSchema = z.object({
-  id: z.string(),
-  type: z.literal('function'),
-  function: z.object({
-    name: z.string(),
-    arguments: z.string()
-  })
-})
-
-/**
- * Schema for OpenAI response
- */
-const OpenAIResponseSchema = z.object({
-  id: z.string(),
-  choices: z.array(z.object({
-    message: z.object({
-      role: z.string(),
-      content: z.string().nullable(),
-      tool_calls: z.array(BaseToolCallSchema).optional()
-    })
-  })),
-  usage: z.object({
-    prompt_tokens: z.number(),
-    completion_tokens: z.number(),
-    total_tokens: z.number()
-  }).optional()
-})
-
-/**
- * Raw OpenAI response type
- */
-type RawOpenAIResponse = z.infer<typeof OpenAIResponseSchema>
 
 /**
  * Simplified OpenAI response for easier consumption
  */
 export interface OpenAIResult<T = unknown> {
-  // Text content of the response, if any
-  content: string | null
-  
-  // Tool call, if any (at most one allowed)
-  toolCall: T | null
-  
-  // Tool name that was called
-  toolName: string | null
-  
-  // Usage statistics
+  message: Message
+  toolUse?: {
+    callId: string;
+    call: T
+    name: string
+  };
   usage?: {
     promptTokens: number
     completionTokens: number
@@ -167,6 +72,15 @@ function createOpenAITool(toolDef: ToolDefinition<z.ZodType>): { type: 'function
       description: toolDef.description,
       parameters: toJsonSchema(toolDef.schema)
     }
+  }
+}
+
+function outputMessageToInputMessage(
+  message: OpenAI.Chat.Completions.ChatCompletionMessage
+): Message {
+  return {
+    name: 'player',
+    ...message,
   }
 }
 
@@ -217,7 +131,7 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
     model: params.model,
     messages: params.messages,
     temperature: params.temperature ?? 0.7,
-    max_tokens: params.maxTokens,
+    max_tokens: params.maxTokens ?? null,
     tools: params.tools.definitions.map(createOpenAITool),
     tool_choice: params.tools.choice === "auto" || params.tools.choice === "none" 
       ? params.tools.choice
@@ -247,11 +161,13 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   // Extract the content and tool calls from the response
   const message = rawResponse.choices[0]?.message;
 
+  if (!message) {
+    throw new Error("No message in the response");
+  }
+
   // Create the simplified result object
   const result: OpenAIResult<z.infer<T[keyof T]>> = {
-    content: message?.content ?? null,
-    toolCall: null,
-    toolName: null,
+    message: outputMessageToInputMessage(message),
   };
 
   // Add usage if available
@@ -266,7 +182,6 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   // Extract tool call if present
   if (message?.tool_calls?.[0]) {
     const toolCall = message.tool_calls[0];
-    result.toolName = toolCall.function.name;
 
     // Parse arguments if schema is available
     if (toolCallSchema && params.tools?.schemas) {
@@ -288,7 +203,11 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
       // Parse the args with the specific schema
       try {
         const validArgs = schema.parse(parsedArgs);
-        result.toolCall = validArgs;
+        result.toolUse = {
+          call: validArgs,
+          name: toolName,
+          callId: toolCall.id,
+        };
       } catch (error) {
         // Error will be thrown with details
         throw new Error(
@@ -301,7 +220,11 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
     } else {
       // No schema available, just parse the JSON
       try {
-        result.toolCall = JSON.parse(toolCall.function.arguments) as any;
+        result.toolUse = {
+          call: JSON.parse(toolCall.function.arguments),
+          name: toolCall.function.name,
+          callId: toolCall.id,
+        };
       } catch (error) {
         // Error will be thrown with details
         throw new Error(

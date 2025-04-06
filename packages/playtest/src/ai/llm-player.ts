@@ -1,22 +1,27 @@
-import type { InputOutput, ActionSchemas } from '../types'
-import type { Schema } from '../schema/utils'
-import { z } from 'zod'
-import { callOpenAI, type Message, type ToolDefinition } from './api'
-import 'dotenv/config'
+import type { InputOutput, ActionSchemas } from "../types";
+import type { Schema } from "../schema/utils";
+import { z } from "zod";
+import {
+  callOpenAI,
+  type Message,
+  type OpenAIResult,
+  type ToolDefinition,
+} from "./api";
+import "dotenv/config";
 
 /**
  * Event emitted during LLM player operation
  */
 export interface LLMPlayerEvent {
-  type: 'thinking' | 'response' | 'error' | 'action' | 'prompt' | 'system'
-  content: string
-  data?: Record<string, unknown> | undefined
+  type: "thinking" | "response" | "error" | "action" | "prompt" | "system";
+  content: string;
+  data?: Record<string, unknown> | undefined;
 }
 
 /**
  * Event handler for LLM player events
  */
-export type LLMPlayerEventHandler = (event: LLMPlayerEvent) => void
+export type LLMPlayerEventHandler = (event: LLMPlayerEvent) => void;
 
 /**
  * Options for the LLM player
@@ -25,60 +30,126 @@ export interface LLMPlayerOptions {
   /**
    * Maximum number of retries for getting a valid action
    */
-  maxRetries?: number
-  
+  maxRetries?: number;
+
   /**
    * System prompt for the LLM
    */
-  systemPrompt?: string
-  
+  systemPrompt?: string;
+
   /**
    * Model to use
    */
-  model?: string
+  model?: string;
 
   /**
    * Event handler for LLM player events
    */
-  onEvent?: LLMPlayerEventHandler
+  onEvent?: LLMPlayerEventHandler;
+}
+
+function convertActionSchemas<T extends ActionSchemas>(
+  actionSchemas: T
+): {
+  definitions: ToolDefinition<z.ZodType>[];
+  schemas: Record<string, z.ZodType>;
+} {
+  const definitions: ToolDefinition<z.ZodType>[] = [];
+  const schemas: Record<string, z.ZodType> = {};
+
+  // Process each action schema into a separate tool
+  for (const [actionName, schema] of Object.entries(actionSchemas)) {
+    // Schema is already a Zod schema (Schema<T> is just an alias for z.ZodType<T>)
+    const zodSchema = schema;
+    definitions.push({
+      name: actionName,
+      description: `Tool for performing the ${actionName} action`,
+      schema: zodSchema,
+    });
+
+    schemas[actionName] = zodSchema;
+  }
+  return { definitions, schemas };
 }
 
 /**
  * LLM-based game player implementation
- * 
+ *
  * IMPORTANT: This class MUST remain completely game-agnostic.
  * It should NEVER contain any game-specific logic, hardcoded actions,
  * or assumptions about specific game mechanics.
- * 
+ *
  * All game-specific handling should be done at the schema level by the caller.
  */
 export class LLMPlayer implements InputOutput {
-  private chatHistory: Message[] = []
-  private options: Required<LLMPlayerOptions>
-  private onEvent: LLMPlayerEventHandler
-  
+  private chatHistory: Message[] = [];
+  private readonly options: Required<LLMPlayerOptions>;
+  private readonly onEvent: LLMPlayerEventHandler;
+
+  private lastToolCallId: string | null = null;
+
   constructor(options: LLMPlayerOptions) {
     this.options = {
       maxRetries: options.maxRetries || 3,
-      systemPrompt: options.systemPrompt || 'You are playing a game. Analyze the game state and take the most appropriate action.',
-      model: options.model || 'gpt-4o',
-      onEvent: options.onEvent || (() => {})
-    }
-    
-    this.onEvent = this.options.onEvent
-    
+      systemPrompt:
+        options.systemPrompt ||
+        "You are playing a game. Analyze the game state and take the most appropriate action.",
+      model: options.model || "gpt-4o",
+      onEvent: options.onEvent || (() => {}),
+    };
+
+    this.onEvent = this.options.onEvent;
+
     // Initialize chat history with system message
     this.chatHistory = [
       {
-        role: 'system',
-        content: this.options.systemPrompt
-      }
-    ]
+        role: "system",
+        content: this.options.systemPrompt,
+      },
+    ];
   }
-  
+
+  private async getToolUse(
+    definitions: ToolDefinition<z.ZodType>[],
+    schemas: Record<string, z.ZodType>
+  ): Promise<NonNullable<OpenAIResult["toolUse"]>> {
+    for (let retries = 0; retries < this.options.maxRetries; retries++) {
+      const result = await callOpenAI({
+        model: this.options.model,
+        messages: this.chatHistory,
+        tools: {
+          definitions,
+          schemas,
+          choice: "auto", // Let the AI choose which action to take
+        },
+      });
+
+      // Add assistant response to chat history
+      this.chatHistory.push(result.message);
+      if (result.message.content) {
+        this.emitEvent("response", result.message.content as string);
+      }
+
+      if (result.toolUse) {
+        return result.toolUse;
+      } else {
+        const noAction = 'Your inner monologue has been noted, but no in-game action was taken.';
+        this.chatHistory.push({
+          role: "system",
+          content: noAction
+        })
+        this.emitEvent("system", noAction);
+      }
+    }
+
+    throw new Error(
+      `No valid tool use found after ${this.options.maxRetries} retries`
+    );
+  }
+
   /**
    * Get an action from the LLM player based on game output and action schemas
-   * 
+   *
    * @param gameOutput Text description of current game state
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
@@ -87,126 +158,79 @@ export class LLMPlayer implements InputOutput {
     gameOutput: string,
     actionSchemas: T
   ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-    try {
-      // Add game output to chat history
-      this.chatHistory.push({
-        role: 'user',
-        content: gameOutput
-      })
-
-      this.emitEvent('prompt', gameOutput);
-      this.emitEvent('thinking', 'Analyzing game state...')
-      
-      // Convert each action schema into a separate tool definition
-      const tools: ToolDefinition<z.ZodType>[] = []
-      const toolSchemas: Record<string, z.ZodType> = {}
-      
-      // Process each action schema into a separate tool
-      for (const [actionName, schema] of Object.entries(actionSchemas)) {
-        // Schema is already a Zod schema (Schema<T> is just an alias for z.ZodType<T>)
-        const zodSchema = schema
-        tools.push({
-          name: actionName,
-          description: `Tool for performing the ${actionName} action`,
-          schema: zodSchema
-        })
-        
-        toolSchemas[actionName] = zodSchema
-      }
-      
-      // Call OpenAI with structured parameters and schemas
-      try {
-        const result = await callOpenAI({
-          model: this.options.model,
-          messages: this.chatHistory,
-          tools: {
-            definitions: tools,
-            schemas: toolSchemas,
-            choice: 'auto' // Let the AI choose which action to take
+    // Add game output to chat history
+    this.chatHistory.push(
+      this.lastToolCallId
+        ? {
+            role: "tool",
+            content: gameOutput,
+            tool_call_id: this.lastToolCallId,
           }
-        })
-        
-        // Tool call is now directly available with correct typing
-        if (result.toolCall && result.toolName) {
-          const actionName = result.toolName as keyof T
-          const actionData = result.toolCall
-          
-          this.emitEvent('action', `Selected action: ${String(actionName)}`, { 
-            action: actionName,
-            args: actionData
-          })
-          
-          // Add assistant response to chat history
-          this.chatHistory.push({
-            role: 'assistant',
-            content: "", // Empty string instead of null to avoid API error
-            // We'd ideally include tool_calls here but our Message type doesn't support it yet
-          })
-          
-          return [
-            actionName, 
-            actionData as T[keyof T] extends Schema<infer U> ? U : never
-          ]
-        }
-        
-        // No tool call, just text response - this is an error case since we expect a tool call
-        if (result.content) {
-          this.emitEvent('response', result.content)
-          this.chatHistory.push({
-            role: 'assistant',
-            content: result.content
-          })
-          return;
-        }
-        
-        throw new Error('LLM returned empty response without selecting an action or emitting content')
-      } catch (e: unknown) {
-        // Just throw the error to be handled by the caller
-        
-        // Try again with the next retry if available
-        throw e
-      }
-      
-      // We should never reach here but return a dummy action to satisfy the type system
-      const firstActionType = Object.keys(actionSchemas)[0] as keyof T
+        : {
+            role: "system",
+            content: gameOutput,
+          }
+    );
+
+    this.emitEvent("prompt", gameOutput);
+    this.emitEvent("thinking", "Analyzing game state...");
+
+    const { definitions, schemas } = convertActionSchemas(actionSchemas);
+
+    try {
+      const toolUse = await this.getToolUse(definitions, schemas);
+      const actionName = toolUse.name as keyof T;
+      const actionData = toolUse.call;
+      this.lastToolCallId = toolUse.callId;
+
+      this.emitEvent("action", `Selected action: ${String(actionName)}`, {
+        action: actionName,
+        args: actionData,
+      });
+
       return [
-        firstActionType, 
-        {} as T[keyof T] extends Schema<infer U> ? U : never
-      ]
+        actionName,
+        actionData as T[keyof T] extends Schema<infer U> ? U : never,
+      ];
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      this.emitEvent('error', `Error selecting action: ${errorMessage}`)
-      throw error
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.emitEvent("error", `Error selecting action: ${errorMessage}`);
+      throw error;
     }
   }
-  
+
   outputResult(text: string): void {
     this.chatHistory.push({
-      role: 'system',
-      content: text
+      role: "system",
+      content: text,
     });
-    this.emitEvent('system', text);
+    this.emitEvent("system", text);
   }
-  
+
   /**
    * Get the chat history
    */
   getChatHistory(): Message[] {
-    return [...this.chatHistory]
+    return [...this.chatHistory];
   }
-  
+
   /**
    * Emit an event to the registered handler
    */
-  private emitEvent(type: LLMPlayerEvent['type'], content: string, data?: Record<string, unknown>): void {
-    this.onEvent({ type, content, data })
+  private emitEvent(
+    type: LLMPlayerEvent["type"],
+    content: string,
+    data?: Record<string, unknown>
+  ): void {
+    this.onEvent({ type, content, data });
   }
-  
+
   /**
    * Clean up resources
    */
   async cleanup(): Promise<void> {
     // Clear the chat history
-    this.chatHistory = []
+    this.chatHistory = [];
   }
 }
