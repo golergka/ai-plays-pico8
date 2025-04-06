@@ -167,14 +167,49 @@ export const gameMap: GameMap = {
       name: "Western Wing",
       description: "An armory with empty weapon racks and fallen shields.",
       exits: {
-        east: "mainHall",
-        north: "guardRoom",
+        east: {
+          id: "east",
+          name: "Eastern Passage",
+          description: "The passage back to the main hall",
+          tags: ["east", "passage", "door"],
+          targetRoom: "mainHall"
+        },
+        north: {
+          id: "north",
+          name: "Northern Passage",
+          description: "A passage leading to the guard room",
+          tags: ["north", "passage", "door"],
+          targetRoom: "guardRoom"
+        }
       },
-      items: ["rusty_sword"],
+      items: {
+        rusty_sword: {
+          id: "rusty_sword",
+          name: "Rusty Sword",
+          description: "An old sword, its blade dulled by rust but still usable",
+          tags: ["sword", "weapon", "metal"],
+          takeable: true
+        }
+      },
       features: {
-        "weapon racks": "The wooden weapon racks stand mostly empty, though you can see where weapons once rested.",
-        "training circle": "A circular area marked in the stone floor suggests this was once a practice area.",
-        "armor stand": "A toppled armor stand lies in the corner, its bronze surface dulled by time."
+        weapon_racks: {
+          id: "weapon_racks",
+          name: "Weapon Racks",
+          description: "The wooden weapon racks stand mostly empty, though you can see where weapons once rested.",
+          tags: ["rack", "weapon", "storage"]
+        },
+        training_circle: {
+          id: "training_circle",
+          name: "Training Circle",
+          description: "A circular area marked in the stone floor suggests this was once a practice area.",
+          tags: ["circle", "floor", "training"]
+        },
+        armor_stand: {
+          id: "armor_stand",
+          name: "Armor Stand",
+          description: "A toppled armor stand lies in the corner, its bronze surface dulled by time.",
+          tags: ["armor", "stand", "bronze"]
+        }
       }
     },
     northCorridor: {
@@ -182,15 +217,54 @@ export const gameMap: GameMap = {
       name: "North Corridor",
       description: "A long hallway with flickering magical lights. The air feels charged with energy.",
       exits: {
-        south: "mainHall",
-        east: "meditation",
-        west: "guardRoom",
-        north: "innerSanctum",
+        south: {
+          id: "south",
+          name: "Southern Passage",
+          description: "The passage back to the main hall",
+          tags: ["south", "passage", "door"],
+          targetRoom: "mainHall"
+        },
+        east: {
+          id: "east",
+          name: "Eastern Passage",
+          description: "A passage leading to the meditation chamber",
+          tags: ["east", "passage", "door"],
+          targetRoom: "meditation"
+        },
+        west: {
+          id: "west",
+          name: "Western Passage",
+          description: "A passage leading to the guard room",
+          tags: ["west", "passage", "door"],
+          targetRoom: "guardRoom"
+        },
+        north: {
+          id: "north",
+          name: "Northern Passage",
+          description: "A passage leading to the inner sanctum",
+          tags: ["north", "passage", "door"],
+          targetRoom: "innerSanctum"
+        }
       },
       features: {
-        "crystal lights": "Mysterious crystals embedded in the walls emit a soft, pulsing blue light.",
-        "wall carvings": "The walls are carved with flowing patterns that seem to move in the flickering light.",
-        "grand archway": "A grand archway ahead bears symbols of power and protection."
+        crystal_lights: {
+          id: "crystal_lights",
+          name: "Crystal Lights",
+          description: "Mysterious crystals embedded in the walls emit a soft, pulsing blue light.",
+          tags: ["crystal", "light", "magic"]
+        },
+        wall_carvings: {
+          id: "wall_carvings",
+          name: "Wall Carvings",
+          description: "The walls are carved with flowing patterns that seem to move in the flickering light.",
+          tags: ["carving", "wall", "pattern"]
+        },
+        grand_archway: {
+          id: "grand_archway",
+          name: "Grand Archway",
+          description: "A grand archway ahead bears symbols of power and protection.",
+          tags: ["arch", "doorway", "symbol"]
+        }
       }
     },
     meditation: {
