@@ -114,17 +114,52 @@ export const gameMap: GameMap = {
     },
     eastWing: {
       id: "eastWing",
-      name: "Eastern Wing",
+      name: "Eastern Wing", 
       description: "A library-like chamber filled with dusty scrolls and broken pottery.",
       exits: {
-        west: "mainHall",
-        north: "meditation",
+        west: {
+          id: "west",
+          name: "Western Passage",
+          description: "The passage back to the main hall",
+          tags: ["west", "passage", "door"],
+          targetRoom: "mainHall"
+        },
+        north: {
+          id: "north",
+          name: "Northern Passage", 
+          description: "A passage leading to the meditation chamber",
+          tags: ["north", "passage", "door"],
+          targetRoom: "meditation"
+        }
       },
-      items: ["ancient_scroll"],
+      items: {
+        ancient_scroll: {
+          id: "ancient_scroll",
+          name: "Ancient Scroll",
+          description: "A fragile scroll covered in mysterious writing",
+          tags: ["scroll", "paper", "writing"],
+          takeable: true
+        }
+      },
       features: {
-        "wooden shelves": "Wooden shelves line the walls, sagging under the weight of ancient tomes and scrolls.",
-        "scholar's desk": "A scholar's desk sits in the corner, covered in dust and fragments of pottery.",
-        "bronze brazier": "An old bronze brazier stands cold and empty, its surface green with age."
+        wooden_shelves: {
+          id: "wooden_shelves",
+          name: "Wooden Shelves",
+          description: "Wooden shelves line the walls, sagging under the weight of ancient tomes and scrolls.",
+          tags: ["shelf", "furniture", "wood"]
+        },
+        scholars_desk: {
+          id: "scholars_desk", 
+          name: "Scholar's Desk",
+          description: "A scholar's desk sits in the corner, covered in dust and fragments of pottery.",
+          tags: ["desk", "furniture", "wood"]
+        },
+        bronze_brazier: {
+          id: "bronze_brazier",
+          name: "Bronze Brazier",
+          description: "An old bronze brazier stands cold and empty, its surface green with age.",
+          tags: ["brazier", "metal", "bronze"]
+        }
       }
     },
     westWing: {
