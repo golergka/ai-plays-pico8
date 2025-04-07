@@ -149,7 +149,7 @@ export const gameMap: GameMap = {
           id: ItemIds.oldCoin,
           name: "Ancient Gold Coin",
           description:
-            "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight.",
+            "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight. The dark runes suggest touching it without magical protection would be fatal.",
           tags: ["coin", "gold", "money"],
           takeable: true,
         },

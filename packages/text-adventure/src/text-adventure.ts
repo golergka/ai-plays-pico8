@@ -306,14 +306,10 @@ export class TextAdventure implements SaveableGame {
         switch (item.id) {
           case ItemIds.oldCoin:
             if (!this.inventory[ItemIds.sacredGem]?.id) {
-              return {
-                type: "state",
-                state: {
-                  gameState: this.formatGameState(),
-                  feedback: "The coin's dark symbols pulse ominously. Perhaps you need some protection against dark magic before touching it.",
-                  actions,
-                },
-              };
+              return this.gameOver(
+                "As you reach for the cursed coin, its dark runes flare with deadly power. " +
+                "Without magical protection, their ancient curse reduces you to ash."
+              );
             }
             // Remove from room and add to inventory
             const { [item.id]: _coin, ...remainingCoinItems } = currentRoom.items!;
