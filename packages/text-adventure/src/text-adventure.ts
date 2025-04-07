@@ -422,7 +422,7 @@ export class TextAdventure implements SaveableGame {
 
   private handleItemUse(item: Entity, target: Entity): StepResult {
     // Handle specific item uses
-    if (target.id === ItemIds.oldCoin || target.tags.includes('coin')) {
+    if (target.id === ItemIds.oldCoin) {
       switch (item.id) {
         case ItemIds.sacredGem:
           return {
