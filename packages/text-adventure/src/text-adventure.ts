@@ -141,8 +141,9 @@ export class TextAdventure implements SaveableGame {
     const { target } = actions.look.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
-    // Looking at the room/around/surroundings
-    if (target === "room" || target === "around" || target === "surroundings") {
+    // Looking at the room/around/surroundings or room name
+    if (target === "room" || target === "around" || target === "surroundings" || 
+        target.toLowerCase() === currentRoom.name.toLowerCase()) {
       let description = currentRoom.description;
       
       if (currentRoom.items && Object.keys(currentRoom.items).length > 0) {
