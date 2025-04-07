@@ -376,22 +376,22 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        stone_fountain: {
-          id: "stone_fountain",
+        [FeatureIds.stoneFountain]: {
+          id: FeatureIds.stoneFountain,
           name: "Stone Fountain",
           description:
             "A small fountain trickles with surprisingly clear water, creating a peaceful atmosphere.",
           tags: ["fountain", "water", "stone"],
         },
-        crystal_formations: {
-          id: "crystal_formations",
+        [FeatureIds.crystalFormations]: {
+          id: FeatureIds.crystalFormations,
           name: "Crystal Formations",
           description:
             "Natural crystal formations grow from the walls, catching and refracting light beautifully.",
           tags: ["crystal", "formation", "light"],
         },
-        meditation_cushions: {
-          id: "meditation_cushions",
+        [FeatureIds.meditationCushions]: {
+          id: FeatureIds.meditationCushions,
           name: "Meditation Cushions",
           description:
             "Ancient meditation cushions, now mostly dust, are arranged in a circle.",
