@@ -315,8 +315,8 @@ export class TextAdventure implements SaveableGame {
               };
             }
             // Remove from room and add to inventory
-            const { [item.id]: _, ...remainingItems } = currentRoom.items!;
-            currentRoom.items = remainingItems;
+            const { [item.id]: _coin, ...remainingCoinItems } = currentRoom.items!;
+            currentRoom.items = remainingCoinItems;
             this.inventory[item.id] = item;
             scoreMessage = this.addScore(15, "safely retrieved the cursed coin");
             break;
@@ -348,16 +348,16 @@ export class TextAdventure implements SaveableGame {
 
           case ItemIds.sacredGem:
             // Remove from room and add to inventory
-            const { [item.id]: _, ...remainingItems } = currentRoom.items!;
-            currentRoom.items = remainingItems;
+            const { [item.id]: _gem, ...remainingGemItems } = currentRoom.items!;
+            currentRoom.items = remainingGemItems;
             this.inventory[item.id] = item;
             scoreMessage = this.addScore(20, "found a rare sacred gem");
             break;
 
           default:
             // Remove from room and add to inventory
-            const { [item.id]: _, ...remainingItems } = currentRoom.items!;
-            currentRoom.items = remainingItems;
+            const { [item.id]: _default, ...remainingDefaultItems } = currentRoom.items!;
+            currentRoom.items = remainingDefaultItems;
             this.inventory[item.id] = item;
             scoreMessage = this.addScore(5, "collected a treasure");
         }
