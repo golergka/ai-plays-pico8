@@ -93,15 +93,15 @@ export const gameMap: GameMap = {
             "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
           tags: ["column", "pillar", "stone"],
         },
-        inscriptions: {
-          id: "inscriptions",
+        [FeatureIds.inscriptions]: {
+          id: FeatureIds.inscriptions,
           name: "Ancient Inscriptions",
           description:
             "The wall inscriptions appear to be in an ancient script, depicting rituals and warnings about the temple's depths.",
           tags: ["writing", "inscription", "wall", "text"],
         },
-        doorway: {
-          id: "doorway",
+        [FeatureIds.doorway]: {
+          id: FeatureIds.doorway,
           name: "Grand Doorway",
           description:
             "The grand stone doorway is flanked by carved serpents, their eyes seeming to follow your movements.",
@@ -154,8 +154,8 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        ancient_murals: {
-          id: "ancient_murals",
+        [FeatureIds.ancientMurals]: {
+          id: FeatureIds.ancientMurals,
           name: "Ancient Murals",
           description:
             "The faded murals show robed figures performing complex ceremonies around a golden chalice.",
