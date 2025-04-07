@@ -533,22 +533,22 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        treasure_piles: {
-          id: "treasure_piles",
+        [FeatureIds.treasurePiles]: {
+          id: FeatureIds.treasurePiles,
           name: "Treasure Piles",
           description:
             "Piles of ancient coins and jewelry glitter in your torchlight.",
           tags: ["treasure", "gold", "coins"],
         },
-        golden_altar: {
-          id: "golden_altar",
+        [FeatureIds.goldenAltar]: {
+          id: FeatureIds.goldenAltar,
           name: "Golden Altar",
           description:
             "A golden altar stands at the center, clearly meant for the legendary chalice.",
           tags: ["altar", "gold", "ritual"],
         },
-        treasure_murals: {
-          id: "treasure_murals",
+        [FeatureIds.treasureMurals]: {
+          id: FeatureIds.treasureMurals,
           name: "Treasure Murals",
           description:
             "Rich murals depict the history of the temple's treasures and their guardians.",
