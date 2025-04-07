@@ -11,7 +11,7 @@ import type {
   Item,
   Entity,
 } from "./types";
-import { ItemIds, RoomIds } from "./map";
+import { FeatureIds, ItemIds, RoomIds } from "./map";
 import { findEntity } from "./utils";
 import {
   DirectionSchema,
