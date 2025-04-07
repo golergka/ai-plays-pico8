@@ -38,7 +38,7 @@ export enum FeatureIds {
   goldenStatues = "golden_statues",
   treasurePiles = "treasure_piles",
   goldenAltar = "golden_altar",
-  treasureMurals = "treasure_murals"
+  treasureMurals = "treasure_murals",
 }
 
 export enum RoomIds {
@@ -148,7 +148,8 @@ export const gameMap: GameMap = {
         [ItemIds.oldCoin]: {
           id: ItemIds.oldCoin,
           name: "Ancient Gold Coin",
-          description: "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight.",
+          description:
+            "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight.",
           tags: ["coin", "gold", "money"],
           takeable: true,
         },
