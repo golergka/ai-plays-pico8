@@ -80,7 +80,9 @@ export class StrategyGame implements Game<typeof actions> {
     };
   }
 
-  private gather(workers: number): string {
+  private gather(data: unknown): string {
+    const { workers } = this.actions.gather.parse(data);
+    
     if (workers > this.state.freeWorkers) {
       return `You only have ${this.state.population} people available!`;
     }
@@ -93,7 +95,9 @@ export class StrategyGame implements Game<typeof actions> {
     return `Your gatherers collected ${foodGathered} food! (${this.state.freeWorkers} workers remaining)`;
   }
 
-  private chop(workers: number): string {
+  private chop(data: unknown): string {
+    const { workers } = this.actions.chop.parse(data);
+    
     if (workers > this.state.freeWorkers) {
       return `You only have ${this.state.population} people available!`;
     }
@@ -106,7 +110,8 @@ export class StrategyGame implements Game<typeof actions> {
     return `Your workers chopped ${woodChopped} wood! (${this.state.freeWorkers} workers remaining)`;
   }
 
-  private build(shelters: number): string {
+  private build(data: unknown): string {
+    const { shelters } = this.actions.build.parse(data);
     const woodNeeded = shelters * 5;
 
     if (woodNeeded > this.state.wood) {
@@ -193,21 +198,15 @@ export class StrategyGame implements Game<typeof actions> {
       case "endTurn":
         onResult(this.endTurn());
         return;
-      case "gather": {
-        const { workers } = this.actions.gather.parse(data);
-        onResult(this.gather(workers));
+      case "gather":
+        onResult(this.gather(data));
         return;
-      }
-      case "chop": {
-        const { workers } = actions.chop.parse(data);
-        onResult(this.chop(workers));
+      case "chop":
+        onResult(this.chop(data));
         return;
-      }
-      case "build": {
-        const { shelters } = actions.build.parse(data);
-        onResult(this.build(shelters));
+      case "build":
+        onResult(this.build(data));
         return;
-      }
     }
   }
 
