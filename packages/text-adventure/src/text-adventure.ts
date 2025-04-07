@@ -483,6 +483,23 @@ export class TextAdventure implements SaveableGame {
         break;
 
       case ItemIds.rustySword:
+        if (target.id === ItemIds.crystalShard) {
+          // Remove both items from inventory as they break
+          const { [ItemIds.rustySword]: _sword, ...remainingSwordItems } = this.inventory;
+          this.inventory = remainingSwordItems;
+
+          const { [ItemIds.crystalShard]: _shard, ...remainingShardItems } = this.inventory;
+          this.inventory = remainingShardItems;
+          
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "You strike the crystal shard with the rusty sword. Both items shatter in a burst of magical energy! Perhaps attacking a magical crystal with a mundane weapon wasn't the best idea...",
+              actions,
+            },
+          };
+        }
         if (target.id === ItemIds.oldCoin) {
           // Remove the sword from inventory as it breaks
           const { [ItemIds.rustySword]: _, ...remainingItems } = this.inventory;
