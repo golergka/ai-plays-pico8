@@ -262,22 +262,22 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        weapon_racks: {
-          id: "weapon_racks",
+        [FeatureIds.weaponRacks]: {
+          id: FeatureIds.weaponRacks,
           name: "Weapon Racks",
           description:
             "The wooden weapon racks stand mostly empty, though you can see where weapons once rested.",
           tags: ["rack", "weapon", "storage"],
         },
-        training_circle: {
-          id: "training_circle",
+        [FeatureIds.trainingCircle]: {
+          id: FeatureIds.trainingCircle,
           name: "Training Circle",
           description:
             "A circular area marked in the stone floor suggests this was once a practice area.",
           tags: ["circle", "floor", "training"],
         },
-        armor_stand: {
-          id: "armor_stand",
+        [FeatureIds.armorStand]: {
+          id: FeatureIds.armorStand,
           name: "Armor Stand",
           description:
             "A toppled armor stand lies in the corner, its bronze surface dulled by time.",
@@ -328,15 +328,15 @@ export const gameMap: GameMap = {
             "Mysterious crystals embedded in the walls emit a soft, pulsing blue light.",
           tags: ["crystal", "light", "magic"],
         },
-        wall_carvings: {
-          id: "wall_carvings",
+        [FeatureIds.wallCarvings]: {
+          id: FeatureIds.wallCarvings,
           name: "Wall Carvings",
           description:
             "The walls are carved with flowing patterns that seem to move in the flickering light.",
           tags: ["carving", "wall", "pattern"],
         },
-        grand_archway: {
-          id: "grand_archway",
+        [FeatureIds.grandArchway]: {
+          id: FeatureIds.grandArchway,
           name: "Grand Archway",
           description:
             "A grand archway ahead bears symbols of power and protection.",
