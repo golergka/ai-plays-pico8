@@ -113,7 +113,7 @@ export const gameMap: GameMap = {
       id: RoomIds.mainHall,
       name: "Main Hall",
       description:
-        "A vast ceremonial hall with a vaulted ceiling stretching high above, decorated with astronomical symbols. Ancient murals on the walls depict forgotten rituals, while a large stone altar dominates the center of the chamber, its surface stained dark with age. The air is thick with dust, and your torch casts dancing shadows on the crumbling walls.",
+        "A vast ceremonial hall with a vaulted ceiling stretching high above, decorated with astronomical symbols. Ancient murals on the walls depict forgotten rituals, while a large stone altar dominates the center of the chamber, its surface stained dark with age. The air is thick with dust, and shadows dance across the crumbling walls.",
       exits: {
         south: {
           id: "south",
