@@ -477,7 +477,7 @@ export class TextAdventure implements SaveableGame {
         break;
 
       case ItemIds.torch:
-        if (target.id === ItemIds.crystalLights) {
+        if (target.id === "crystal_lights") {
           return {
             type: "state",
             state: {

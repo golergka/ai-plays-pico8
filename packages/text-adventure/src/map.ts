@@ -321,8 +321,8 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        crystal_lights: {
-          id: "crystal_lights",
+        [FeatureIds.crystalLights]: {
+          id: FeatureIds.crystalLights,
           name: "Crystal Lights",
           description:
             "Mysterious crystals embedded in the walls emit a soft, pulsing blue light.",
