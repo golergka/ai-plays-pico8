@@ -353,8 +353,6 @@ export class LLMPlayer implements InputOutput {
       langfuseSessionId: this.options.sessionId,
     });
 
-    await this.summariseIfNeccessary(feedback.usage);
-
     this.addMessage({
       type: LLMPlayerEventType.playtesterFeedback,
       message: feedback.message,
