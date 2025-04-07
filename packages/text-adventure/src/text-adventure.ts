@@ -321,6 +321,7 @@ export class TextAdventure implements SaveableGame {
 
   private handleUse(actionData: unknown): StepResult {
     const { item: itemName, target: targetName } = actions.use.parse(actionData);
+    const currentRoom = this.getCurrentRoom();
     
     // Check if item is in inventory
     const itemResult = this.findEntityWithFeedback(
@@ -328,29 +329,35 @@ export class TextAdventure implements SaveableGame {
       this.inventory,
       "In inventory",
       (item) => {
-        // Handle specific item uses
-        if (item.id === ItemIds.sacredGem) {
-          if (targetName.toLowerCase().includes("coin") || 
-              targetName.toLowerCase().includes("symbol")) {
-            return {
-              type: "state",
-              state: {
-                gameState: this.formatGameState(),
-                feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic.",
-                actions,
-              },
-            };
-          }
-        }
-        
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `You can't figure out how to use the ${item.name} on that.`,
-            actions,
-          },
-        };
+        // Check if target exists in inventory
+        const inventoryTargetResult = this.findEntityWithFeedback(
+          targetName,
+          this.inventory,
+          "In inventory",
+          (target) => this.handleItemUse(item, target)
+        );
+        if (inventoryTargetResult) return inventoryTargetResult;
+
+        // Check if target exists in room items
+        const roomItemTargetResult = this.findEntityWithFeedback(
+          targetName,
+          currentRoom.items,
+          "In room",
+          (target) => this.handleItemUse(item, target)
+        );
+        if (roomItemTargetResult) return roomItemTargetResult;
+
+        // Check if target exists in room features
+        const featureTargetResult = this.findEntityWithFeedback(
+          targetName,
+          currentRoom.features,
+          "Features here",
+          (target) => this.handleItemUse(item, target)
+        );
+        if (featureTargetResult) return featureTargetResult;
+
+        // Target not found
+        return this.createNotFoundState(targetName);
       }
     );
     
@@ -359,6 +366,33 @@ export class TextAdventure implements SaveableGame {
       state: {
         gameState: this.formatGameState(),
         feedback: `You don't have a ${itemName} to use.`,
+        actions,
+      },
+    };
+  }
+
+  private handleItemUse(item: Entity, target: Entity): StepResult {
+    // Handle specific item uses
+    if (item.id === ItemIds.sacredGem) {
+      if (target.tags.some(tag => 
+          tag.toLowerCase().includes('coin') || 
+          tag.toLowerCase().includes('symbol'))) {
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic.",
+            actions,
+          },
+        };
+      }
+    }
+    
+    return {
+      type: "state",
+      state: {
+        gameState: this.formatGameState(),
+        feedback: `You can't figure out how to use the ${item.name} on the ${target.name}.`,
         actions,
       },
     };
