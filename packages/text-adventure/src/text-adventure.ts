@@ -256,52 +256,57 @@ export class TextAdventure implements SaveableGame {
         currentRoom.items = remainingItems;
         let scoreMessage = "";
 
-        // Check for cursed coin
-        if (item.id === ItemIds.oldCoin) {
-          if (!this.inventory[ItemIds.sacredGem]?.id) {
+        // Handle special items
+        switch (item.id) {
+          case ItemIds.oldCoin:
+            if (!this.inventory[ItemIds.sacredGem]?.id) {
+              return {
+                type: "state",
+                state: {
+                  gameState: this.formatGameState(),
+                  feedback: "The coin's dark symbols pulse ominously. Perhaps you need some protection against dark magic before touching it.",
+                  actions,
+                },
+              };
+            }
+            scoreMessage = this.addScore(15, "safely retrieved the cursed coin");
+            break;
+
+          case ItemIds.goldenChalice:
+            if (!this.inventory[ItemIds.guardBadge]?.id || !this.inventory[ItemIds.oldCoin]?.id) {
+              return this.gameOver(
+                "As you reach for the chalice, ancient wards flare to life. " +
+                "Without both a guard's authority and the temple's sacred coin, " +
+                "the magical defenses reduce you to ash."
+              );
+            }
+            scoreMessage = this.addScore(50, "claimed the legendary Golden Chalice");
             return {
-              type: "state",
-              state: {
-                gameState: this.formatGameState(),
-                feedback: "The coin's dark symbols pulse ominously. Perhaps you need some protection against dark magic before touching it.",
-                actions,
+              type: "result",
+              result: {
+                description: 
+                  "The guard's badge glows in recognition of your authority, " +
+                  "while the ancient coin resonates with the temple's magic. " +
+                  "The wards surrounding the chalice fade, allowing you to claim your prize.\n\n" +
+                  `Congratulations! You've won the game! Final score: ${this.score}`,
+                metadata: {
+                  score: this.score,
+                  inventory: this.inventory,
+                  gameOver: true
+                },
               },
             };
-          }
-          scoreMessage += this.addScore(15, "safely retrieved the cursed coin");
+
+          case ItemIds.sacredGem:
+            scoreMessage = this.addScore(20, "found a rare sacred gem");
+            break;
+
+          default:
+            scoreMessage = this.addScore(5, "collected a treasure");
         }
 
-        // Check for golden chalice
-        if (item.id === ItemIds.goldenChalice) {
-          if (!this.inventory[ItemIds.guardBadge]?.id || !this.inventory[ItemIds.oldCoin]?.id) {
-            return this.gameOver(
-              "As you reach for the chalice, ancient wards flare to life. " +
-              "Without both a guard's authority and the temple's sacred coin, " +
-              "the magical defenses reduce you to ash."
-            );
-          }
-          scoreMessage += this.addScore(50, "claimed the legendary Golden Chalice");
-          return {
-            type: "result",
-            result: {
-              description: 
-                "The guard's badge glows in recognition of your authority, " +
-                "while the ancient coin resonates with the temple's magic. " +
-                "The wards surrounding the chalice fade, allowing you to claim your prize.\n\n" +
-                `Congratulations! You've won the game! Final score: ${this.score}`,
-              metadata: {
-                score: this.score,
-                inventory: this.inventory,
-                gameOver: true
-              },
-            },
-          };
-        } else if (item.id === ItemIds.sacredGem) {
-          scoreMessage = this.addScore(20, "found a rare sacred gem");
-        } else {
-          scoreMessage = this.addScore(5, "collected a treasure");
-        }
-
+        // Add to inventory and return success message
+        this.inventory[item.id] = item;
         return {
           type: "state",
           state: {
