@@ -431,21 +431,21 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        stone_firepit: {
-          id: "stone_firepit",
+        [FeatureIds.stoneFirepit]: {
+          id: FeatureIds.stoneFirepit,
           name: "Stone Firepit",
           description: "A cold firepit contains the ashes of long-dead fires.",
           tags: ["firepit", "stone", "ash"],
         },
-        stone_bunks: {
-          id: "stone_bunks",
+        [FeatureIds.stoneBunks]: {
+          id: FeatureIds.stoneBunks,
           name: "Stone Bunks",
           description:
             "Stone bunks line the walls, their old bedding reduced to dust.",
           tags: ["bunk", "bed", "stone"],
         },
-        fallen_weapon_rack: {
-          id: "fallen_weapon_rack",
+        [FeatureIds.fallenWeaponRack]: {
+          id: FeatureIds.fallenWeaponRack,
           name: "Fallen Weapon Rack",
           description:
             "A fallen weapon rack lies against the wall, its contents long since looted.",
