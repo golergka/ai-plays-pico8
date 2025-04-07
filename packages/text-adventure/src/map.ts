@@ -9,6 +9,7 @@ export enum ItemIds {
   guardBadge = "guard_badge",
   sacredGem = "sacred_gem",
   goldenChalice = "golden_chalice",
+  crystalLights = "crystal_lights",
 }
 
 export enum RoomIds {
