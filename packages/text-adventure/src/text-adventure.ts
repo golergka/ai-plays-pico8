@@ -434,6 +434,16 @@ export class TextAdventure implements SaveableGame {
         };
 
       case ItemIds.crystalShard:
+        if (target.id === "crystal_lights") {
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The crystal shard resonates with the wall crystals, creating a harmonious hum. While beautiful, this seems more like a natural resonance than a useful interaction.",
+              actions,
+            },
+          };
+        }
         return {
           type: "state",
           state: {
@@ -442,12 +452,19 @@ export class TextAdventure implements SaveableGame {
             actions,
           },
         };
-    }
 
-    // Handle coin-specific interactions
-    if (target.id === ItemIds.oldCoin) {
-      switch (item.id) {
-        case ItemIds.sacredGem:
+      case ItemIds.sacredGem:
+        if (target.id === "crystal_lights") {
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The sacred gem and wall crystals pulse in alternating patterns. The effect is mesmerizing but doesn't seem to serve any practical purpose.",
+              actions,
+            },
+          };
+        }
+        if (target.id === ItemIds.oldCoin) {
           return {
             type: "state",
             state: {
@@ -456,16 +473,21 @@ export class TextAdventure implements SaveableGame {
               actions,
             },
           };
-        case ItemIds.ancientScroll:
+        }
+        break;
+
+      case ItemIds.torch:
+        if (target.id === "crystal_lights") {
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The scroll contains warnings about dark artifacts, but merely reading about protection won't help. You need something with actual protective power.",
+              feedback: "The eternal flame causes interesting reflections in the crystal lights, but nothing more happens.",
               actions,
             },
           };
-        case ItemIds.torch:
+        }
+        if (target.id === ItemIds.oldCoin) {
           return {
             type: "state",
             state: {
@@ -474,7 +496,21 @@ export class TextAdventure implements SaveableGame {
               actions,
             },
           };
-      }
+        }
+        break;
+
+      case ItemIds.ancientScroll:
+        if (target.id === ItemIds.oldCoin) {
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The scroll contains warnings about dark artifacts, but merely reading about protection won't help. You need something with actual protective power.",
+              actions,
+            },
+          };
+        }
+        break;
     }
     
     return {
