@@ -434,7 +434,7 @@ export class TextAdventure implements SaveableGame {
         };
 
       case ItemIds.crystalShard:
-        if (target.id === ItemIds.crystalLights) {
+        if (target.id === ItemIds.crystalShard) {
           return {
             type: "state",
             state: {
@@ -454,7 +454,7 @@ export class TextAdventure implements SaveableGame {
         };
 
       case ItemIds.sacredGem:
-        if (target.id === ItemIds.crystalLights) {
+        if (target.id === ItemIds.crystalShard) {
           return {
             type: "state",
             state: {
