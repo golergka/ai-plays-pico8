@@ -26,6 +26,12 @@ export function findEntity<T extends Entity>(
   // Get unique matching entities with their best matching tag
   const matches = Object.values(entities)
     .map((entity) => {
+      // Check if name matches
+      const nameLower = entity.name.toLowerCase();
+      if (searchWords.some(word => nameLower.includes(word.toLowerCase()))) {
+        return { entity, matchedTag: entity.name };
+      }
+      // Check if any tag matches
       const matchingTag = entity.tags.find((tag) =>
         searchWords.some((word) =>
           tag.toLowerCase().includes(word.toLowerCase())
