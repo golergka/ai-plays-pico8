@@ -422,6 +422,29 @@ export class TextAdventure implements SaveableGame {
 
   private handleItemUse(item: Entity, target: Entity): StepResult {
     // Handle specific item uses
+    switch (item.id) {
+      case ItemIds.guardBadge:
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: "The guard badge is a symbol of authority, but it has no magical properties. It might be useful for proving your right to access certain areas.",
+            actions,
+          },
+        };
+
+      case ItemIds.crystalShard:
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: "The crystal shard pulses with protective energy. It seems designed to shield against specific magical threats in the temple.",
+            actions,
+          },
+        };
+    }
+
+    // Handle coin-specific interactions
     if (target.id === ItemIds.oldCoin) {
       switch (item.id) {
         case ItemIds.sacredGem:
@@ -430,15 +453,6 @@ export class TextAdventure implements SaveableGame {
             state: {
               gameState: this.formatGameState(),
               feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic. This seems like the right approach to handling the cursed coin.",
-              actions,
-            },
-          };
-        case ItemIds.crystalShard:
-          return {
-            type: "state",
-            state: {
-              gameState: this.formatGameState(),
-              feedback: "The crystal shard resonates with the coin's magic, but its power seems insufficient. Perhaps you need something more sacred in nature.",
               actions,
             },
           };
