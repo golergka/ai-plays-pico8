@@ -81,11 +81,17 @@ export class TextAdventure implements SaveableGame {
   }
 
   private createAmbiguousState(target: string, matches: Array<{entity: Entity}>, context: string): StepResult {
+    // Filter matches to only include entities that actually match the target name
+    const relevantMatches = matches.filter(m => 
+      m.entity.name.toLowerCase().includes(target.toLowerCase()) ||
+      m.entity.tags.some(tag => tag.toLowerCase().includes(target.toLowerCase()))
+    );
+
     return {
       type: "state",
       state: {
         gameState: this.formatGameState(),
-        feedback: `Which ${target} do you mean? ${context}: ${matches
+        feedback: `Which ${target} do you mean? ${context}: ${relevantMatches
           .map((m) => m.entity.name)
           .join(", ")}`,
         actions,
