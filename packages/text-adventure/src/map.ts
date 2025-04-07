@@ -161,15 +161,15 @@ export const gameMap: GameMap = {
             "The faded murals show robed figures performing complex ceremonies around a golden chalice.",
           tags: ["mural", "art", "wall", "painting"],
         },
-        vaulted_ceiling: {
-          id: "vaulted_ceiling",
+        [FeatureIds.vaultedCeiling]: {
+          id: FeatureIds.vaultedCeiling,
           name: "Vaulted Ceiling",
           description:
             "The vaulted ceiling stretches high above, decorated with astronomical symbols.",
           tags: ["ceiling", "roof", "astronomy"],
         },
-        stone_altar: {
-          id: "stone_altar",
+        [FeatureIds.stoneAltar]: {
+          id: FeatureIds.stoneAltar,
           name: "Stone Altar",
           description:
             "A large stone altar dominates the center of the hall, its surface stained dark with age.",
@@ -208,22 +208,22 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        wooden_shelves: {
-          id: "wooden_shelves",
+        [FeatureIds.woodenShelves]: {
+          id: FeatureIds.woodenShelves,
           name: "Wooden Shelves",
           description:
             "Wooden shelves line the walls, sagging under the weight of ancient tomes and scrolls.",
           tags: ["shelf", "furniture", "wood"],
         },
-        scholars_desk: {
-          id: "scholars_desk",
+        [FeatureIds.scholarsDesk]: {
+          id: FeatureIds.scholarsDesk,
           name: "Scholar's Desk",
           description:
             "A scholar's desk sits in the corner, covered in dust and fragments of pottery.",
           tags: ["desk", "furniture", "wood"],
         },
-        bronze_brazier: {
-          id: "bronze_brazier",
+        [FeatureIds.bronzeBrazier]: {
+          id: FeatureIds.bronzeBrazier,
           name: "Bronze Brazier",
           description:
             "An old bronze brazier stands cold and empty, its surface green with age.",
