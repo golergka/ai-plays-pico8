@@ -135,13 +135,56 @@ export class TextAdventure implements SaveableGame {
     const { target } = actions.look.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
-    // Looking at the room/around
-    if (target === "room" || target === "around") {
+    // Looking at the room/around/surroundings
+    if (target === "room" || target === "around" || target === "surroundings") {
+      let description = currentRoom.description;
+      
+      if (currentRoom.items && Object.keys(currentRoom.items).length > 0) {
+        description += "\n\nYou can see: " + 
+          Object.values(currentRoom.items)
+            .map(item => item.name)
+            .join(", ");
+      }
+
+      if (currentRoom.features && Object.keys(currentRoom.features).length > 0) {
+        description += "\n\nNotable features: " + 
+          Object.values(currentRoom.features)
+            .map(feature => feature.name)
+            .join(", ");
+      }
+
       return {
         type: "state",
         state: {
           gameState: this.formatGameState(),
-          feedback: currentRoom.description,
+          feedback: description,
+          actions,
+        },
+      };
+    }
+
+    // Looking at exits
+    if (target === "exits") {
+      if (!currentRoom.exits || Object.keys(currentRoom.exits).length === 0) {
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: "There are no visible exits.",
+            actions,
+          },
+        };
+      }
+
+      const exitDescriptions = Object.entries(currentRoom.exits)
+        .map(([direction, exit]) => `${direction}: ${exit.description}`)
+        .join("\n");
+
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: "Available exits:\n" + exitDescriptions,
           actions,
         },
       };
