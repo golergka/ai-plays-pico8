@@ -151,6 +151,9 @@ export const gameMap: GameMap = {
           description:
             "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight.",
           tags: ["coin", "gold", "money"],
+          state: {
+            chipped: false
+          },
           takeable: true,
         },
       },

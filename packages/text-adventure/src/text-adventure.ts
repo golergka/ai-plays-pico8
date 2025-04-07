@@ -482,6 +482,30 @@ export class TextAdventure implements SaveableGame {
         }
         break;
 
+      case ItemIds.rustySword:
+        if (target.id === ItemIds.oldCoin) {
+          // Remove the sword from inventory as it breaks
+          const { [ItemIds.rustySword]: _, ...remainingItems } = this.inventory;
+          this.inventory = remainingItems;
+          
+          // Mark the coin as chipped
+          if (currentRoom.items?.[ItemIds.oldCoin]) {
+            currentRoom.items[ItemIds.oldCoin].description = 
+              "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight. A chip in the edge has weakened some of the dark runes.";
+            currentRoom.items[ItemIds.oldCoin].state = { chipped: true };
+          }
+          
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "You strike the coin with the rusty sword. The blade shatters on impact, but manages to chip the coin's edge, weakening some of its dark runes. Perhaps with proper magical protection, you could now handle it...",
+              actions,
+            },
+          };
+        }
+        break;
+
       case ItemIds.torch:
         if (target.id === FeatureIds.crystalLights) {
           return {
