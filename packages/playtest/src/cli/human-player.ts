@@ -43,7 +43,7 @@ export class HumanPlayer implements InputOutput {
    * @param actionSchemas Map of action names to schemas defining valid actions
    * @returns Promise resolving with a tuple of action name and the corresponding action data
    */
-  async askForAction<T extends Record<string, Schema<any>>>(
+  async askForActions<T extends Record<string, Schema<any>>>(
     gameState: string,
     feedback: string,
     actionSchemas: T

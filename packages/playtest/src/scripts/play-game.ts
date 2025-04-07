@@ -3,7 +3,7 @@
  */
 import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { StrategyGame } from "@ai-gamedev/strategy-game";
-import type { Game, InputOutput } from "../types";
+import type { ActionSchemas, Game, InputOutput } from "../types";
 
 export interface PlayGameOptions {
   /**
@@ -37,35 +37,27 @@ export async function playGame(
   const maxSteps = options.maxSteps || Infinity;
 
   // Initialize the appropriate game
-  let game = await initializeGame(gameType);
-  if (!game) {
-    throw new Error(`Unknown game type: ${gameType}`);
-  }
+  const game = await initializeGame(gameType);
+  game.initialize();
 
   // Run the game with the provided player
   try {
-    let gameState = await game.start();
-
     for (let stepCount = 0; stepCount < maxSteps; stepCount++) {
+      const gameState = game.getGameState();
+
+      if (gameState.gameOver) {
+        io.outputResult(`Game completed: ${gameState.description}`);
+        game.initialize();
+      }
+
       // Get action from player
-      const [actionType, actionData] = await io.askForAction(
-        gameState.gameState,
-        gameState.feedback,
+      const actionCalls = await io.askForActions(
+        gameState.description,
         game.actions,
       );
 
-      // Process step
-      const stepResult = await game.step([actionType as string, actionData]);
-
-      if (stepResult.type === "result") {
-        io.outputResult(`Game completed: ${stepResult.result.description}`);
-        game = await initializeGame(gameType);
-        if (!game) {
-          throw new Error(`Unknown game type: ${gameType}`);
-        }
-        gameState = await game.start();
-      } else {
-        gameState = stepResult.state;
+      for (const call of actionCalls) {
+        game.callAction(...call);
       }
     }
 
@@ -73,6 +65,7 @@ export async function playGame(
       `Maximum number of LLM play-through steps (${maxSteps}) reached`
     );
   } catch (error) {
+    console.error(error);
     io.outputResult(
       `Game terminated due to an internal error: ${
         error instanceof Error ? error.message : String(error)
@@ -87,19 +80,13 @@ export async function playGame(
  * @param gameType Type of game to initialize
  * @returns Initialized game instance or null if game type not found
  */
-export async function initializeGame(gameType: string): Promise<Game | null> {
+export async function initializeGame(gameType: string): Promise<Game<ActionSchemas>> {
   switch (gameType) {
-    case "text-adventure": {
-      const game = new TextAdventure();
-      await game.initialize();
-      return game;
-    }
-    case "strategy-game": {
-      const game = new StrategyGame();
-      await game.initialize();
-      return game;
-    }
+    case "text-adventure":
+      return new TextAdventure();
+    case "strategy-game":
+      return new StrategyGame();
+    default:
+      throw new Error(`Unknown game type: ${gameType}`);
   }
-
-  throw new Error(`Unknown game type: ${gameType}`);
 }

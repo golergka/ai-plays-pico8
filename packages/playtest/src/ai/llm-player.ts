@@ -1,12 +1,10 @@
-import type { InputOutput, ActionSchemas } from "../types";
-import type { Schema } from "../schema/utils";
+import type { InputOutput, ActionSchemas, ActionCall } from "../types";
 import { z } from "zod";
 import {
   callOpenAI,
   type Message,
   type OpenAIResult,
   type ToolDefinition,
-  type ToolUse,
 } from "./api";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
@@ -28,10 +26,6 @@ the right direction.
 const SUMMARIZE_PROMPT = `
 Condense the following play‑log so a future agent can keep playing flawlessly.
 Omit fluff, keep essential game state and internal monologue.
-`.trim();
-
-const IGNORED_TOOL_MESSAGE = `
-Please only use one tool at a time. This tool call has been ignored.
 `.trim();
 
 const NO_ACTION_MESSAGE = `
@@ -127,8 +121,6 @@ export class LLMPlayer implements InputOutput {
   private eventHistory: LLMPlayerEvent[] = [];
   private readonly options: Required<LLMPlayerOptions>;
 
-  private lastToolCallId: string | null = null;
-
   constructor(options: LLMPlayerOptions) {
     this.options = {
       maxRetries: options.maxRetries || 3,
@@ -222,14 +214,46 @@ export class LLMPlayer implements InputOutput {
     });
   }
 
-  private async getToolUse(
-    definitions: ToolDefinition<z.ZodType>[],
-    schemas: Record<string, z.ZodType>
-  ): Promise<ToolUse> {
+  private async withRetries<T>(
+    fn: () => Promise<T>
+  ): Promise<T> {
     for (let retries = 0; retries < this.options.maxRetries; retries++) {
-      let result: Awaited<ReturnType<typeof callOpenAI>>;
-      // Used only for this iteration to save errors on top of
       try {
+        return await fn();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.addMessage({
+          type: LLMPlayerEventType.error,
+          message: { role: "system", content: `Error:\n\n${message}` },
+          data: { error }
+        });
+      }
+    }
+
+    throw new Error(MAX_RETRIES_MESSAGE(this.options.maxRetries));
+  }
+
+  /**
+   * Get an action from the LLM player based on game output and action schemas
+   *
+   * @param gameOutput Text description of current game state
+   * @param actionSchemas Map of action names to schemas defining valid actions
+   * @returns Promise resolving with a tuple of action name and the corresponding action data
+   */
+  async askForActions<T extends ActionSchemas>(
+    gameState: string,
+    actionSchemas: T
+  ): Promise<ActionCall<T>[]> {
+    // Add latest game state to chat history
+    this.addMessage({
+      type: LLMPlayerEventType.gameState,
+      message: { role: "system", content: gameState },
+    });
+
+    const { definitions, schemas } = convertActionSchemas(actionSchemas);
+
+    return this.withRetries(async () => {
+      let result: Awaited<ReturnType<typeof callOpenAI>>;
         result = await callOpenAI({
           model: this.options.model,
           messages: this.constructRequestHistory(),
@@ -243,102 +267,40 @@ export class LLMPlayer implements InputOutput {
 
         await this.summariseIfNeccessary(result.usage);
 
-        // Add assistant response to chat history
         this.addMessage({
           type: LLMPlayerEventType.playerAction,
           message: result.message,
         });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+
+      if (result.toolUse.length === 0) {
         this.addMessage({
           type: LLMPlayerEventType.error,
-          message: { role: "system", content: `Error:\n\n${message}` },
-        });
-        continue;
-      }
-
-      const [toolUse, ...rest] = result.toolUse;
-
-      for (const failed of rest) {
-        const ignoredMessage = IGNORED_TOOL_MESSAGE;
-        this.addMessage({
-          type: LLMPlayerEventType.error,
-          message: {
-            role: "tool",
-            content: ignoredMessage,
-            tool_call_id: failed.callId,
-          },
+          message: { role: "system", content: NO_ACTION_MESSAGE },
         });
       }
 
-      if (toolUse) {
-        return toolUse;
-      }
-
-      const noAction = NO_ACTION_MESSAGE;
-      this.addMessage({
-        type: LLMPlayerEventType.error,
-        message: { role: "system", content: noAction },
-      });
-    }
-
-    throw new Error(MAX_RETRIES_MESSAGE(this.options.maxRetries));
-  }
-
-  /**
-   * Get an action from the LLM player based on game output and action schemas
-   *
-   * @param gameOutput Text description of current game state
-   * @param actionSchemas Map of action names to schemas defining valid actions
-   * @returns Promise resolving with a tuple of action name and the corresponding action data
-   */
-  async askForAction<T extends ActionSchemas>(
-    gameState: string,
-    feedback: string,
-    actionSchemas: T
-  ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-    // Add feedback to chat history
-    if (feedback) {
-      this.addMessage({
-        type: LLMPlayerEventType.gameAction,
-        message: this.lastToolCallId
-          ? {
-              role: "tool",
-              content: feedback,
-              tool_call_id: this.lastToolCallId,
+      return result.toolUse.map(({
+        call, callId, name, 
+      }) => {
+        const action = actionSchemas[name];
+        if (!action) {
+          throw new Error(
+            `Action "${name}" not found in action schemas`
+          );
+        }
+        const data = action.parse(call);
+        return [name, data, (result) =>
+          this.addMessage({
+            type: LLMPlayerEventType.gameAction,
+            message: {
+              role: 'tool',
+              content: result,
+              tool_call_id: callId,
             }
-          : { role: "system", content: feedback },
+          })
+        ] as ActionCall<T>;
       });
-    }
-
-    // Add latest game state to chat history
-    this.addMessage({
-      type: LLMPlayerEventType.gameState,
-      message: { role: "system", content: gameState },
     });
-
-    const { definitions, schemas } = convertActionSchemas(actionSchemas);
-
-    try {
-      const toolUse = await this.getToolUse(definitions, schemas);
-      const actionName = toolUse.name as keyof T;
-      const actionData = toolUse.call;
-      this.lastToolCallId = toolUse.callId;
-
-      return [
-        actionName,
-        actionData as T[keyof T] extends Schema<infer U> ? U : never,
-      ];
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.addMessage({
-        type: LLMPlayerEventType.error,
-        message: { role: "system", content: `Error:\n\n${errorMessage}` },
-        data: { error },
-      });
-      throw error;
-    }
   }
 
   async askForFeedback(): Promise<string> {
