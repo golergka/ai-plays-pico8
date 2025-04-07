@@ -19,31 +19,7 @@ import {
   TextAdventureSaveSchema,
 } from "./types";
 import { gameMap } from "./map";
-import _ from 'lodash'
-
-const actions = {
-  look: z
-    .object({
-      target: z.string().describe("What to look at"),
-    })
-    .describe("Look at something in the environment"),
-  move: z
-    .object({
-      direction: DirectionSchema.describe("Direction to move"),
-    })
-    .describe("Move in a direction"),
-  take: z
-    .object({
-      item: z.string().describe("Item to pick up"),
-    })
-    .describe("Take an item"),
-  use: z
-    .object({
-      item: z.string().describe("Item to use"),
-      target: z.string().describe("Target to use item on"),
-    })
-    .describe("Use an item on something"),
-} as const;
+import _ from "lodash";
 
 /**
  * Game that implements the Text Adventure mechanics with save/load functionality
@@ -54,6 +30,31 @@ export class TextAdventure implements SaveableGame {
   private inventory: Record<string, Item> = {};
   private visitedRooms: Set<string> = new Set();
   private score: number = 0;
+
+  public actions = {
+    look: z
+      .object({
+        target: z.string().describe("What to look at"),
+      })
+      .describe("Look at something in the environment"),
+    move: z
+      .object({
+        direction: DirectionSchema.describe("Direction to move"),
+      })
+      .describe("Move in a direction"),
+    take: z
+      .object({
+        item: z.string().describe("Item to pick up"),
+      })
+      .describe("Take an item"),
+    use: z
+      .object({
+        item: z.string().describe("Item to use"),
+        target: z.string().describe("Target to use item on"),
+      })
+      .describe("Use an item on something"),
+  } as const;
+
   private get hasTorch(): boolean {
     return ItemIds.torch in this.inventory;
   }
@@ -66,7 +67,7 @@ export class TextAdventure implements SaveableGame {
         metadata: {
           score: this.score,
           inventory: this.inventory,
-          gameOver: true
+          gameOver: true,
         },
       },
     };
@@ -80,11 +81,18 @@ export class TextAdventure implements SaveableGame {
     return currentRoom;
   }
 
-  private createAmbiguousState(target: string, matches: Array<{entity: Entity}>, context: string): StepResult {
+  private createAmbiguousState(
+    target: string,
+    matches: Array<{ entity: Entity }>,
+    context: string
+  ): StepResult {
     // Filter matches to only include entities that actually match the target name
-    const relevantMatches = matches.filter(m => 
-      m.entity.name.toLowerCase().includes(target.toLowerCase()) ||
-      m.entity.tags.some(tag => tag.toLowerCase().includes(target.toLowerCase()))
+    const relevantMatches = matches.filter(
+      (m) =>
+        m.entity.name.toLowerCase().includes(target.toLowerCase()) ||
+        m.entity.tags.some((tag) =>
+          tag.toLowerCase().includes(target.toLowerCase())
+        )
     );
 
     return {
@@ -94,7 +102,6 @@ export class TextAdventure implements SaveableGame {
         feedback: `Which ${target} do you mean? ${context}: ${relevantMatches
           .map((m) => m.entity.name)
           .join(", ")}`,
-        actions,
       },
     };
   }
@@ -105,7 +112,6 @@ export class TextAdventure implements SaveableGame {
       state: {
         gameState: this.formatGameState(),
         feedback: `You don't see any ${target} here.`,
-        actions,
       },
     };
   }
@@ -121,7 +127,7 @@ export class TextAdventure implements SaveableGame {
     }
 
     const result = findEntity(target, entities);
-    
+
     switch (result.type) {
       case "found":
         return handler(result.entity);
@@ -140,12 +146,12 @@ export class TextAdventure implements SaveableGame {
   private findAcrossEntities<T extends Entity>(
     target: string,
     entitySets: Array<Record<string, T> | undefined>
-  ): { type: "found"; entity: T; context?: string } | 
-     { type: "ambiguous"; matches: Array<{entity: T}> } | 
-     { type: "notFound" } {
-    
-    const allMatches: Array<{entity: T}> = [];
-    
+  ):
+    | { type: "found"; entity: T; context?: string }
+    | { type: "ambiguous"; matches: Array<{ entity: T }> }
+    | { type: "notFound" } {
+    const allMatches: Array<{ entity: T }> = [];
+
     for (const entities of entitySets) {
       if (entities) {
         const result = findEntity(target, entities);
@@ -168,25 +174,34 @@ export class TextAdventure implements SaveableGame {
   }
 
   private handleLook(actionData: unknown): StepResult {
-    const { target } = actions.look.parse(actionData);
+    const { target } = this.actions.look.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
     // Looking at the room/around/surroundings or room name
-    if (target === "room" || target === "around" || target === "surroundings" || 
-        target.toLowerCase() === currentRoom.name.toLowerCase()) {
+    if (
+      target === "room" ||
+      target === "around" ||
+      target === "surroundings" ||
+      target.toLowerCase() === currentRoom.name.toLowerCase()
+    ) {
       let description = currentRoom.description;
-      
+
       if (currentRoom.items && Object.keys(currentRoom.items).length > 0) {
-        description += "\n\nYou can see: " + 
+        description +=
+          "\n\nYou can see: " +
           Object.values(currentRoom.items)
-            .map(item => item.name)
+            .map((item) => item.name)
             .join(", ");
       }
 
-      if (currentRoom.features && Object.keys(currentRoom.features).length > 0) {
-        description += "\n\nNotable features: " + 
+      if (
+        currentRoom.features &&
+        Object.keys(currentRoom.features).length > 0
+      ) {
+        description +=
+          "\n\nNotable features: " +
           Object.values(currentRoom.features)
-            .map(feature => feature.name)
+            .map((feature) => feature.name)
             .join(", ");
       }
 
@@ -195,7 +210,6 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: description,
-          actions,
         },
       };
     }
@@ -208,7 +222,6 @@ export class TextAdventure implements SaveableGame {
           state: {
             gameState: this.formatGameState(),
             feedback: "There are no visible exits.",
-            actions,
           },
         };
       }
@@ -222,7 +235,6 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: "Available exits:\n" + exitDescriptions,
-          actions,
         },
       };
     }
@@ -232,14 +244,17 @@ export class TextAdventure implements SaveableGame {
       currentRoom.features,
       currentRoom.items,
       this.inventory,
-      currentRoom.characters
+      currentRoom.characters,
     ]);
 
     switch (result.type) {
       case "found": {
         const entity = result.entity;
         let context = "";
-        if (currentRoom.items && Object.values(currentRoom.items).includes(entity)) {
+        if (
+          currentRoom.items &&
+          Object.values(currentRoom.items).includes(entity)
+        ) {
           context = "(In this room)";
         } else if (Object.values(this.inventory).includes(entity)) {
           context = "(In your inventory)";
@@ -249,19 +264,22 @@ export class TextAdventure implements SaveableGame {
           state: {
             gameState: this.formatGameState(),
             feedback: `${entity.description} ${context}`.trim(),
-            actions,
           },
         };
       }
       case "ambiguous":
-        return this.createAmbiguousState(target, result.matches, "Found multiple matches");
+        return this.createAmbiguousState(
+          target,
+          result.matches,
+          "Found multiple matches"
+        );
       case "notFound":
         return this.createNotFoundState(target);
     }
   }
 
   private handleTake(actionData: unknown): StepResult {
-    const { item: targetItem } = actions.take.parse(actionData);
+    const { item: targetItem } = this.actions.take.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
     // First check if item is already in inventory
@@ -274,102 +292,114 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: `You already have the ${item.name} in your inventory.`,
-          actions,
         },
       })
     );
     if (inventoryResult) return inventoryResult;
 
     // Then check room items
-    return this.findEntityWithFeedback(
-      targetItem,
-      currentRoom.items,
-      "In room",
-      (item) => {
-        if (!item.takeable) {
+    return (
+      this.findEntityWithFeedback(
+        targetItem,
+        currentRoom.items,
+        "In room",
+        (item) => {
+          if (!item.takeable) {
+            return {
+              type: "state",
+              state: {
+                gameState: this.formatGameState(),
+                feedback: `You can't take the ${item.name}.`,
+              },
+            };
+          }
+
+          // Handle special items first to check if taking is allowed
+          let scoreMessage = "";
+          switch (item.id) {
+            case ItemIds.oldCoin:
+              if (!this.inventory[ItemIds.sacredGem]?.id) {
+                return this.gameOver(
+                  "As you reach for the cursed coin, its dark runes flare with deadly power. " +
+                    "Without magical protection, their ancient curse reduces you to ash."
+                );
+              }
+              // Remove from room and add to inventory
+              const { [item.id]: _coin, ...remainingCoinItems } =
+                currentRoom.items!;
+              currentRoom.items = remainingCoinItems;
+              this.inventory[item.id] = item;
+              scoreMessage = this.addScore(
+                15,
+                "safely retrieved the cursed coin"
+              );
+              break;
+
+            case ItemIds.goldenChalice:
+              if (
+                !this.inventory[ItemIds.guardBadge]?.id ||
+                !this.inventory[ItemIds.oldCoin]?.id
+              ) {
+                return this.gameOver(
+                  "As you reach for the chalice, ancient wards flare to life. " +
+                    "Without both a guard's authority and the temple's sacred coin, " +
+                    "the magical defenses reduce you to ash."
+                );
+              }
+              scoreMessage = this.addScore(
+                50,
+                "claimed the legendary Golden Chalice"
+              );
+              return {
+                type: "result",
+                result: {
+                  description:
+                    "The guard's badge glows in recognition of your authority, " +
+                    "while the ancient coin resonates with the temple's magic. " +
+                    "The wards surrounding the chalice fade, allowing you to claim your prize.\n\n" +
+                    `Congratulations! You've won the game! Final score: ${this.score}`,
+                  metadata: {
+                    score: this.score,
+                    inventory: this.inventory,
+                    gameOver: true,
+                  },
+                },
+              };
+
+            case ItemIds.sacredGem:
+              // Remove from room and add to inventory
+              const { [item.id]: _gem, ...remainingGemItems } =
+                currentRoom.items!;
+              currentRoom.items = remainingGemItems;
+              this.inventory[item.id] = item;
+              scoreMessage = this.addScore(20, "found a rare sacred gem");
+              break;
+
+            default:
+              // Remove from room and add to inventory
+              const { [item.id]: _default, ...remainingDefaultItems } =
+                currentRoom.items!;
+              currentRoom.items = remainingDefaultItems;
+              this.inventory[item.id] = item;
+              scoreMessage = this.addScore(5, "collected a treasure");
+          }
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: `You can't take the ${item.name}.`,
-              actions,
+              feedback: `You carefully take the ${item.name}. ${scoreMessage}`,
             },
           };
         }
-
-        // Handle special items first to check if taking is allowed
-        let scoreMessage = "";
-        switch (item.id) {
-          case ItemIds.oldCoin:
-            if (!this.inventory[ItemIds.sacredGem]?.id) {
-              return this.gameOver(
-                "As you reach for the cursed coin, its dark runes flare with deadly power. " +
-                "Without magical protection, their ancient curse reduces you to ash."
-              );
-            }
-            // Remove from room and add to inventory
-            const { [item.id]: _coin, ...remainingCoinItems } = currentRoom.items!;
-            currentRoom.items = remainingCoinItems;
-            this.inventory[item.id] = item;
-            scoreMessage = this.addScore(15, "safely retrieved the cursed coin");
-            break;
-
-          case ItemIds.goldenChalice:
-            if (!this.inventory[ItemIds.guardBadge]?.id || !this.inventory[ItemIds.oldCoin]?.id) {
-              return this.gameOver(
-                "As you reach for the chalice, ancient wards flare to life. " +
-                "Without both a guard's authority and the temple's sacred coin, " +
-                "the magical defenses reduce you to ash."
-              );
-            }
-            scoreMessage = this.addScore(50, "claimed the legendary Golden Chalice");
-            return {
-              type: "result",
-              result: {
-                description: 
-                  "The guard's badge glows in recognition of your authority, " +
-                  "while the ancient coin resonates with the temple's magic. " +
-                  "The wards surrounding the chalice fade, allowing you to claim your prize.\n\n" +
-                  `Congratulations! You've won the game! Final score: ${this.score}`,
-                metadata: {
-                  score: this.score,
-                  inventory: this.inventory,
-                  gameOver: true
-                },
-              },
-            };
-
-          case ItemIds.sacredGem:
-            // Remove from room and add to inventory
-            const { [item.id]: _gem, ...remainingGemItems } = currentRoom.items!;
-            currentRoom.items = remainingGemItems;
-            this.inventory[item.id] = item;
-            scoreMessage = this.addScore(20, "found a rare sacred gem");
-            break;
-
-          default:
-            // Remove from room and add to inventory
-            const { [item.id]: _default, ...remainingDefaultItems } = currentRoom.items!;
-            currentRoom.items = remainingDefaultItems;
-            this.inventory[item.id] = item;
-            scoreMessage = this.addScore(5, "collected a treasure");
-        }
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: `You carefully take the ${item.name}. ${scoreMessage}`,
-            actions,
-          },
-        };
-      }
-    ) ?? this.createNotFoundState(targetItem);
+      ) ?? this.createNotFoundState(targetItem)
+    );
   }
 
   private handleUse(actionData: unknown): StepResult {
-    const { item: itemName, target: targetName } = actions.use.parse(actionData);
+    const { item: itemName, target: targetName } =
+      this.actions.use.parse(actionData);
     const currentRoom = this.getCurrentRoom();
-    
+
     // Check if item is in inventory
     const itemResult = this.findEntityWithFeedback(
       itemName,
@@ -378,15 +408,17 @@ export class TextAdventure implements SaveableGame {
       (item) => {
         // First try exact matches in room
         const exactRoomMatch = Object.values(currentRoom.items || {}).find(
-          target => target.name.toLowerCase() === targetName.toLowerCase()
+          (target) => target.name.toLowerCase() === targetName.toLowerCase()
         );
         if (exactRoomMatch) {
           return this.handleItemUse(item, exactRoomMatch);
         }
 
         // Then try exact matches in features
-        const exactFeatureMatch = Object.values(currentRoom.features || {}).find(
-          target => target.name.toLowerCase() === targetName.toLowerCase()
+        const exactFeatureMatch = Object.values(
+          currentRoom.features || {}
+        ).find(
+          (target) => target.name.toLowerCase() === targetName.toLowerCase()
         );
         if (exactFeatureMatch) {
           return this.handleItemUse(item, exactFeatureMatch);
@@ -423,15 +455,16 @@ export class TextAdventure implements SaveableGame {
         return this.createNotFoundState(targetName);
       }
     );
-    
-    return itemResult ?? {
-      type: "state",
-      state: {
-        gameState: this.formatGameState(),
-        feedback: `You don't have a ${itemName} to use.`,
-        actions,
-      },
-    };
+
+    return (
+      itemResult ?? {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `You don't have a ${itemName} to use.`,
+        },
+      }
+    );
   }
 
   private handleItemUse(item: Entity, target: Entity): StepResult {
@@ -442,8 +475,8 @@ export class TextAdventure implements SaveableGame {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: "The guard badge is a symbol of authority, but it has no magical properties. It might be useful for proving your right to access certain areas.",
-            actions,
+            feedback:
+              "The guard badge is a symbol of authority, but it has no magical properties. It might be useful for proving your right to access certain areas.",
           },
         };
 
@@ -453,8 +486,8 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The crystal shard resonates with the wall crystals, creating a harmonious hum. While beautiful, this seems more like a natural resonance than a useful interaction.",
-              actions,
+              feedback:
+                "The crystal shard resonates with the wall crystals, creating a harmonious hum. While beautiful, this seems more like a natural resonance than a useful interaction.",
             },
           };
         }
@@ -462,8 +495,8 @@ export class TextAdventure implements SaveableGame {
           type: "state",
           state: {
             gameState: this.formatGameState(),
-            feedback: "The crystal shard pulses with protective energy. It seems designed to shield against specific magical threats in the temple.",
-            actions,
+            feedback:
+              "The crystal shard pulses with protective energy. It seems designed to shield against specific magical threats in the temple.",
           },
         };
 
@@ -473,8 +506,8 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The sacred gem and wall crystals pulse in alternating patterns. The effect is mesmerizing but doesn't seem to serve any practical purpose.",
-              actions,
+              feedback:
+                "The sacred gem and wall crystals pulse in alternating patterns. The effect is mesmerizing but doesn't seem to serve any practical purpose.",
             },
           };
         }
@@ -483,8 +516,8 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic. This seems like the right approach to handling the cursed coin.",
-              actions,
+              feedback:
+                "The sacred gem glows brightly, its protective aura ready to shield you from dark magic. This seems like the right approach to handling the cursed coin.",
             },
           };
         }
@@ -493,18 +526,20 @@ export class TextAdventure implements SaveableGame {
       case ItemIds.rustySword:
         if (target.id === ItemIds.crystalShard) {
           // Remove both items from inventory as they break
-          const { [ItemIds.rustySword]: _sword, ...remainingItems } = this.inventory;
+          const { [ItemIds.rustySword]: _sword, ...remainingItems } =
+            this.inventory;
           this.inventory = remainingItems;
 
           // Update target crystal shard description to show damage
-          target.description += " The crystal has been chipped by the sword strike.";
-          
+          target.description +=
+            " The crystal has been chipped by the sword strike.";
+
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "You strike the crystal shard with the rusty sword. Both items shatter in a burst of magical energy! Perhaps attacking a magical crystal with a mundane weapon wasn't the best idea...",
-              actions,
+              feedback:
+                "You strike the crystal shard with the rusty sword. Both items shatter in a burst of magical energy! Perhaps attacking a magical crystal with a mundane weapon wasn't the best idea...",
             },
           };
         }
@@ -512,16 +547,17 @@ export class TextAdventure implements SaveableGame {
           // Remove the sword from inventory as it breaks
           const { [ItemIds.rustySword]: _, ...remainingItems } = this.inventory;
           this.inventory = remainingItems;
-          
+
           // Mark the target coin as chipped
-          target.description += " A chip in the edge has weakened some of the dark runes.";
-          
+          target.description +=
+            " A chip in the edge has weakened some of the dark runes.";
+
           return {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "You strike the coin with the rusty sword. The blade shatters on impact, but manages to chip the coin's edge, weakening some of its dark runes. Perhaps with proper magical protection, you could now handle it...",
-              actions,
+              feedback:
+                "You strike the coin with the rusty sword. The blade shatters on impact, but manages to chip the coin's edge, weakening some of its dark runes. Perhaps with proper magical protection, you could now handle it...",
             },
           };
         }
@@ -533,8 +569,8 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The eternal flame causes interesting reflections in the crystal lights, but nothing more happens.",
-              actions,
+              feedback:
+                "The eternal flame causes interesting reflections in the crystal lights, but nothing more happens.",
             },
           };
         }
@@ -543,8 +579,8 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The eternal flame makes the coin's symbols glow brighter, but light alone won't protect you from its curse.",
-              actions,
+              feedback:
+                "The eternal flame makes the coin's symbols glow brighter, but light alone won't protect you from its curse.",
             },
           };
         }
@@ -556,8 +592,8 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The scroll contains warnings about dark artifacts, but merely reading about protection won't help. You need something with actual protective power.",
-              actions,
+              feedback:
+                "The scroll contains warnings about dark artifacts, but merely reading about protection won't help. You need something with actual protective power.",
             },
           };
         }
@@ -566,48 +602,51 @@ export class TextAdventure implements SaveableGame {
             type: "state",
             state: {
               gameState: this.formatGameState(),
-              feedback: "The scroll mentions crystal shards as tools of protection, but suggests they work best when empowered by sacred artifacts.",
-              actions,
+              feedback:
+                "The scroll mentions crystal shards as tools of protection, but suggests they work best when empowered by sacred artifacts.",
             },
           };
         }
         break;
     }
-    
+
     return {
       type: "state",
       state: {
         gameState: this.formatGameState(),
         feedback: `You can't figure out how to use the ${item.name} on the ${target.name}.`,
-        actions,
       },
     };
   }
 
   private handleMove(actionData: unknown): StepResult {
-    const { direction } = actions.move.parse(actionData);
+    const { direction } = this.actions.move.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
     const exit = currentRoom.exits?.[direction];
     if (exit) {
       // Check if player has light before allowing movement
-      if (!this.hasTorch && 
-          this.currentRoomId === RoomIds.entrance && 
-          direction === "north") {
+      if (
+        !this.hasTorch &&
+        this.currentRoomId === RoomIds.entrance &&
+        direction === "north"
+      ) {
         return this.gameOver(
           "You stumble in the dark and fall into a deep pit. " +
-          "Perhaps you should find a light source before venturing deeper into the temple."
+            "Perhaps you should find a light source before venturing deeper into the temple."
         );
       }
-      
+
       // Check for trap in meditation room
-      if (this.currentRoomId === RoomIds.meditation && 
-          direction === "west" &&
-          !this.inventory[ItemIds.crystalShard]?.id) {
+      if (
+        this.currentRoomId === RoomIds.meditation &&
+        direction === "west" &&
+        !this.inventory[ItemIds.crystalShard]?.id
+      ) {
         return this.gameOver(
           "As you step into the corridor, ancient magic detects your presence. " +
-          "Without the crystal's protective aura, the temple's defenses activate, " +
-          "and magical energy reduces you to ash."
+            "Without the crystal's protective aura, the temple's defenses activate, " +
+            "and magical energy reduces you to ash."
         );
       }
 
@@ -619,7 +658,6 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: `You move ${direction}.`,
-          actions,
         },
       };
     } else {
@@ -628,7 +666,6 @@ export class TextAdventure implements SaveableGame {
         state: {
           gameState: this.formatGameState(),
           feedback: `You cannot move ${direction} from here.`,
-          actions,
         },
       };
     }
@@ -701,7 +738,6 @@ export class TextAdventure implements SaveableGame {
     return {
       gameState: this.formatGameState(),
       feedback: "Welcome to the Ancient Maze Temple. Your adventure begins...",
-      actions,
     };
   }
 
@@ -721,7 +757,7 @@ export class TextAdventure implements SaveableGame {
 
       case "move":
         return this.handleMove(actionData);
-        
+
       case "use":
         return this.handleUse(actionData);
 
@@ -731,7 +767,6 @@ export class TextAdventure implements SaveableGame {
           state: {
             gameState: this.formatGameState(),
             feedback: "Action not recognized. Please try a different action.",
-            actions,
           },
         };
     }

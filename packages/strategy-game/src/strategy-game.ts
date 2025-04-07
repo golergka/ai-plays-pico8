@@ -2,34 +2,6 @@ import { z } from "zod";
 import type { Game, GameState, StepResult } from "@ai-gamedev/playtest";
 import type { StrategyGameState } from "./types";
 
-const actions = {
-  gather: z
-    .object({
-      workers: z
-        .number()
-        .min(1)
-        .describe("Number of people to send gathering food"),
-    })
-    .describe("Send people to gather food"),
-  chop: z
-    .object({
-      workers: z
-        .number()
-        .min(1)
-        .describe("Number of people to send chopping wood"),
-    })
-    .describe("Send people to chop wood"),
-  build: z
-    .object({
-      shelters: z
-        .number()
-        .min(1)
-        .describe("Number of shelters to build (costs 5 wood each)"),
-    })
-    .describe("Build shelters to improve living conditions"),
-  endTurn: z.object({}).describe("End the current day and process results"),
-} as const;
-
 function formatOutput(state: StrategyGameState): string {
   return [
     `Day ${state.day}`,
@@ -69,11 +41,38 @@ export class StrategyGame implements Game {
     };
   }
 
+  public actions = {
+    gather: z
+      .object({
+        workers: z
+          .number()
+          .min(1)
+          .describe("Number of people to send gathering food"),
+      })
+      .describe("Send people to gather food"),
+    chop: z
+      .object({
+        workers: z
+          .number()
+          .min(1)
+          .describe("Number of people to send chopping wood"),
+      })
+      .describe("Send people to chop wood"),
+    build: z
+      .object({
+        shelters: z
+          .number()
+          .min(1)
+          .describe("Number of shelters to build (costs 5 wood each)"),
+      })
+      .describe("Build shelters to improve living conditions"),
+    endTurn: z.object({}).describe("End the current day and process results"),
+  } as const;
+
   private getGameState(feedback: string): GameState {
     return {
       feedback,
       gameState: formatOutput(this.state),
-      actions,
     };
   }
 
@@ -177,14 +176,14 @@ export class StrategyGame implements Game {
 
     switch (actionType) {
       case "gather": {
-        const { workers } = actions.gather.parse(actionData);
+        const { workers } = this.actions.gather.parse(actionData);
 
         if (workers > this.state.freeWorkers) {
           return {
             type: "state",
             state: this.getGameState(
               `You only have ${this.state.population} people available!`
-            )
+            ),
           };
         }
 
@@ -202,7 +201,7 @@ export class StrategyGame implements Game {
       }
 
       case "chop": {
-        const { workers } = actions.chop.parse(actionData);
+        const { workers } = this.actions.chop.parse(actionData);
 
         if (workers > this.state.freeWorkers) {
           return {
@@ -227,7 +226,7 @@ export class StrategyGame implements Game {
       }
 
       case "build": {
-        const { shelters } = actions.build.parse(actionData);
+        const { shelters } = this.actions.build.parse(actionData);
         const woodNeeded = shelters * 5;
 
         if (woodNeeded > this.state.wood) {
@@ -245,9 +244,9 @@ export class StrategyGame implements Game {
         return {
           type: "state",
           state: this.getGameState(
-            `You built ${shelters} new shelter${
-            shelters > 1 ? "s" : ""
-            }! (${this.state.freeWorkers} workers remaining)`
+            `You built ${shelters} new shelter${shelters > 1 ? "s" : ""}! (${
+              this.state.freeWorkers
+            } workers remaining)`
           ),
         };
       }
@@ -255,9 +254,7 @@ export class StrategyGame implements Game {
       default: {
         return {
           type: "state",
-          state: this.getGameState(
-            `Action "${actionType}" not recognized.`
-          ),
+          state: this.getGameState(`Action "${actionType}" not recognized.`),
         };
       }
     }

@@ -51,7 +51,7 @@ export async function playGame(
       const [actionType, actionData] = await io.askForAction(
         gameState.gameState,
         gameState.feedback,
-        gameState.actions,
+        game.actions,
       );
 
       // Process step

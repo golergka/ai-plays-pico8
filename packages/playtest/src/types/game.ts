@@ -60,9 +60,6 @@ export interface GameState {
   /** Response to the latest player action */
   feedback: string
   
-  /** Map of possible actions at this step */
-  actions: ActionSchemas
-  
   /**
    * Optional metadata that games can attach to the state
    * This is not used by the platform directly but can be used
@@ -108,6 +105,9 @@ export interface Game {
    * Clean up resources when game ends
    */
   cleanup(): Promise<void>
+
+  /** All possible game actions */
+  actions: ActionSchemas
 }
 
 /**
