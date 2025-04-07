@@ -80,6 +80,47 @@ export class StrategyGame implements Game<typeof actions> {
     };
   }
 
+  private gather(workers: number): string {
+    if (workers > this.state.freeWorkers) {
+      return `You only have ${this.state.population} people available!`;
+    }
+
+    const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
+    this.state.food += foodGathered;
+
+    this.state.freeWorkers -= workers;
+
+    return `Your gatherers collected ${foodGathered} food! (${this.state.freeWorkers} workers remaining)`;
+  }
+
+  private chop(workers: number): string {
+    if (workers > this.state.freeWorkers) {
+      return `You only have ${this.state.population} people available!`;
+    }
+
+    const woodChopped = workers * (1 + Math.floor(Math.random() * 2));
+    this.state.wood += woodChopped;
+
+    this.state.freeWorkers -= workers;
+
+    return `Your workers chopped ${woodChopped} wood! (${this.state.freeWorkers} workers remaining)`;
+  }
+
+  private build(shelters: number): string {
+    const woodNeeded = shelters * 5;
+
+    if (woodNeeded > this.state.wood) {
+      return `Not enough wood! Need ${woodNeeded} but only have ${this.state.wood}.`;
+    }
+
+    this.state.wood -= woodNeeded;
+    this.state.shelters += shelters;
+
+    return `You built ${shelters} new shelter${shelters > 1 ? "s" : ""}! (${
+      this.state.freeWorkers
+    } workers remaining)`;
+  }
+
   private endTurn(): string {
     let feedback = `Day ${this.state.day} summary:`;
 
@@ -154,56 +195,17 @@ export class StrategyGame implements Game<typeof actions> {
         return;
       case "gather": {
         const { workers } = this.actions.gather.parse(data);
-
-        if (workers > this.state.freeWorkers) {
-          return `You only have ${this.state.population} people available!`;
-        }
-
-        const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
-        this.state.food += foodGathered;
-
-        this.state.freeWorkers -= workers;
-
-        onResult(
-          `Your gatherers collected ${foodGathered} food! (${this.state.freeWorkers} workers remaining)`
-        );
+        onResult(this.gather(workers));
         return;
       }
-
       case "chop": {
         const { workers } = actions.chop.parse(data);
-
-        if (workers > this.state.freeWorkers) {
-          return `You only have ${this.state.population} people available!`;
-        }
-
-        const woodChopped = workers * (1 + Math.floor(Math.random() * 2));
-        this.state.wood += woodChopped;
-
-        this.state.freeWorkers -= workers;
-
-        onResult(
-          `Your workers chopped ${woodChopped} wood! (${this.state.freeWorkers} workers remaining)`
-        );
+        onResult(this.chop(workers));
         return;
       }
-
       case "build": {
         const { shelters } = actions.build.parse(data);
-        const woodNeeded = shelters * 5;
-
-        if (woodNeeded > this.state.wood) {
-          return `Not enough wood! Need ${woodNeeded} but only have ${this.state.wood}.`;
-        }
-
-        this.state.wood -= woodNeeded;
-        this.state.shelters += shelters;
-
-        onResult(
-          `You built ${shelters} new shelter${shelters > 1 ? "s" : ""}! (${
-            this.state.freeWorkers
-          } workers remaining)`
-        );
+        onResult(this.build(shelters));
         return;
       }
     }
