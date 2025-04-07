@@ -213,23 +213,38 @@ export class TextAdventure implements SaveableGame {
     );
     if (featureResult) return featureResult;
 
-    // Check inventory
-    const inventoryResult = this.findEntityWithFeedback(
-      target,
-      this.inventory,
-      "In your inventory",
-      (item) => ({
+    // First try exact matches in room
+    const exactRoomMatch = Object.values(currentRoom.items || {}).find(
+      item => item.name.toLowerCase() === target.toLowerCase()
+    );
+    if (exactRoomMatch) {
+      return {
         type: "state",
         state: {
           gameState: this.formatGameState(),
-          feedback: `${item.description} (In your inventory)`,
+          feedback: `${exactRoomMatch.description} (In this room)`,
           actions,
         },
-      })
-    );
-    if (inventoryResult) return inventoryResult;
+      };
+    }
 
-    // Check room items
+    // Then try exact matches in inventory
+    const exactInventoryMatch = Object.values(this.inventory).find(
+      item => item.name.toLowerCase() === target.toLowerCase()
+    );
+    if (exactInventoryMatch) {
+      return {
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `${exactInventoryMatch.description} (In your inventory)`,
+          actions,
+        },
+      };
+    }
+
+    // If no exact matches, try partial matches with findEntityWithFeedback
+    // Check room items first
     const itemResult = this.findEntityWithFeedback(
       target,
       currentRoom.items,
@@ -244,6 +259,22 @@ export class TextAdventure implements SaveableGame {
       })
     );
     if (itemResult) return itemResult;
+
+    // Then check inventory
+    const inventoryResult = this.findEntityWithFeedback(
+      target,
+      this.inventory,
+      "In your inventory",
+      (item) => ({
+        type: "state",
+        state: {
+          gameState: this.formatGameState(),
+          feedback: `${item.description} (In your inventory)`,
+          actions,
+        },
+      })
+    );
+    if (inventoryResult) return inventoryResult;
 
     // Check characters
     const characterResult = this.findEntityWithFeedback(
@@ -380,7 +411,23 @@ export class TextAdventure implements SaveableGame {
       this.inventory,
       "In inventory",
       (item) => {
-        // Check if target exists in inventory
+        // First try exact matches in room
+        const exactRoomMatch = Object.values(currentRoom.items || {}).find(
+          target => target.name.toLowerCase() === targetName.toLowerCase()
+        );
+        if (exactRoomMatch) {
+          return this.handleItemUse(item, exactRoomMatch);
+        }
+
+        // Then try exact matches in features
+        const exactFeatureMatch = Object.values(currentRoom.features || {}).find(
+          target => target.name.toLowerCase() === targetName.toLowerCase()
+        );
+        if (exactFeatureMatch) {
+          return this.handleItemUse(item, exactFeatureMatch);
+        }
+
+        // If no exact matches, try partial matches
         const inventoryTargetResult = this.findEntityWithFeedback(
           targetName,
           this.inventory,
