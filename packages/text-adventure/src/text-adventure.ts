@@ -137,6 +137,36 @@ export class TextAdventure implements SaveableGame {
     return `(+${points} points: ${reason})`;
   }
 
+  private findAcrossEntities<T extends Entity>(
+    target: string,
+    entitySets: Array<Record<string, T> | undefined>
+  ): { type: "found"; entity: T; context?: string } | 
+     { type: "ambiguous"; matches: Array<{entity: T}> } | 
+     { type: "notFound" } {
+    
+    const allMatches: Array<{entity: T}> = [];
+    
+    for (const entities of entitySets) {
+      if (entities) {
+        const result = findEntity(target, entities);
+        if (result.type === "found") {
+          return result; // Return immediately if exact match found
+        } else if (result.type === "ambiguous") {
+          allMatches.push(...result.matches);
+        }
+      }
+    }
+
+    const [firstMatch, ...restMatches] = allMatches;
+    if (restMatches.length > 0) {
+      return { type: "ambiguous", matches: allMatches };
+    } else if (firstMatch) {
+      return { type: "found", entity: firstMatch.entity };
+    } else {
+      return { type: "notFound" };
+    }
+  }
+
   private handleLook(actionData: unknown): StepResult {
     const { target } = actions.look.parse(actionData);
     const currentRoom = this.getCurrentRoom();
@@ -197,102 +227,37 @@ export class TextAdventure implements SaveableGame {
       };
     }
 
-    // Check features
-    const featureResult = this.findEntityWithFeedback(
-      target,
+    // Search across all relevant entity sets
+    const result = this.findAcrossEntities(target, [
       currentRoom.features,
-      "Features here",
-      (feature) => ({
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: feature.description,
-          actions,
-        },
-      })
-    );
-    if (featureResult) return featureResult;
-
-    // First try exact matches in room
-    const exactRoomMatch = Object.values(currentRoom.items || {}).find(
-      item => item.name.toLowerCase() === target.toLowerCase()
-    );
-    if (exactRoomMatch) {
-      return {
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: `${exactRoomMatch.description} (In this room)`,
-          actions,
-        },
-      };
-    }
-
-    // Then try exact matches in inventory
-    const exactInventoryMatch = Object.values(this.inventory).find(
-      item => item.name.toLowerCase() === target.toLowerCase()
-    );
-    if (exactInventoryMatch) {
-      return {
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: `${exactInventoryMatch.description} (In your inventory)`,
-          actions,
-        },
-      };
-    }
-
-    // If no exact matches, try partial matches with findEntityWithFeedback
-    // Check room items first
-    const itemResult = this.findEntityWithFeedback(
-      target,
       currentRoom.items,
-      "In the room",
-      (item) => ({
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: `${item.description} (In this room)`,
-          actions,
-        },
-      })
-    );
-    if (itemResult) return itemResult;
-
-    // Then check inventory
-    const inventoryResult = this.findEntityWithFeedback(
-      target,
       this.inventory,
-      "In your inventory",
-      (item) => ({
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: `${item.description} (In your inventory)`,
-          actions,
-        },
-      })
-    );
-    if (inventoryResult) return inventoryResult;
+      currentRoom.characters
+    ]);
 
-    // Check characters
-    const characterResult = this.findEntityWithFeedback(
-      target,
-      currentRoom.characters,
-      "Characters here",
-      (character) => ({
-        type: "state",
-        state: {
-          gameState: this.formatGameState(),
-          feedback: character.description,
-          actions,
-        },
-      })
-    );
-    if (characterResult) return characterResult;
-
-    return this.createNotFoundState(target);
+    switch (result.type) {
+      case "found": {
+        const entity = result.entity;
+        let context = "";
+        if (currentRoom.items && Object.values(currentRoom.items).includes(entity)) {
+          context = "(In this room)";
+        } else if (Object.values(this.inventory).includes(entity)) {
+          context = "(In your inventory)";
+        }
+        return {
+          type: "state",
+          state: {
+            gameState: this.formatGameState(),
+            feedback: `${entity.description} ${context}`.trim(),
+            actions,
+          },
+        };
+      }
+      case "ambiguous":
+        return this.createAmbiguousState(target, result.matches, "Found multiple matches");
+      case "notFound":
+        return this.createNotFoundState(target);
+    }
   }
 
   private handleTake(actionData: unknown): StepResult {
