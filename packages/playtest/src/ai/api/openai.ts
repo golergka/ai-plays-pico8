@@ -167,15 +167,17 @@ export async function callOpenAI<T extends Record<string, z.ZodType>>(
   // Call the API
   const rawResponse = await client.chat.completions.create(requestParams);
   if (!rawResponse) {
+    console.error("No response from OpenAI API:", rawResponse);
     throw new Error("No response from OpenAI API");
   }
 
   if ((rawResponse as any).error) {
+    console.error("OpenAI API error:", rawResponse);
     throw new Error(`API error: ${(rawResponse as any).error.message}`);
   }
 
   if (!rawResponse.choices) {
-    console.log("response", rawResponse);
+    console.error("No choices in the response:", rawResponse);
     throw new Error("No choices in the response");
   }
 
