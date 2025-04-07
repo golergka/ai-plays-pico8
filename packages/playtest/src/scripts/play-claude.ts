@@ -4,7 +4,6 @@
 import path from "path";
 import { TerminalUI } from "@ai-gamedev/playtest";
 import { TextAdventure } from "@ai-gamedev/text-adventure";
-import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
 import type { SaveableGame } from "@ai-gamedev/playtest";
 import { ClaudeSavePlayer } from "./claude-save-player";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -22,7 +21,7 @@ async function main() {
   ui.displayHeader("Claude Save Player");
   ui.display(`Usage: bun run play:claude [game-type] [save-dir]`);
   ui.display(`  game-type: Game to play (default: text-adventure)`);
-  ui.display(`            Options: text-adventure, compact-adventure`);
+  ui.display(`            Options: text-adventure`);
   ui.display(`  save-dir: Directory to store save files (default: ./saves)`);
   ui.display(``);
   ui.display(`Current settings:`);

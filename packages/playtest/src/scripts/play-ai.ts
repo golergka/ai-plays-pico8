@@ -22,7 +22,7 @@ async function main() {
   );
   ui.display(`  game-type: Game to play (default: text-adventure)`);
   ui.display(
-    `            Options: text-adventure, compact-adventure, strategy-game`
+    `            Options: text-adventure, strategy-game`
   );
   ui.display(`  model: LLM model to use (default: openrouter/auto)`);
   ui.display(`  max-retries: Maximum retries for invalid actions (default: 3)`);

@@ -2,7 +2,6 @@
  * Common game runner for both AI and human players
  */
 import { TextAdventure } from "@ai-gamedev/text-adventure";
-import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
 import { StrategyGame } from "@ai-gamedev/strategy-game";
 import type { Game, InputOutput } from "../types";
 
@@ -34,7 +33,7 @@ export async function playGame(
   io: InputOutput,
   options: PlayGameOptions = {}
 ): Promise<void> {
-  const gameType = options.gameType || "compact-adventure";
+  const gameType = options.gameType  || "text-adventure";
   const maxSteps = options.maxSteps || Infinity;
 
   // Initialize the appropriate game
@@ -92,11 +91,6 @@ export async function initializeGame(gameType: string): Promise<Game | null> {
   switch (gameType) {
     case "text-adventure": {
       const game = new TextAdventure();
-      await game.initialize();
-      return game;
-    }
-    case "compact-adventure": {
-      const game = new CompactTextAdventure();
       await game.initialize();
       return game;
     }

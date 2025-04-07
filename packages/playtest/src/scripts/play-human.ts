@@ -16,7 +16,7 @@ async function main() {
   ui.displayHeader('Human Player Mode')
   ui.display(`Usage: bun run play:human [game-type]`)
   ui.display(`  game-type: Game to play (default: text-adventure)`)
-  ui.display(`            Options: text-adventure, compact-adventure`)
+  ui.display(`            Options: text-adventure`)
   ui.display(``)
   ui.display(`Current settings:`)
   ui.display(`  Game: ${gameType}`)

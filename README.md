@@ -12,7 +12,6 @@ This monorepo contains packages for AI game development and testing:
 
 - `@ai-gamedev/playtest`: Framework for AI agents to play text games with easy, menu-based input and output
 - `@ai-gamedev/text-adventure`: Implementation of a text adventure game
-- `@ai-gamedev/compact-adventure`: Compact version of the text adventure game
 - `@ai-gamedev/play`: CLI tools for playing games with human or AI players
 
 ## Setup & Installation
@@ -33,9 +32,6 @@ bun install
 ```bash
 # Play a text adventure with human input
 bun run play human text-adventure
-
-# Play a compact adventure with AI
-bun run play ai compact-adventure openrouter/auto 3 15
 
 # Show help
 bun run play help
