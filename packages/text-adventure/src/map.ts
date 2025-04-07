@@ -11,6 +11,36 @@ export enum ItemIds {
   goldenChalice = "golden_chalice",
 }
 
+export enum FeatureIds {
+  columns = "columns",
+  inscriptions = "inscriptions",
+  doorway = "doorway",
+  ancientMurals = "ancient_murals",
+  vaultedCeiling = "vaulted_ceiling",
+  stoneAltar = "stone_altar",
+  woodenShelves = "wooden_shelves",
+  scholarsDesk = "scholars_desk",
+  bronzeBrazier = "bronze_brazier",
+  weaponRacks = "weapon_racks",
+  trainingCircle = "training_circle",
+  armorStand = "armor_stand",
+  crystalLights = "crystal_lights",
+  wallCarvings = "wall_carvings",
+  grandArchway = "grand_archway",
+  stoneFountain = "stone_fountain",
+  crystalFormations = "crystal_formations",
+  meditationCushions = "meditation_cushions",
+  stoneFirepit = "stone_firepit",
+  stoneBunks = "stone_bunks",
+  fallenWeaponRack = "fallen_weapon_rack",
+  ornatePedestals = "ornate_pedestals",
+  glowingSymbols = "glowing_symbols",
+  goldenStatues = "golden_statues",
+  treasurePiles = "treasure_piles",
+  goldenAltar = "golden_altar",
+  treasureMurals = "treasure_murals"
+}
+
 export enum RoomIds {
   entrance = "entrance",
   mainHall = "mainHall",
@@ -56,8 +86,8 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        columns: {
-          id: "columns",
+        [FeatureIds.columns]: {
+          id: FeatureIds.columns,
           name: "Stone Columns",
           description:
             "Massive stone columns rise to the ceiling, carved with intricate spiral patterns that seem to tell ancient stories.",
