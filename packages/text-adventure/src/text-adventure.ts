@@ -516,6 +516,16 @@ export class TextAdventure implements SaveableGame {
             },
           };
         }
+        if (target.id === ItemIds.crystalShard) {
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The scroll mentions crystal shards as tools of protection, but suggests they work best when empowered by sacred artifacts.",
+              actions,
+            },
+          };
+        }
         break;
     }
     
