@@ -5,7 +5,6 @@ import { TextAdventure } from "@ai-gamedev/text-adventure";
 import { CompactTextAdventure } from "@ai-gamedev/compact-adventure";
 import { StrategyGame } from "@ai-gamedev/strategy-game";
 import type { Game, InputOutput } from "../types";
-import { z } from "zod";
 
 export interface PlayGameOptions {
   /**
