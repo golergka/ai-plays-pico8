@@ -485,8 +485,8 @@ export class TextAdventure implements SaveableGame {
       case ItemIds.rustySword:
         if (target.id === ItemIds.crystalShard) {
           // Remove both items from inventory as they break
-          const { [ItemIds.rustySword]: _sword, ...remainingSwordItems } = this.inventory;
-          this.inventory = remainingSwordItems;
+          const { [ItemIds.rustySword]: _sword, ...remainingItems } = this.inventory;
+          this.inventory = remainingItems;
 
           // Update target crystal shard description to show damage
           target.description += " The crystal has been chipped by the sword strike.";
@@ -507,7 +507,6 @@ export class TextAdventure implements SaveableGame {
           
           // Mark the target coin as chipped
           target.description += " A chip in the edge has weakened some of the dark runes.";
-          target.state = { chipped: true };
           
           return {
             type: "state",
