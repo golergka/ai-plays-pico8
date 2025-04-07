@@ -485,22 +485,22 @@ export const gameMap: GameMap = {
         },
       },
       features: {
-        ornate_pedestals: {
-          id: "ornate_pedestals",
+        [FeatureIds.ornatePedestals]: {
+          id: FeatureIds.ornatePedestals,
           name: "Ornate Pedestals",
           description:
             "Ornate pedestals display various religious artifacts and offerings.",
           tags: ["pedestal", "display", "ornate"],
         },
-        glowing_symbols: {
-          id: "glowing_symbols",
+        [FeatureIds.glowingSymbols]: {
+          id: FeatureIds.glowingSymbols,
           name: "Glowing Symbols",
           description:
             "Glowing symbols on the floor form a complex magical pattern.",
           tags: ["symbol", "magic", "floor"],
         },
-        golden_statues: {
-          id: "golden_statues",
+        [FeatureIds.goldenStatues]: {
+          id: FeatureIds.goldenStatues,
           name: "Golden Statues",
           description:
             "Golden statues of ancient deities stand in alcoves around the room.",
