@@ -254,6 +254,7 @@ export class TextAdventure implements SaveableGame {
         // Remove from room items
         const { [item.id]: _, ...remainingItems } = currentRoom.items!;
         currentRoom.items = remainingItems;
+        let scoreMessage = "";
 
         // Check for cursed coin
         if (item.id === ItemIds.oldCoin) {
@@ -267,7 +268,7 @@ export class TextAdventure implements SaveableGame {
               },
             };
           }
-          scoreMessage = this.addScore(15, "safely retrieved the cursed coin");
+          scoreMessage += this.addScore(15, "safely retrieved the cursed coin");
         }
 
         // Check for golden chalice
@@ -279,7 +280,7 @@ export class TextAdventure implements SaveableGame {
               "the magical defenses reduce you to ash."
             );
           }
-          scoreMessage = this.addScore(50, "claimed the legendary Golden Chalice");
+          scoreMessage += this.addScore(50, "claimed the legendary Golden Chalice");
           return {
             type: "result",
             result: {
