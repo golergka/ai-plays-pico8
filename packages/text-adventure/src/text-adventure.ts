@@ -488,8 +488,8 @@ export class TextAdventure implements SaveableGame {
           const { [ItemIds.rustySword]: _sword, ...remainingSwordItems } = this.inventory;
           this.inventory = remainingSwordItems;
 
-          const { [ItemIds.crystalShard]: _shard, ...remainingShardItems } = this.inventory;
-          this.inventory = remainingShardItems;
+          // Update crystal shard description to show damage
+          this.inventory[ItemIds.crystalShard].description += " The crystal has been chipped by the sword strike.";
           
           return {
             type: "state",
@@ -507,8 +507,7 @@ export class TextAdventure implements SaveableGame {
           
           // Mark the coin as chipped
           if (currentRoom.items?.[ItemIds.oldCoin]) {
-            currentRoom.items[ItemIds.oldCoin].description = 
-              "A tarnished gold coin bearing ominous markings. Strange symbols pulse faintly in the torchlight. A chip in the edge has weakened some of the dark runes.";
+            currentRoom.items[ItemIds.oldCoin].description += " A chip in the edge has weakened some of the dark runes.";
             currentRoom.items[ItemIds.oldCoin].state = { chipped: true };
           }
           
