@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Game, GameState, StepResult } from "@ai-gamedev/playtest";
+import type { Game, GameState } from "@ai-gamedev/playtest";
 import type { StrategyGameState } from "./types";
 
 function formatOutput(state: StrategyGameState): string {
@@ -18,7 +18,35 @@ function formatOutput(state: StrategyGameState): string {
   ].join("\n");
 }
 
-export class StrategyGame implements Game {
+const actions = {
+  gather: z
+    .object({
+      workers: z
+        .number()
+        .min(1)
+        .describe("Number of people to send gathering food"),
+    })
+    .describe("Send people to gather food"),
+  chop: z
+    .object({
+      workers: z
+        .number()
+        .min(1)
+        .describe("Number of people to send chopping wood"),
+    })
+    .describe("Send people to chop wood"),
+  build: z
+    .object({
+      shelters: z
+        .number()
+        .min(1)
+        .describe("Number of shelters to build (costs 5 wood each)"),
+    })
+    .describe("Build shelters to improve living conditions"),
+  endTurn: z.object({}).describe("End the current day and process results"),
+} as const;
+
+export class StrategyGame implements Game<typeof actions> {
   private state: StrategyGameState = {
     food: 10,
     wood: 5,
@@ -28,6 +56,7 @@ export class StrategyGame implements Game {
     score: 0,
     freeWorkers: 5,
   };
+  private gameOver = false;
 
   async initialize(): Promise<void> {
     this.state = {
@@ -39,44 +68,21 @@ export class StrategyGame implements Game {
       score: 0,
       freeWorkers: 5,
     };
+    this.gameOver = false;
   }
 
-  public actions = {
-    gather: z
-      .object({
-        workers: z
-          .number()
-          .min(1)
-          .describe("Number of people to send gathering food"),
-      })
-      .describe("Send people to gather food"),
-    chop: z
-      .object({
-        workers: z
-          .number()
-          .min(1)
-          .describe("Number of people to send chopping wood"),
-      })
-      .describe("Send people to chop wood"),
-    build: z
-      .object({
-        shelters: z
-          .number()
-          .min(1)
-          .describe("Number of shelters to build (costs 5 wood each)"),
-      })
-      .describe("Build shelters to improve living conditions"),
-    endTurn: z.object({}).describe("End the current day and process results"),
-  } as const;
+  public readonly actions = actions;
 
-  private getGameState(feedback: string): GameState {
+  public getGameState(): GameState {
     return {
-      feedback,
-      gameState: formatOutput(this.state),
+      description: formatOutput(this.state),
+      gameOver: this.gameOver,
     };
   }
 
-  private simulateDay(feedback: string): StepResult {
+  private endTurn(): string {
+    let feedback = `Day ${this.state.day} summary:`;
+
     this.state.day += 1;
     this.state.freeWorkers = this.state.population; // Reset free workers
 
@@ -103,47 +109,26 @@ export class StrategyGame implements Game {
 
     // Check loss condition
     if (this.state.food < 0) {
-      return {
-        type: "result",
-        result: {
-          description: [
-            "Your tribe has run out of food and perished.",
-            `Final Score: ${this.state.score}`,
-            `Survived ${this.state.day} days`,
-            `Peak Population: ${this.state.population}`,
-          ].join("\n\n"),
-          metadata: {
-            survived_days: this.state.day,
-            final_population: this.state.population,
-            final_score: this.state.score,
-          },
-        },
-      };
+      return (
+        feedback +
+        `\n\nYour tribe has run out of food and perished. Final Score: ${this.state.score}\n` +
+        `Survived ${this.state.day} days`
+      );
     }
 
     // Check win condition
     if (this.state.population >= 20 && this.state.shelters >= 10) {
-      return {
-        type: "result",
-        result: {
-          description: [
-            "Victory! Your tribe has grown strong and prosperous with proper housing!",
-            `Final Score: ${this.state.score}`,
-            `Completed in ${this.state.day} days`,
-            `Final Population: ${this.state.population}`,
-            `Shelters Built: ${this.state.shelters}`,
-            `Resources Remaining: ${this.state.food} food, ${this.state.wood} wood`,
-          ].join("\n\n"),
-          metadata: {
-            survived_days: this.state.day,
-            final_population: this.state.population,
-            shelters: this.state.shelters,
-            food_stored: this.state.food,
-            wood_stored: this.state.wood,
-            final_score: this.state.score,
-          },
-        },
-      };
+      return (
+        feedback +
+        [
+          "\nVictory! Your tribe has grown strong and prosperous with proper housing!",
+          `Final Score: ${this.state.score}`,
+          `Completed in ${this.state.day} days`,
+          `Final Population: ${this.state.population}`,
+          `Shelters Built: ${this.state.shelters}`,
+          `Resources Remaining: ${this.state.food} food, ${this.state.wood} wood`,
+        ].join("\n")
+      );
     }
 
     // Check population growth (requires food surplus and adequate shelter)
@@ -155,36 +140,23 @@ export class StrategyGame implements Game {
       feedback += `\n\nYour tribe has grown! Population increased to ${this.state.population}.`;
     }
 
-    return {
-      type: "state",
-      state: this.getGameState(feedback),
-    };
+    return feedback;
   }
 
-  async start(): Promise<GameState> {
-    return this.getGameState(
-      "Your tribe awaits your guidance. You must manage food and population to survive."
-    );
-  }
-
-  async step(action: [string, unknown]): Promise<StepResult> {
-    const [actionType, actionData] = action;
-
-    if (actionType === "endTurn") {
-      return this.simulateDay("Day ended.");
-    }
-
-    switch (actionType) {
+  async callAction(
+    name: keyof typeof actions,
+    data: z.infer<(typeof actions)[typeof name]>,
+    onResult: (result: string) => void
+  ) {
+    switch (name) {
+      case "endTurn":
+        onResult(this.endTurn());
+        return;
       case "gather": {
-        const { workers } = this.actions.gather.parse(actionData);
+        const { workers } = this.actions.gather.parse(data);
 
         if (workers > this.state.freeWorkers) {
-          return {
-            type: "state",
-            state: this.getGameState(
-              `You only have ${this.state.population} people available!`
-            ),
-          };
+          return `You only have ${this.state.population} people available!`;
         }
 
         const foodGathered = workers * (2 + Math.floor(Math.random() * 3));
@@ -192,24 +164,17 @@ export class StrategyGame implements Game {
 
         this.state.freeWorkers -= workers;
 
-        return {
-          type: "state",
-          state: this.getGameState(
-            `Your gatherers collected ${foodGathered} food! (${this.state.freeWorkers} workers remaining)`
-          ),
-        };
+        onResult(
+          `Your gatherers collected ${foodGathered} food! (${this.state.freeWorkers} workers remaining)`
+        );
+        return;
       }
 
       case "chop": {
-        const { workers } = this.actions.chop.parse(actionData);
+        const { workers } = actions.chop.parse(data);
 
         if (workers > this.state.freeWorkers) {
-          return {
-            type: "state",
-            state: this.getGameState(
-              `You only have ${this.state.population} people available!`
-            ),
-          };
+          return `You only have ${this.state.population} people available!`;
         }
 
         const woodChopped = workers * (1 + Math.floor(Math.random() * 2));
@@ -217,45 +182,29 @@ export class StrategyGame implements Game {
 
         this.state.freeWorkers -= workers;
 
-        return {
-          type: "state",
-          state: this.getGameState(
-            `Your workers chopped ${woodChopped} wood! (${this.state.freeWorkers} workers remaining)`
-          ),
-        };
+        onResult(
+          `Your workers chopped ${woodChopped} wood! (${this.state.freeWorkers} workers remaining)`
+        );
+        return;
       }
 
       case "build": {
-        const { shelters } = this.actions.build.parse(actionData);
+        const { shelters } = actions.build.parse(data);
         const woodNeeded = shelters * 5;
 
         if (woodNeeded > this.state.wood) {
-          return {
-            type: "state",
-            state: this.getGameState(
-              `Not enough wood! Need ${woodNeeded} but only have ${this.state.wood}.`
-            ),
-          };
+          return `Not enough wood! Need ${woodNeeded} but only have ${this.state.wood}.`;
         }
 
         this.state.wood -= woodNeeded;
         this.state.shelters += shelters;
 
-        return {
-          type: "state",
-          state: this.getGameState(
-            `You built ${shelters} new shelter${shelters > 1 ? "s" : ""}! (${
-              this.state.freeWorkers
-            } workers remaining)`
-          ),
-        };
-      }
-
-      default: {
-        return {
-          type: "state",
-          state: this.getGameState(`Action "${actionType}" not recognized.`),
-        };
+        onResult(
+          `You built ${shelters} new shelter${shelters > 1 ? "s" : ""}! (${
+            this.state.freeWorkers
+          } workers remaining)`
+        );
+        return;
       }
     }
   }
