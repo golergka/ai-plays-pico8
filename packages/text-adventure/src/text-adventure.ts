@@ -422,18 +422,44 @@ export class TextAdventure implements SaveableGame {
 
   private handleItemUse(item: Entity, target: Entity): StepResult {
     // Handle specific item uses
-    if (item.id === ItemIds.sacredGem) {
-      if (target.tags.some(tag => 
-          tag.toLowerCase().includes('coin') || 
-          tag.toLowerCase().includes('symbol'))) {
-        return {
-          type: "state",
-          state: {
-            gameState: this.formatGameState(),
-            feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic.",
-            actions,
-          },
-        };
+    if (target.id === ItemIds.oldCoin || target.tags.includes('coin')) {
+      switch (item.id) {
+        case ItemIds.sacredGem:
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The sacred gem glows brightly, its protective aura ready to shield you from dark magic. This seems like the right approach to handling the cursed coin.",
+              actions,
+            },
+          };
+        case ItemIds.crystalShard:
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The crystal shard resonates with the coin's magic, but its power seems insufficient. Perhaps you need something more sacred in nature.",
+              actions,
+            },
+          };
+        case ItemIds.ancientScroll:
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The scroll contains warnings about dark artifacts, but merely reading about protection won't help. You need something with actual protective power.",
+              actions,
+            },
+          };
+        case ItemIds.torch:
+          return {
+            type: "state",
+            state: {
+              gameState: this.formatGameState(),
+              feedback: "The eternal flame makes the coin's symbols glow brighter, but light alone won't protect you from its curse.",
+              actions,
+            },
+          };
       }
     }
     
