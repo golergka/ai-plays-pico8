@@ -4,7 +4,7 @@
 import path from "path";
 import { TerminalUI } from "@ai-gamedev/playtest";
 import { TextAdventure } from "@ai-gamedev/text-adventure";
-import type { SaveableGame } from "@ai-gamedev/playtest";
+import type { SaveableGame, ActionSchemas } from "@ai-gamedev/playtest";
 import { ClaudeSavePlayer } from "./claude-save-player";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { jsonschema2md } from "@adobe/jsonschema2md";
@@ -134,13 +134,11 @@ async function main() {
  * @param gameType Type of game to initialize
  * @returns Initialized game instance or null if game type not found
  */
-async function initializeGame(gameType: string): Promise<SaveableGame | null> {
+async function initializeGame(
+  gameType: string
+): Promise<SaveableGame<ActionSchemas> | null> {
   if (gameType === "text-adventure") {
     const game = new TextAdventure();
-    await game.initialize();
-    return game;
-  } else if (gameType === "compact-adventure") {
-    const game = new CompactTextAdventure();
     await game.initialize();
     return game;
   }
