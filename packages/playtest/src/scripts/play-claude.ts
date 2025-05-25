@@ -46,53 +46,55 @@ async function main() {
     // Check if we have a save file or need to start a new game
     const saveLoaded = await player.loadSaveOrCreateNew(game);
 
-    let gameState;
     if (saveLoaded) {
-      // If save was loaded, just get the current state
       ui.display("Loading saved game...");
-      gameState = await game.start();
     } else {
-      // Otherwise, start a new game
       ui.display("No save file found. Starting new game...");
-      gameState = await game.start();
-      // Save the initial state
       await player.saveGame(game);
     }
 
     // Display current game state
+    const gameState = game.getGameState();
     ui.displayHeader("Current Game State");
-    ui.display(gameState.output);
+    ui.display(gameState.description);
 
     // Get action from the command line
     try {
       // Get the action from the command line (processed by player.getAction)
       const [actionType, actionData] = await player.getAction(
-        gameState.output,
-        gameState.actions
+        gameState.description,
+        game.actions
       );
 
       // Display the action being taken
       ui.displayHeader("Action");
       ui.display(
-        ui.color(`${actionType} ${JSON.stringify(actionData)}`, "yellow")
+        ui.color(`${String(actionType)} ${JSON.stringify(actionData)}`, "yellow")
       );
 
-      // Process the step
-      const stepResult = await game.step([actionType as string, actionData]);
+      // Execute the action
+      game.callAction(
+        actionType as keyof typeof game.actions,
+        actionData,
+        (result: string) => {
+          ui.displayHeader("Result");
+          ui.display(result);
+        }
+      );
 
       // Save the updated game state
       await player.saveGame(game);
 
-      // Display the result
-      if (stepResult.type === "result") {
-        // Game is complete
+      // Display the new state
+      const newState = game.getGameState();
+      if (newState.gameOver) {
         ui.displayHeader("Game Finished");
-        ui.display(stepResult.result.description);
+        ui.display(newState.description);
       } else {
         ui.displayHeader("Game State");
-        ui.display(stepResult.state.output);
+        ui.display(newState.description);
         ui.displayHeader("Actions");
-        for (const [name, schema] of Object.entries(stepResult.state.actions)) {
+        for (const [name, schema] of Object.entries(game.actions)) {
           ui.display(`${name}:`);
           const jsonSchema = zodToJsonSchema(schema);
           const md = jsonschema2md(jsonSchema as any, {})
@@ -121,8 +123,8 @@ async function main() {
     process.exit(1);
   } finally {
     // Clean up game resources
-    if (game) {
-      await game.cleanup();
+    if (game && (game as any).cleanup) {
+      await (game as any).cleanup();
     }
     ui.cleanup();
   }
