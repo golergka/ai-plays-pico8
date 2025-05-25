@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import type { SaveableGame } from '@ai-gamedev/playtest'
+import type { SaveableGame, ActionSchemas } from '@ai-gamedev/playtest'
 import type { Schema } from '@ai-gamedev/playtest'
 
 /**
@@ -116,7 +116,9 @@ export class ClaudeSavePlayer {
    * @param game The game instance to load state into
    * @returns True if a save was loaded, false if a new game was created
    */
-  async loadSaveOrCreateNew(game: SaveableGame): Promise<boolean> {
+  async loadSaveOrCreateNew(
+    game: SaveableGame<ActionSchemas>
+  ): Promise<boolean> {
     try {
       // Create save directory if it doesn't exist
       await fs.mkdir(this.saveDir, { recursive: true })
@@ -153,7 +155,7 @@ export class ClaudeSavePlayer {
    * 
    * @param game The game instance to save
    */
-  async saveGame(game: SaveableGame): Promise<void> {
+  async saveGame(game: SaveableGame<ActionSchemas>): Promise<void> {
     // Get the save data from the game
     const saveData = game.getSaveData()
     
