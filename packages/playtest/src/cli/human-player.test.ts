@@ -75,7 +75,7 @@ describe('HumanPlayer', () => {
     
     // Act
     const result = await humanPlayer.askForActions('Game state', actionSchemas)
-    const [action, data] = result[0]
+    const [action, data] = result[0]!
     
     // Assert
     expect(action).toBe('inventory')
@@ -88,7 +88,7 @@ describe('HumanPlayer', () => {
     
     // Act
     const result = await humanPlayer.askForActions('Game state', actionSchemas)
-    const [action, data] = result[0]
+    const [action, data] = result[0]!
     
     // Assert
     expect(action).toBe('go')
@@ -101,7 +101,7 @@ describe('HumanPlayer', () => {
     
     // Act
     const result = await humanPlayer.askForActions('Game state', actionSchemas)
-    const [action, data] = result[0]
+    const [action, data] = result[0]!
     
     // Assert
     expect(action).toBe('take')
@@ -114,7 +114,7 @@ describe('HumanPlayer', () => {
     
     // Act
     const result = await humanPlayer.askForActions('Game state', actionSchemas)
-    const [action, data] = result[0]
+    const [action, data] = result[0]!
     
     // Assert
     expect(action).toBe('go')
@@ -129,7 +129,7 @@ describe('HumanPlayer', () => {
     
     // Act
     const result = await humanPlayer.askForActions('Game state', actionSchemas)
-    const [action, data] = result[0]
+    const [action, data] = result[0]!
     
     // Assert
     expect(action).toBe('go')
@@ -143,7 +143,7 @@ describe('HumanPlayer', () => {
     
     // Act
     const result = await humanPlayer.askForActions('Game state', actionSchemas)
-    const [action, data] = result[0]
+    const [action, data] = result[0]!
     
     // Assert
     // The current implementation treats the entire text as a single string for the direction parameter
@@ -190,43 +190,43 @@ describe('HumanPlayer', () => {
   async function testCompleteGameSession() {
     // Simulate the look action
     let result = await humanPlayer.askForActions('You are in a dark room. There is a door to the north.', actionSchemas)
-    let [action, data] = result[0]
+    let [action, data] = result[0]!
     expect(action).toBe('look')
     expect(data).toEqual({})
     
     // Simulate the go north action
     result = await humanPlayer.askForActions('You see a door to the north.', actionSchemas)
-    ;[action, data] = result[0]
+    ;[action, data] = result[0]!
     expect(action).toBe('go')
     expect(data).toEqual({ direction: 'north' })
     
     // Simulate the look action in new location
     result = await humanPlayer.askForActions('You are in a hallway. There is a key on the ground.', actionSchemas)
-    ;[action, data] = result[0]
+    ;[action, data] = result[0]!
     expect(action).toBe('look')
     expect(data).toEqual({})
     
     // Simulate the take key action
     result = await humanPlayer.askForActions('You see a shiny key on the ground.', actionSchemas)
-    ;[action, data] = result[0]
+    ;[action, data] = result[0]!
     expect(action).toBe('take')
     expect(data).toEqual({ item: 'key' })
     
     // Simulate the go south action
     result = await humanPlayer.askForActions('You have picked up the key.', actionSchemas)
-    ;[action, data] = result[0]
+    ;[action, data] = result[0]!
     expect(action).toBe('go')
     expect(data).toEqual({ direction: 'south' })
     
     // Simulate the look action back in original location
     result = await humanPlayer.askForActions('You are back in the dark room.', actionSchemas)
-    ;[action, data] = result[0]
+    ;[action, data] = result[0]!
     expect(action).toBe('look')
     expect(data).toEqual({})
     
     // Simulate the help command followed by inventory
     result = await humanPlayer.askForActions('You look around the dark room.', actionSchemas)
-    ;[action, data] = result[0]
+    ;[action, data] = result[0]!
     expect(action).toBe('inventory')
     expect(data).toEqual({})
   }
