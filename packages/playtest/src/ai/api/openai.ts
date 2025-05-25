@@ -3,9 +3,7 @@ import { z } from "zod";
 import { toJsonSchema } from "../../schema/utils";
 import type { JsonSchema7Type } from "zod-to-json-schema";
 import OpenAI from "openai";
-import { observeOpenAI, Langfuse } from "langfuse";
-
-// const langfuse = new Langfuse();
+import { observeOpenAI } from "langfuse";
 
 /**
  * Tool definition with Zod schema

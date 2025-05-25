@@ -4,7 +4,6 @@
 import { HumanPlayer } from './src/cli/human-player'
 import { TextAdventure } from './src/games/text-adventure'
 import { TerminalUI } from './src/cli/terminal-ui'
-import type { GameResult } from './src/types'
 
 async function main() {
   const args = process.argv.slice(2)
