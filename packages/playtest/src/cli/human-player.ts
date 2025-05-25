@@ -1,4 +1,4 @@
-import type { InputOutput } from '../types'
+import type { InputOutput, ActionCall } from '../types'
 import type { Schema } from '../schema/utils'
 import type { ITerminalUI } from './i-terminal-ui'
 import { TerminalUI } from './terminal-ui'
@@ -45,10 +45,9 @@ export class HumanPlayer implements InputOutput {
    */
   async askForActions<T extends Record<string, Schema<any>>>(
     gameState: string,
-    feedback: string,
     actionSchemas: T
-  ): Promise<[keyof T, T[keyof T] extends Schema<infer U> ? U : never]> {
-    const gameOutput = `${gameState}\n\n${feedback}`
+  ): Promise<ActionCall<T>[]> {
+    const gameOutput = gameState
     this.terminalUI.displayHeader('Game State')
 
     // Display game output
@@ -109,8 +108,17 @@ export class HumanPlayer implements InputOutput {
     if (actionName === null || actionData === null) {
       throw new Error('Failed to get valid action')
     }
-    
-    return [actionName, actionData]
+
+    const call: ActionCall<T> = [
+      actionName,
+      actionData,
+      (result: string) => {
+        this.terminalUI.displayHeader('Result')
+        this.terminalUI.display(result)
+      }
+    ]
+
+    return [call]
   }
   
   outputResult(text: string): void {
