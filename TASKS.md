@@ -6,6 +6,8 @@
 
 These tasks track remaining work after cleaning up the old documentation.
 
+**Codex Instructions**: Delete tasks from this list once they're complete.
+
 ### [ROOT-001] Implement AI Mode in CLI [TODO]
 **Dependencies**: None
 **Description**: The command line interface only supports human play. Add an AI mode that uses the existing AI player modules.
