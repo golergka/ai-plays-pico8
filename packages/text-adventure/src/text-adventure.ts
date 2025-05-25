@@ -5,7 +5,6 @@ import { z } from "zod";
 import type {
   SaveableGame,
   GameState,
-  StepResult,
   TextAdventureSaveData,
   Room,
   Item,
@@ -182,8 +181,8 @@ export class TextAdventure implements SaveableGame<typeof actions> {
     target: string,
     entities: Record<string, T> | undefined,
     context: string,
-    handler: (entity: T) => StepResult
-  ): StepResult | null {
+    handler: (entity: T) => string
+  ): string | null {
     if (!entities) {
       return null;
     }
@@ -317,7 +316,7 @@ export class TextAdventure implements SaveableGame<typeof actions> {
     }
   }
 
-  private handleTake(actionData: unknown): StepResult {
+  private handleTake(actionData: unknown): string {
     const { item: targetItem } = this.actions.take.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 
@@ -411,7 +410,7 @@ export class TextAdventure implements SaveableGame<typeof actions> {
     );
   }
 
-  private handleUse(actionData: unknown): StepResult {
+  private handleUse(actionData: unknown): string {
     const { item: itemName, target: targetName } =
       this.actions.use.parse(actionData);
     const currentRoom = this.getCurrentRoom();
@@ -475,7 +474,7 @@ export class TextAdventure implements SaveableGame<typeof actions> {
     return itemResult ?? `You don't have a ${itemName} to use.`;
   }
 
-  private handleItemUse(item: Entity, target: Entity): StepResult {
+  private handleItemUse(item: Entity, target: Entity): string {
     // Handle specific item uses
     switch (item.id) {
       case ItemIds.guardBadge:
@@ -544,7 +543,7 @@ export class TextAdventure implements SaveableGame<typeof actions> {
     return `You can't figure out how to use the ${item.name} on the ${target.name}.`;
   }
 
-  private handleMove(actionData: unknown): StepResult {
+  private handleMove(actionData: unknown): string {
     const { direction } = this.actions.move.parse(actionData);
     const currentRoom = this.getCurrentRoom();
 

@@ -1,18 +1,16 @@
 /**
  * Text adventure game types and schemas
  */
-import type { 
-  Game, 
-  GameState, 
-  GameResult, 
-  StepResult, 
+import type {
+  Game,
+  GameState,
   ActionSchemas,
   SaveableGame
 } from '@ai-gamedev/playtest'
 import { z } from 'zod'
 
 // Re-export types from playtest
-export type { Game, GameState, GameResult, StepResult, ActionSchemas, SaveableGame }
+export type { Game, GameState, ActionSchemas, SaveableGame }
 
 export const DirectionSchema = z.enum([
   'north',
